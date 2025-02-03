@@ -1,0 +1,73 @@
+
+
+.skill-item{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--bg-color);
+    border-radius: 10px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    /* padding-top: 15px; */
+    height: 205px;
+    width: 280px;
+    cursor: pointer;
+    transition: all 0.5s;
+    text-align: center;
+    /* background-color: aqua; */
+}
+
+.skill-item:hover{
+    /* background-color: blueviolet; */
+    /* display: flex; */
+    /* justify-content: center; */
+    border: 1px solid var(--primary-color);
+    /* border-radius: 10px; */
+    /* margin-right: 20px; */
+    /* height: 265px; */
+    /* width: 340px; */
+}
+
+/* .skill-img{
+    width: 150px;
+    height: 150px;
+} */
+.skill-img{
+    /* display: flex;
+    justify-content: center; */
+    
+
+    color: var(--primary-color);
+    /* color: red !important; */
+    /* margin-top: 75px; */
+    /* margin-left: 75px; */
+    font-size: 5rem;
+    /* size: 3rem; */
+    /* text-align: center; */
+}
+
+.skill-img img{
+    color: var(--primary-color);
+}
+
+.firebase{
+    /* background-color: red; */
+    color: var(--primary-color);
+    /* -webkit-mask: url(public/images/firebase.svg) no-repeat center; */
+    /* mask: url(public/images/firebase.svg) no-repeat center; */
+}
+
+.skill-details{
+    /* display: flex;
+    justify-content: center; */
+    width: inherit;
+    margin-top: 15px;
+    position: relative;
+    /* padding: 20px; */
+}
+
+/* .fa-brands .fa-flutter{
+    fill: red;
+    width: 80px;
+} */
