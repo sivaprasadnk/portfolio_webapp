@@ -9,7 +9,6 @@ import 'package:spnk/utils/screen_type.dart';
 import 'package:spnk/views/bloc/screen_details/screen_bloc.dart';
 import 'package:spnk/views/bloc/screen_details/screen_event.dart';
 import 'package:spnk/views/screens/animation_item_builder.dart';
-import 'package:spnk/views/screens/home/widgets/copyright_text.dart';
 
 class HomeScreenDrawer extends StatelessWidget {
   const HomeScreenDrawer({super.key});
@@ -68,7 +67,7 @@ class HomeScreenDrawer extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const CopyrightText(size: 15),
+          // const CopyrightText(size: 15),
           // const Spacer(),
           const SizedBox(height: 25),
         ],

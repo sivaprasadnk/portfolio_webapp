@@ -4,7 +4,7 @@ import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/screen_type.dart';
 import 'package:spnk/views/bloc/screen_details/screen_bloc.dart';
 import 'package:spnk/views/bloc/screen_details/screen_state.dart';
-import 'package:spnk/views/screens/home/widgets/copyright_text.dart';
+import 'package:spnk/views/screens/home/widgets/animated_footer.dart';
 import 'package:spnk/views/screens/home/widgets/made_with_flutter_widget.dart';
 
 class BottomNavbar extends StatelessWidget {
@@ -20,7 +20,6 @@ class BottomNavbar extends StatelessWidget {
               ? context.screenWidth < 995
                   ? const MadeWithFlutterWidget(
                       size: 15,
-                      mainAxisAlignment: MainAxisAlignment.center,
                     )
                   : Padding(
                       padding: EdgeInsets.symmetric(
@@ -38,18 +37,19 @@ class BottomNavbar extends StatelessWidget {
                       //     ),
                       //   ],
                       // ),
-                      child: const Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          CopyrightText(size: 15),
-                          MadeWithFlutterWidget(
-                            size: 15,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                          ),
-                        ],
-                      ),
+                      // child: const Column(
+                      //   mainAxisSize: MainAxisSize.min,
+                      //   mainAxisAlignment: MainAxisAlignment.end,
+                      //   // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     CopyrightText(size: 15),
+                      //     MadeWithFlutterWidget(
+                      //       size: 15,
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //     ),
+                      //   ],
+                      // ),
+                      child: AnimatedFooter()
                     )
               : const SizedBox.shrink(),
         );

@@ -14,7 +14,7 @@ import 'package:spnk/views/screens/contact_me/contact_me_screen.dart';
 import 'package:spnk/views/screens/experience/experience_screen.dart';
 import 'package:spnk/views/screens/home/home_screen_large.dart';
 import 'package:spnk/views/screens/home/home_screen_small.dart';
-import 'package:spnk/views/screens/home/widgets/bottom_navbar.dart';
+import 'package:spnk/views/screens/home/widgets/animated_footer.dart';
 import 'package:spnk/views/screens/home/widgets/home_screen_drawer.dart';
 import 'package:spnk/views/screens/home/widgets/logo_text.dart';
 import 'package:spnk/views/screens/home/widgets/menu_icon.dart';
@@ -66,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     const Duration duration = Duration(seconds: 1);
     final width = context.screenWidth;
-    debugPrint("## width :$width");
     List<Widget> menuList = [
       const SizedBox(width: 32),
       const BrightnessSwitch(),
@@ -120,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen>
               Scaffold(
                 // bottomNavigationBar: const FooterText(),
                 // bottomNavigationBar: SlideFadeText(),
-                bottomNavigationBar: const BottomNavbar(),
+                bottomNavigationBar: const AnimatedFooter(),
                 extendBodyBehindAppBar: true,
                 extendBody: true,
                 endDrawer: const HomeScreenDrawer(),

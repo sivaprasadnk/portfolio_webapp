@@ -1,21 +1,18 @@
-import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 
 class MadeWithFlutterWidget extends StatelessWidget {
   const MadeWithFlutterWidget({
     super.key,
-    this.mainAxisAlignment = MainAxisAlignment.end,
     required this.size,
   });
-  final MainAxisAlignment mainAxisAlignment;
   final double size;
 
   @override
   Widget build(BuildContext context) {
     final color = context.primaryColor.withOpacity(0.5);
     return Row(
-      mainAxisAlignment: mainAxisAlignment,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           ' Made with ',
@@ -26,23 +23,30 @@ class MadeWithFlutterWidget extends StatelessWidget {
             fontFamily: 'Roboto',
           ),
         ),
-        AvatarGlow(
-          glowColor: color,
-          endRadius: 20.0,
-          showTwoGlows: false,
-          child: const Icon(
-            Icons.favorite,
-            color: Colors.red,
-          ),
-        ),
-        // CircleAvatar(
-        //   child: Icon(
+        // AvatarGlow(
+        //   glowColor: color,
+        //   endRadius: 10.0,
+        //   showTwoGlows: false,
+        //   child: const Icon(
         //     Icons.favorite,
         //     color: Colors.red,
         //   ),
         // ),
+        // CircleAvatar(
+        //   radius: ,
+        //   child: Icon(
+        //     Icons.favorite,
+        //     color: Colors.red,
+        //     size: 16,
+        //   ),
+        // ),
+        Icon(
+          Icons.favorite,
+          color: Colors.red,
+          size: 16,
+        ),
         Text(
-          ' in ',
+          '  in ',
           style: TextStyle(
             // fontWeight: FontWeight.bold,
             fontSize: size,
@@ -51,9 +55,10 @@ class MadeWithFlutterWidget extends StatelessWidget {
             fontFamily: 'Roboto',
           ),
         ),
-        FlutterLogo(
-          size: size,
-        ),
+        // Icon(Icons.logo)
+        // FlutterLogo(
+        //   size: size,
+        // ),
         Text(
           ' Flutter  ',
           style: TextStyle(

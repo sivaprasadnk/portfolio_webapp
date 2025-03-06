@@ -1,16 +1,17 @@
-# spnk
+# Sivaprasad NK's Portfolio WebApp
 
-A new Flutter project.
+https://sivaprasadnk.dev/
 
-## Getting Started
+Made using Flutter.
 
-This project is a starting point for a Flutter application.
+Highly responsive design.
 
-A few resources to get you started if this is your first Flutter project:
+Light / Dark Theme available with various color themes.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Clean Architecture.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Bloc state-management.
+
+Hosted in GitHub Pages.
+
+Backend using NodeJs
