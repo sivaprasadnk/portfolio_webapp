@@ -22,7 +22,6 @@ class AboutMeScreen extends StatelessWidget {
         title: Screen.aboutMe.screenTitle,
         details: BlocBuilder<AboutMeBloc, AboutMeState>(
           builder: (context, state) {
-            final data = SampleCommonWidget.of(context).data;
             return SingleChildScrollView(
               child: SizedBox(
                 // width: context.isMobileDevice ? context.screenWidth - 20 : 600,

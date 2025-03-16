@@ -11,7 +11,8 @@ class DownloadCvBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
+      
       onTap: () async {
         await launchUrl(
           Uri.parse(resumeLink),
@@ -21,6 +22,7 @@ class DownloadCvBtn extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(seconds: 1),
         height: 50,
+        // width: 150,
         padding: const EdgeInsets.symmetric(
           horizontal: 45,
         ),
