@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     const Duration duration = Duration(seconds: 1);
-    final width = context.screenWidth;
+    // final width = context.screenWidth;
     List<Widget> menuList = [
       const SizedBox(width: 32),
       const BrightnessSwitch(),

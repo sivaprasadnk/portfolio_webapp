@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/screens/home/widgets/download_cv_btn.dart';
-import 'package:spnk/views/screens/home/widgets/profile_pic.dart';
-import 'package:spnk/views/screens/home/widgets/social.media.icons.list.dart';
+import 'package:spnk/views/screens/home/widgets/orbit_animation3.dart';
 
 class HomeScreenSmall extends StatelessWidget {
   const HomeScreenSmall({super.key});
@@ -24,7 +23,8 @@ class HomeScreenSmall extends StatelessWidget {
           children: [
             const Spacer(),
             // SizedBox(height: context.screenHeight * 0.2),
-            const ProfilePic(width: 315),
+            // const ProfilePic(width: 315),
+            OrbitAnimation3(),
             Text(
               "Hi,\nI 'm Sivaprasad NK .",
               style: Theme.of(context).textTheme.displayMedium,
@@ -50,18 +50,18 @@ class HomeScreenSmall extends StatelessWidget {
                 DownloadCvBtn(),
               ],
             ),
-            const SizedBox(height: 15),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "Follow me ",
-                  style: context.displaySmall,
-                ),
-                const SizedBox(width: 10),
-                const SocialMediaIconsList(),
-              ],
-            ),
+            // const SizedBox(height: 15),
+            // Row(
+            //   mainAxisSize: MainAxisSize.min,
+            //   children: [
+            //     Text(
+            //       "Follow me ",
+            //       style: context.displaySmall,
+            //     ),
+            //     const SizedBox(width: 10),
+            //     const SocialMediaIconsList(),
+            //   ],
+            // ),
           
             const SizedBox(height: 50),
           ],

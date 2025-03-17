@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/screens/home/widgets/download_cv_btn.dart';
 import 'package:spnk/views/screens/home/widgets/intro_text.dart';
-import 'package:spnk/views/screens/home/widgets/profile_pic.dart';
-import 'package:spnk/views/screens/home/widgets/social.media.icons.list.dart';
+import 'package:spnk/views/screens/home/widgets/orbit_animation3.dart';
 
 class HomeScreenLarge extends StatefulWidget {
   @override
@@ -45,24 +44,25 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
               const SizedBox(height: 30),
               const DownloadCvBtn(),
               const SizedBox(height: 15),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Follow me ",
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-                  const SizedBox(width: 10),
-                  const SocialMediaIconsList(),
-                ],
-              ),
+              // Row(
+              //   mainAxisSize: MainAxisSize.min,
+              //   children: [
+              //     Text(
+              //       "Follow me ",
+              //       style: Theme.of(context).textTheme.displaySmall,
+              //     ),
+              //     const SizedBox(width: 10),
+              //     const SocialMediaIconsList(),
+              //   ],
+              // ),
             ],
           ),
         ),
         if (context.isLargeDevice)
-          ProfilePic(
-            width: screenWidth * 0.28,
-          ),
+        OrbitAnimation3()
+        // ProfilePic(
+        //   width: screenWidth * 0.28,
+        // ),
       ],
     );
   }
