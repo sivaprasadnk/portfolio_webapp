@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:spnk/views/screens/home/widgets/animated_name_text.dart';
 import 'package:spnk/views/screens/home/widgets/download_cv_btn.dart';
 
 class IntroSection extends StatefulWidget {
@@ -110,16 +109,16 @@ class _IntroSectionState extends State<IntroSection>
           position: _slideAnimation,
           child: FadeTransition(
             opacity: _fadeAnimation,
-            child: AnimatedNameText(
-              staticText: "Hi,",
-              targetText: "I'm Sivaprasad NK.",
-              duration: Duration(seconds: 3),
-              jumbleSpeed: Duration(milliseconds: 30),
-            ),
-            // child: Text(
-            //   "Hi,\nI'm Sivaprasad NK.",
-            //   style: Theme.of(context).textTheme.displayMedium,
+            // child: AnimatedNameText(
+            //   staticText: "Hi,",
+            //   targetText: "I'm Sivaprasad NK.",
+            //   duration: Duration(seconds: 3),
+            //   jumbleSpeed: Duration(milliseconds: 30),
             // ),
+            child: Text(
+              "Hi,\nI'm Sivaprasad NK.",
+              style: Theme.of(context).textTheme.displayMedium,
+            ),
           ),
         ),
         // AnimatedNameText(),
@@ -132,18 +131,18 @@ class _IntroSectionState extends State<IntroSection>
             opacity: _subTextFade,
             child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
-                child: AnimatedNameText(
-                  staticText: "",
-                  targetText:
-                      "Flutter Developer and Fitness Enthusiast from Tripunithura, Kerala.",
-                  duration: Duration(seconds: 3),
-                  jumbleSpeed: Duration(milliseconds: 30),
-                  targetTextStyle: Theme.of(context).textTheme.displaySmall,
-                )
-                // child: Text(
-                //   'Flutter Developer and Fitness Enthusiast from Tripunithura, Kerala.',
-                //   style: Theme.of(context).textTheme.displaySmall,
-                // ),
+              // child: AnimatedNameText(
+              //   staticText: "",
+              //   targetText:
+              //       "Flutter Developer and Fitness Enthusiast from Tripunithura, Kerala.",
+              //   duration: Duration(seconds: 3),
+              //   jumbleSpeed: Duration(milliseconds: 30),
+              //   targetTextStyle: Theme.of(context).textTheme.displaySmall,
+              // )
+              child: Text(
+                'Flutter Developer and Fitness Enthusiast from Tripunithura, Kerala.',
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
                 ),
           ),
         ),

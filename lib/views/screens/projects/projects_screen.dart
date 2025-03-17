@@ -10,6 +10,7 @@ class ProjectsScreen extends StatelessWidget {
       title: Screen.projects.screenTitle,
       details: const ProjectListView(),
       imageName: 'dash3',
+      keepAlive: false,
     );
   }
 }

@@ -10,10 +10,12 @@ class ScreenSection extends StatefulWidget {
     required this.title,
     required this.details,
     required this.imageName,
+    this.keepAlive = true,
   });
   final String title;
   final Widget details;
   final String imageName;
+  final bool keepAlive;
 
   @override
   State<ScreenSection> createState() => _ScreenSectionState();
@@ -22,7 +24,7 @@ class ScreenSection extends StatefulWidget {
 class _ScreenSectionState extends State<ScreenSection>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => widget.keepAlive;
 
   @override
   Widget build(BuildContext context) {

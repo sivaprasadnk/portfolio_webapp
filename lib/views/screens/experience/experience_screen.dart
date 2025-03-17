@@ -10,6 +10,7 @@ class ExperienceScreen extends StatelessWidget {
       title: Screen.experience.screenTitle,
       details: const ExpDetailsListView(),
       imageName: 'dash2',
+      keepAlive: false,
     );
   }
 }

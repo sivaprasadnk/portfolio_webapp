@@ -10,6 +10,7 @@ class ContactMeScreen extends StatelessWidget {
       title: Screen.contactMe.screenTitle,
       details: const ContactDetailsListView(),
       imageName: 'dash4',
+      keepAlive: false,
     );
   }
 }

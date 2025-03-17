@@ -10,6 +10,7 @@ class SkillsScreen extends StatelessWidget {
       title: Screen.skills.screenTitle,
       details: const SkillDetailsListView(),
       imageName: 'dash4',
+      keepAlive: false,
     );
   }
 }

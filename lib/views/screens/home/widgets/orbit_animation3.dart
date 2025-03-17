@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -58,7 +59,6 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
   void initState() {
     super.initState();
 
-    // Fade in animation for the center image
     imageFadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -73,10 +73,9 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 500)).then((_) {
         if (mounted) {
-          imageFadeController.forward(); // Start fading in the image
+          imageFadeController.forward();
         }
 
-        // Initialize orbit animation
         orbitController = AnimationController(
           vsync: this,
           duration: const Duration(seconds: 5),
@@ -85,7 +84,6 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
         orbitAnimation =
             Tween<double>(begin: 0, end: 2 * pi).animate(orbitController);
 
-        // Create individual controllers for each icon
         for (int i = 0; i < planetIcons.length; i++) {
           final controller = AnimationController(
             vsync: this,
@@ -101,7 +99,6 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
           scaleAnimations.add(scaleAnimation);
           opacityAnimations.add(opacityAnimation);
 
-          // Start each animation with a slight delay
           Future.delayed(Duration(milliseconds: i * 150), () {
             if (mounted) {
               controller.forward();
@@ -109,7 +106,6 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
           });
         }
 
-        // Mark initialization as complete
         if (mounted) {
           setState(() {
             _isInitialized = true;
@@ -120,7 +116,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
   }
 
   Future<void> _handleIconTap(int index) async {
-    orbitController.stop(); // Pause animation on tap
+    orbitController.stop();
     try {
       if (await canLaunchUrl(Uri.parse(urls[index]))) {
         await launchUrl(Uri.parse(urls[index]));
@@ -131,7 +127,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
       debugPrint("## Error: $e");
     }
     await Future.delayed(Duration(milliseconds: 500));
-    orbitController.repeat(); // Resume animation after launching
+    orbitController.repeat();
   }
 
   @override
@@ -155,7 +151,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
                 ),
               ),
             ),
-            if (_isInitialized) // Render orbit animation only after initialization
+            if (_isInitialized)
               AnimatedBuilder(
                 animation: orbitAnimation,
                 builder: (context, child) {
@@ -166,54 +162,70 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
                       double x = radius * cos(angle);
                       double y = radius * sin(angle);
 
+                      // Dynamically adjust icon size based on y-position
+                      double size =
+                          lerpDouble(30, 50, (y + radius) / (2 * radius))!;
+
+                      // Add depth effect by adjusting shadow and opacity based on y-position
+                      double shadowBlur =
+                          lerpDouble(4, 12, (y + radius) / (2 * radius))!;
+                      double shadowOffset =
+                          lerpDouble(2, 8, (y + radius) / (2 * radius))!;
+                      double iconOpacity =
+                          lerpDouble(0.5, 1.0, (y + radius) / (2 * radius))!;
+
                       return Positioned(
-                        left: 200 + x - (40 + i * 5) / 2,
-                        top: 200 + y - (40 + i * 5) / 2,
-                        child: FadeTransition(
-                          opacity: opacityAnimations[i],
-                          child: ScaleTransition(
-                            scale: scaleAnimations[i],
-                            child: MouseRegion(
-                              onEnter: (_) => orbitController.stop(),
-                              onExit: (_) => orbitController.repeat(),
-                              child: GestureDetector(
-                                onTap: () => _handleIconTap(i),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    width: 40 + i * 5,
-                                    height: 40 + i * 5,
-                                    decoration: BoxDecoration(
-                                      gradient: i == 0
-                                          ? const LinearGradient(
-                                              colors: [
-                                                Color(0xFF405DE6), // Blue
-                                                Color(0xFF5851DB), // Purple
-                                                Color(
-                                                    0xFF833AB4), // Dark Purple
-                                                Color(0xFFE1306C), // Red-Pink
-                                                Color(0xFFFD1D1D), // Red
-                                                Color(0xFFFCAF45), // Yellow
-                                              ],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            )
-                                          : null,
-                                      color: i != 0 ? planetColors[i] : null,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 8,
-                                          offset: const Offset(2, 4),
+                        left: 200 + x - size / 2,
+                        top: 200 + y - size / 2,
+                        child: Opacity(
+                          opacity: iconOpacity,
+                          child: FadeTransition(
+                            opacity: opacityAnimations[i],
+                            child: ScaleTransition(
+                              scale: scaleAnimations[i],
+                              child: MouseRegion(
+                                onEnter: (_) => orbitController.stop(),
+                                onExit: (_) => orbitController.repeat(),
+                                child: GestureDetector(
+                                  onTap: () => _handleIconTap(i),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: Container(
+                                      width: size,
+                                      height: size,
+                                      decoration: BoxDecoration(
+                                        gradient: i == 0
+                                            ? const LinearGradient(
+                                                colors: [
+                                                  Color(0xFF405DE6), // Blue
+                                                  Color(0xFF5851DB), // Purple
+                                                  Color(
+                                                      0xFF833AB4), // Dark Purple
+                                                  Color(0xFFE1306C), // Red-Pink
+                                                  Color(0xFFFD1D1D), // Red
+                                                  Color(0xFFFCAF45), // Yellow
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              )
+                                            : null,
+                                        color: i != 0 ? planetColors[i] : null,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.3),
+                                            blurRadius: shadowBlur,
+                                            offset: Offset(0, shadowOffset),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          planetIcons[i],
+                                          color: Colors.white,
+                                          size: size * 0.5,
                                         ),
-                                      ],
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        planetIcons[i],
-                                        color: Colors.white,
-                                        size: 24,
                                       ),
                                     ),
                                   ),
@@ -241,7 +253,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
         controller.dispose();
       }
     }
-    imageFadeController.dispose(); // Clean up image fade controller
+    imageFadeController.dispose();
     super.dispose();
   }
 }
