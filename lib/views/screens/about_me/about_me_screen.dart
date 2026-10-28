@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
-import 'package:spnk/utils/is_mobile_platform.dart';
 import 'package:spnk/utils/screen_type.dart';
 import 'package:spnk/views/bloc/about_me/about_me_bloc.dart';
 import 'package:spnk/views/bloc/about_me/about_me_state.dart';
@@ -16,7 +15,8 @@ class AboutMeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final horizontalPad = isMobilePlatform ? 20.0 : context.screenWidth * 0.08;
+    final horizontalPad =
+        context.isMobileDevice ? 16.0 : context.screenWidth * 0.08;
 
     return ScreenSection(
       title: Screen.aboutMe.screenTitle,
@@ -63,7 +63,7 @@ class AboutMeScreen extends StatelessWidget {
                       width: double.infinity,
                       cyberHeader: '~/spnk/about_me.md',
                       padding: EdgeInsets.all(
-                        context.isLargeDevice ? 32 : 22,
+                        context.isLargeDevice ? 32 : 20,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +90,7 @@ class AboutMeScreen extends StatelessWidget {
                                     Text(
                                       'Crafting High-Performance Flutter Experiences',
                                       style: context.displaySmall.copyWith(
-                                        fontSize: 22,
+                                        fontSize: 21,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -106,19 +106,19 @@ class AboutMeScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
                           Text(
                             state.content.trim(),
                             style: context.bodyLarge.copyWith(
-                              height: 1.65,
-                              fontSize: context.isLargeDevice ? 20 : 18,
+                              height: 1.6,
+                              fontSize: context.isLargeDevice ? 20 : 17,
                               color: context.primaryColor.withOpacity(0.9),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Wrap(
                       spacing: 16,
                       runSpacing: 16,
@@ -127,7 +127,7 @@ class AboutMeScreen extends StatelessWidget {
                           width: context.isLargeDevice ? 265 : double.infinity,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
-                            vertical: 18,
+                            vertical: 16,
                           ),
                           cyberHeader: '~/metrics/${item.$2.toLowerCase()}',
                           child: Row(

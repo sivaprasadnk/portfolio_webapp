@@ -2,8 +2,12 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/string_constants.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OrbitAnimation3 extends StatefulWidget {
@@ -25,10 +29,9 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
   final List<Animation<double>> scaleAnimations = [];
   final List<Animation<double>> opacityAnimations = [];
 
-  final double radius = 150;
   bool _isInitialized = false;
 
-  final List<Color> planetColors = [
+  final List<Color> planetColors = const [
     Color.fromRGBO(88, 81, 219, 1), // Purple
     Colors.green, // WhatsApp
     Color.fromRGBO(10, 102, 194, 1), // LinkedIn Blue
@@ -37,7 +40,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
     Colors.teal, // Store
   ];
 
-  final List<IconData> planetIcons = [
+  final List<IconData> planetIcons = const [
     FontAwesomeIcons.instagram,
     FontAwesomeIcons.whatsapp,
     FontAwesomeIcons.linkedin,
@@ -71,14 +74,13 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
     ));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 500)).then((_) {
-        if (mounted) {
-          imageFadeController.forward();
-        }
+      Future.delayed(const Duration(milliseconds: 400)).then((_) {
+        if (!mounted) return;
+        imageFadeController.forward();
 
         orbitController = AnimationController(
           vsync: this,
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 7),
         )..repeat();
 
         orbitAnimation =
@@ -99,7 +101,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
           scaleAnimations.add(scaleAnimation);
           opacityAnimations.add(opacityAnimation);
 
-          Future.delayed(Duration(milliseconds: i * 150), () {
+          Future.delayed(Duration(milliseconds: i * 120), () {
             if (mounted) {
               controller.forward();
             }
@@ -120,113 +122,166 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
     try {
       if (await canLaunchUrl(Uri.parse(urls[index]))) {
         await launchUrl(Uri.parse(urls[index]));
-      } else {
-        debugPrint("## Could not launch URL");
       }
     } catch (e) {
       debugPrint("## Error: $e");
     }
-    await Future.delayed(Duration(milliseconds: 500));
-    orbitController.repeat();
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      orbitController.repeat();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: 400,
-        height: 400,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Center object with fade-in animation
-            FadeTransition(
-              opacity: imageFadeAnimation,
-              child: SizedBox(
-                width: 300,
-                height: 300,
-                child: Image.asset(
-                  'assets/images/picWithBlob.png',
-                  width: 315,
+    final double boxSize =
+        context.isMobileDevice ? min(context.screenWidth - 32, 330) : 400;
+    final double center = boxSize / 2;
+    final double radius = boxSize * 0.375;
+    final double imgSize = boxSize * 0.72;
+
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final accent = themeState.accentColor;
+
+        return Center(
+          child: SizedBox(
+            width: boxSize,
+            height: boxSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Subtle glowing orbital ring matching active style
+                Container(
+                  width: radius * 2,
+                  height: radius * 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: accent.withOpacity(0.22),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withOpacity(0.08),
+                        blurRadius: 32,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            if (_isInitialized)
-              AnimatedBuilder(
-                animation: orbitAnimation,
-                builder: (context, child) {
-                  return Stack(
-                    children: List.generate(planetIcons.length, (i) {
-                      double angle = orbitAnimation.value +
-                          (i * (2 * pi / planetIcons.length));
-                      double x = radius * cos(angle);
-                      double y = radius * sin(angle);
+                FadeTransition(
+                  opacity: imageFadeAnimation,
+                  child: SizedBox(
+                    width: imgSize,
+                    height: imgSize,
+                    child: Image.asset(
+                      'assets/images/picWithBlob.png',
+                      width: imgSize,
+                    ),
+                  ),
+                ),
+                if (_isInitialized)
+                  AnimatedBuilder(
+                    animation: orbitAnimation,
+                    builder: (context, child) {
+                      return Stack(
+                        children: List.generate(planetIcons.length, (i) {
+                          final double angle = orbitAnimation.value +
+                              (i * (2 * pi / planetIcons.length));
+                          final double x = radius * cos(angle);
+                          final double y = radius * sin(angle);
 
-                      // Dynamically adjust icon size based on y-position
-                      double size =
-                          lerpDouble(30, 50, (y + radius) / (2 * radius))!;
+                          final double minIcon =
+                              context.isMobileDevice ? 26 : 30;
+                          final double maxIcon =
+                              context.isMobileDevice ? 42 : 50;
+                          final double size = lerpDouble(
+                            minIcon,
+                            maxIcon,
+                            (y + radius) / (2 * radius),
+                          )!;
 
-                      // Add depth effect by adjusting shadow and opacity based on y-position
-                      double shadowBlur =
-                          lerpDouble(4, 12, (y + radius) / (2 * radius))!;
-                      double shadowOffset =
-                          lerpDouble(2, 8, (y + radius) / (2 * radius))!;
-                      double iconOpacity =
-                          lerpDouble(0.5, 1.0, (y + radius) / (2 * radius))!;
+                          final double shadowBlur = lerpDouble(
+                            4,
+                            12,
+                            (y + radius) / (2 * radius),
+                          )!;
+                          final double shadowOffset = lerpDouble(
+                            2,
+                            8,
+                            (y + radius) / (2 * radius),
+                          )!;
+                          final double iconOpacity = lerpDouble(
+                            0.55,
+                            1.0,
+                            (y + radius) / (2 * radius),
+                          )!;
 
-                      return Positioned(
-                        left: 200 + x - size / 2,
-                        top: 200 + y - size / 2,
-                        child: RepaintBoundary(
-                          key: ValueKey(i),
-                          child: Opacity(
-                            opacity: iconOpacity,
-                            child: FadeTransition(
-                              opacity: opacityAnimations[i],
-                              child: ScaleTransition(
-                                scale: scaleAnimations[i],
-                                child: MouseRegion(
-                                  onEnter: (_) => orbitController.stop(),
-                                  onExit: (_) => orbitController.repeat(),
-                                  child: GestureDetector(
-                                    onTap: () => _handleIconTap(i),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: Container(
-                                        width: size,
-                                        height: size,
-                                        decoration: BoxDecoration(
-                                          gradient: i == 0
-                                              ? const LinearGradient(
-                                                  colors: [
-                                                    Color(0xFF405DE6),
-                                                    Color(0xFF5851DB),
-                                                    Color(0xFF833AB4),
-                                                    Color(0xFFE1306C),
-                                                    Color(0xFFFD1D1D),
-                                                    Color(0xFFFCAF45),
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                )
-                                              : null,
-                                          color:
-                                              i != 0 ? planetColors[i] : null,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color:
-                                                  Colors.black.withOpacity(0.3),
-                                              blurRadius: shadowBlur,
-                                              offset: Offset(0, shadowOffset),
+                          return Positioned(
+                            left: center + x - size / 2,
+                            top: center + y - size / 2,
+                            child: RepaintBoundary(
+                              key: ValueKey(i),
+                              child: Opacity(
+                                opacity: iconOpacity,
+                                child: FadeTransition(
+                                  opacity: opacityAnimations[i],
+                                  child: ScaleTransition(
+                                    scale: scaleAnimations[i],
+                                    child: MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      onEnter: (_) => orbitController.stop(),
+                                      onExit: (_) => orbitController.repeat(),
+                                      child: GestureDetector(
+                                        onTap: () => _handleIconTap(i),
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: Container(
+                                            width: size,
+                                            height: size,
+                                            decoration: BoxDecoration(
+                                              gradient: i == 0
+                                                  ? const LinearGradient(
+                                                      colors: [
+                                                        Color(0xFF405DE6),
+                                                        Color(0xFF5851DB),
+                                                        Color(0xFF833AB4),
+                                                        Color(0xFFE1306C),
+                                                        Color(0xFFFD1D1D),
+                                                        Color(0xFFFCAF45),
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                    )
+                                                  : null,
+                                              color: i != 0
+                                                  ? planetColors[i]
+                                                  : null,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.white
+                                                    .withOpacity(0.25),
+                                                width: 1,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.35),
+                                                  blurRadius: shadowBlur,
+                                                  offset:
+                                                      Offset(0, shadowOffset),
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
-                                        child: Center(
-                                          child: Icon(
-                                            planetIcons[i],
-                                            color: Colors.white,
-                                            size: size * 0.5,
+                                            child: Center(
+                                              child: Icon(
+                                                planetIcons[i],
+                                                color: Colors.white,
+                                                size: size * 0.5,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -235,16 +290,16 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
                                 ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        }),
                       );
-                    }),
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

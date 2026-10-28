@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/extensions/widget_extensions.dart';
-import 'package:spnk/utils/is_mobile_platform.dart';
 import 'package:spnk/views/screens/section.title.dart';
 
 class ScreenSection extends StatefulWidget {
@@ -29,7 +28,8 @@ class _ScreenSectionState extends State<ScreenSection>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final horizontalPad = isMobilePlatform ? 20.0 : context.screenWidth * 0.08;
+    final horizontalPad =
+        context.isMobileDevice ? 16.0 : context.screenWidth * 0.08;
     return SizedBox(
       width: double.infinity,
       child: Column(

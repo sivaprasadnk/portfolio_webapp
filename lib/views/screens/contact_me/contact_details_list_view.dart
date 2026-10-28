@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
-import 'package:spnk/utils/is_mobile_platform.dart';
 import 'package:spnk/views/bloc/contact_details/contact_details_bloc.dart';
 import 'package:spnk/views/bloc/contact_details/contact_details_state.dart';
 import 'package:spnk/views/screens/contact_me/contact_container.dart';
@@ -12,7 +11,8 @@ class ContactDetailsListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final horizontalPad = isMobilePlatform ? 20.0 : context.screenWidth * 0.08;
+    final horizontalPad =
+        context.isMobileDevice ? 16.0 : context.screenWidth * 0.08;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPad),
