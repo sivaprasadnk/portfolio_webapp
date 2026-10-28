@@ -17,30 +17,12 @@ class MadeWithFlutterWidget extends StatelessWidget {
         Text(
           ' Made with ',
           style: TextStyle(
-            // fontWeight: FontWeight.bold,
             fontSize: size,
             color: color,
             fontFamily: 'Roboto',
           ),
         ),
-        // AvatarGlow(
-        //   glowColor: color,
-        //   endRadius: 10.0,
-        //   showTwoGlows: false,
-        //   child: const Icon(
-        //     Icons.favorite,
-        //     color: Colors.red,
-        //   ),
-        // ),
-        // CircleAvatar(
-        //   radius: ,
-        //   child: Icon(
-        //     Icons.favorite,
-        //     color: Colors.red,
-        //     size: 16,
-        //   ),
-        // ),
-        Icon(
+        const Icon(
           Icons.favorite,
           color: Colors.red,
           size: 16,
@@ -48,21 +30,14 @@ class MadeWithFlutterWidget extends StatelessWidget {
         Text(
           '  in ',
           style: TextStyle(
-            // fontWeight: FontWeight.bold,
             fontSize: size,
             color: color,
-
             fontFamily: 'Roboto',
           ),
         ),
-        // Icon(Icons.logo)
-        // FlutterLogo(
-        //   size: size,
-        // ),
         Text(
           ' Flutter  ',
           style: TextStyle(
-            // fontWeight: FontWeight.bold,
             fontSize: size,
             color: color,
             fontFamily: 'Roboto',

@@ -21,38 +21,68 @@ class _AnimatedFooterState extends State<AnimatedFooter>
   void initState() {
     super.initState();
 
-    widgets = [
+    widgets = const [
       CopyrightText(size: 15),
       MadeWithFlutterWidget(size: 15),
     ];
 
     animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2800),
     );
 
-    fadeAnimation = Tween<double>(begin: 1, end: 0).animate(
-      CurvedAnimation(parent: animationController, curve: Curves.easeInOut),
-    );
+    // Smoothly fade in -> hold visible -> smoothly fade out
+    fadeAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 22,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween<double>(1.0),
+        weight: 56,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeInCubic)),
+        weight: 22,
+      ),
+    ]).animate(animationController);
 
-    slideAnimation = Tween<Offset>(
-      begin: Offset(0, 0),
-      end: Offset(0, -0.7), // Adjusted to prevent large movement
-    ).animate(
-      CurvedAnimation(parent: animationController, curve: Curves.easeIn),
-    );
+    // Smoothly slide up from below -> rest at center -> slide up & out
+    slideAnimation = TweenSequence<Offset>([
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: const Offset(0, 0.55),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 22,
+      ),
+      TweenSequenceItem(
+        tween: ConstantTween<Offset>(Offset.zero),
+        weight: 56,
+      ),
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: Offset.zero,
+          end: const Offset(0, -0.55),
+        ).chain(CurveTween(curve: Curves.easeInCubic)),
+        weight: 22,
+      ),
+    ]).animate(animationController);
 
     animationController.forward();
 
     animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        Future.delayed(Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (!mounted) return;
           setState(() {
             currentIndex = (currentIndex + 1) % widgets.length;
           });
-
-          animationController.reset();
-          animationController.forward();
+          animationController
+            ..reset()
+            ..forward();
         });
       }
     });
