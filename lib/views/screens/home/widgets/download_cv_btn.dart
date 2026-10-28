@@ -1,117 +1,140 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
-import 'package:spnk/utils/extensions/widget_extensions.dart';
 import 'package:spnk/utils/string_constants.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DownloadCvBtn extends StatefulWidget {
-  const DownloadCvBtn({super.key});
+  const DownloadCvBtn({super.key, this.onExploreProjects});
+
+  final VoidCallback? onExploreProjects;
 
   @override
   State<DownloadCvBtn> createState() => _DownloadCvBtnState();
 }
 
-class _DownloadCvBtnState extends State<DownloadCvBtn>
-    with TickerProviderStateMixin {
-  late AnimationController _iconController;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _iconController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0, 0.5), // Slide down
-    ).animate(
-      CurvedAnimation(
-        parent: _iconController,
-        curve: Curves.easeIn,
-      ),
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _iconController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    // Reset and repeat when animation completes
-    _iconController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _iconController.reset();
-        _iconController.forward();
-      }
-    });
-  }
-
-  void _onHover(bool isHovered) {
-    if (isHovered) {
-      _iconController.repeat(); // Start repeating when hovered
-    } else {
-      _iconController.stop(); // Stop when hover ends
-      _iconController.reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _iconController.dispose();
-    super.dispose();
-  }
+class _DownloadCvBtnState extends State<DownloadCvBtn> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => _onHover(true),
-      onExit: (_) => _onHover(false),
-      child: InkWell(
-        onTap: () async {
-          try {
-            await launchUrl(
-              Uri.parse(resumeLink),
-            );
-          } catch (e) {
-            debugPrint("## Error launching URL: $e");
-          }
-        },
-        child: AnimatedContainer(
-          duration: const Duration(seconds: 1),
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 45),
-          child: Row(
-            children: [
-              Text(
-                "Download CV",
-                style: context.displaySmall.copyWith(
-                  color: context.scaffoldColor,
-                ),
-              ),
-              const SizedBox(width: 15),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Icon(
-                    Icons.arrow_downward,
-                    color: context.scaffoldColor,
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        final accent = state.accentColor;
+        final secondary = state.secondaryAccent;
+        final isCyber = state.portfolioStyle == PortfolioStyle.cyber;
+
+        return Wrap(
+          spacing: 14,
+          runSpacing: 12,
+          children: [
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) => setState(() => _hovered = true),
+              onExit: (_) => setState(() => _hovered = false),
+              child: GestureDetector(
+                onTap: () async {
+                  try {
+                    await launchUrl(Uri.parse(resumeLink));
+                  } catch (e) {
+                    debugPrint("## Error launching URL: $e");
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  transform:
+                      Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
+                  decoration: BoxDecoration(
+                    gradient: state.portfolioStyle == PortfolioStyle.glass
+                        ? LinearGradient(colors: [accent, secondary])
+                        : null,
+                    color: state.portfolioStyle != PortfolioStyle.glass
+                        ? accent
+                        : null,
+                    borderRadius: BorderRadius.circular(isCyber ? 6 : 999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withOpacity(_hovered ? 0.45 : 0.25),
+                        blurRadius: _hovered ? 22 : 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isCyber ? "> DOWNLOAD_CV" : "Download CV",
+                        style: context.displaySmall.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: state.portfolioStyle == PortfolioStyle.glass
+                              ? Colors.white
+                              : (state.isDark
+                                  ? const Color(0xFF090D16)
+                                  : Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.download_rounded,
+                        size: 20,
+                        color: state.portfolioStyle == PortfolioStyle.glass
+                            ? Colors.white
+                            : (state.isDark
+                                ? const Color(0xFF090D16)
+                                : Colors.white),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-        ).showCursorOnHover.addShadowOnHover,
-      ),
+            ),
+            if (widget.onExploreProjects != null)
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: widget.onExploreProjects,
+                  child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: state.cardSurfaceColor,
+                      borderRadius: BorderRadius.circular(isCyber ? 6 : 999),
+                      border: Border.all(
+                        color: state.cardBorderColor,
+                        width: 1.3,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isCyber ? "[ VIEW_PROJECTS ]" : "Explore Projects",
+                          style: context.displaySmall.copyWith(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: context.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_downward_rounded,
+                          size: 18,
+                          color: accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

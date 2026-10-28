@@ -1,103 +1,149 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/domain/entity/experience_details.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class ExpContainer extends StatelessWidget {
   const ExpContainer({super.key, required this.experience});
   final ExperienceDetails experience;
+
   @override
   Widget build(BuildContext context) {
-    final bulletPoint = CircleAvatar(
-      radius: 5,
-      backgroundColor: context.primaryColor,
-    );
-    return AnimatedContainer(
-      margin: EdgeInsets.only(
-        bottom: 20,
-        right: context.isLargeDevice ? 20 : 0,
-      ),
-      duration: const Duration(milliseconds: 200),
-      width: context.isLargeDevice ? 340 : double.infinity,
-      height: 260,
-      decoration: BoxDecoration(
-        // color: context.scaffoldColor,
-        border: Border.all(
-          color: context.primaryColor,
-        ),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 5, left: 5),
-            child: Text(
-              experience.title,
-              style: context.displaySmall,
-            ),
-          ),
-          Divider(
-            color: context.primaryColor,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 3,
-              horizontal: 5,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // const SizedBox(width: 10),
-                Text(
-                  experience.orgName,
-                  style: context.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 15),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  "${experience.startDate} - ${experience.endDate}",
-                  style: context.bodyMedium.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 5),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: experience.detailsList.map((desc) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      bulletPoint,
-                      const SizedBox(width: 10),
-                      Text(
-                        desc,
-                        style: context.bodyMedium,
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final accent = themeState.accentColor;
+        final secondary = themeState.secondaryAccent;
+
+        return PortfolioStyledCard(
+          width: context.isLargeDevice ? 370 : double.infinity,
+          cyberHeader: '~/career/${experience.orgName.split(' ').first.toLowerCase()}.log',
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withOpacity(themeState.isDark ? 0.16 : 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: accent.withOpacity(0.4),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 13,
+                          color: accent,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "${experience.startDate} — ${experience.endDate}",
+                          style: context.bodySmall.copyWith(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: accent,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              }).toList(),
-            ),
+                  Icon(
+                    Icons.work_outline_rounded,
+                    color: secondary.withOpacity(0.75),
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                experience.title,
+                style: context.displaySmall.copyWith(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.business_rounded,
+                    size: 16,
+                    color: context.primaryColor.withOpacity(0.65),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      experience.orgName,
+                      style: context.bodyMedium.copyWith(
+                        fontSize: 16,
+                        color: context.primaryColor.withOpacity(0.75),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(
+                color: themeState.cardBorderColor,
+                height: 1,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: experience.detailsList.map((desc) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.primaryColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: context.primaryColor.withOpacity(0.10),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          desc,
+                          style: context.bodySmall.copyWith(
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-          // const Spacer(),
-          // const SizedBox(height: 5),
-        ],
-      ),
+        );
+      },
     );
   }
 }

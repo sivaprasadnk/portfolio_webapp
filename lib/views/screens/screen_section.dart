@@ -29,24 +29,18 @@ class _ScreenSectionState extends State<ScreenSection>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // double leftPadding = context.isLargeDevice ? 150 : 20;
-    // final double leftPadding = context.screenWidth * 0.1;
-    // final double padding = !isMobilePlatform ? context.screenWidth * 0.09 : 20;
-    return Container(
-      width: isMobilePlatform ? double.infinity : double.infinity,
-      // padding: EdgeInsets.only(left: padding, right: 0),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            WindowsLargeSectionTitle(
-              title: widget.title,
-            ).addLeftPadding(
-                isMobilePlatform ? 20 : context.screenWidth * 0.09),
-            widget.details,
-          ],
-        ),
+    final horizontalPad = isMobilePlatform ? 20.0 : context.screenWidth * 0.08;
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          WindowsLargeSectionTitle(
+            title: widget.title,
+          ).addLeftPadding(horizontalPad),
+          widget.details,
+        ],
       ),
     );
   }

@@ -1,140 +1,131 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:auto_animated/auto_animated.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:spnk/utils/common_colors.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/extensions/widget_extensions.dart';
 import 'package:spnk/utils/screen_type.dart';
 import 'package:spnk/views/bloc/screen_details/screen_bloc.dart';
 import 'package:spnk/views/bloc/screen_details/screen_event.dart';
-import 'package:spnk/views/screens/animation_item_builder.dart';
+import 'package:spnk/views/bloc/screen_details/screen_state.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class HomeScreenDrawer extends StatelessWidget {
-  const HomeScreenDrawer({super.key});
+  const HomeScreenDrawer({super.key, this.onSelectScreen});
+
+  final ValueChanged<Screen>? onSelectScreen;
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: Column(
-        children: [
-          const SizedBox(height: 30),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Icon(
-                  Icons.close,
-                  color: context.primaryColor,
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final accent = themeState.accentColor;
+
+        return Drawer(
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'SP',
+                        style: Theme.of(context).textTheme.displayLarge,
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: context.primaryColor.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: context.primaryColor,
+                          ),
+                        ),
+                      ).showCursorOnHover,
+                    ],
+                  ),
                 ),
-              ).showCursorOnHover,
-              const SizedBox(width: 16),
-            ],
-          ),
-          // const SizedBox(height: 0),`
-          FadeInRightBig(
-            child: Image.asset(
-              'assets/images/exp_icon.png',
-              height: 215,
+                const SizedBox(height: 16),
+                const StyleSwitcherBar(compact: true),
+                const SizedBox(height: 16),
+                FadeInRightBig(
+                  duration: const Duration(milliseconds: 400),
+                  child: Image.asset(
+                    'assets/images/exp_icon.png',
+                    height: 150,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: BlocBuilder<ScreenBloc, ScreenState>(
+                    builder: (context, screenState) {
+                      return ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        itemCount: Screen.values.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final screen = Screen.values[index];
+                          final isSelected =
+                              screenState.selectedScreen == screen;
+
+                          return ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? accent.withOpacity(0.6)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            tileColor: isSelected
+                                ? accent.withOpacity(0.14)
+                                : Colors.transparent,
+                            leading: Icon(
+                              screen.icon,
+                              color:
+                                  isSelected ? accent : context.primaryColor,
+                            ),
+                            title: Text(
+                              screen.menuName,
+                              style: context.displaySmall.copyWith(
+                                fontSize: 18,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
+                                color: isSelected
+                                    ? accent
+                                    : context.primaryColor,
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              context
+                                  .read<ScreenBloc>()
+                                  .add(UpdateScreen(screen: screen));
+                              onSelectScreen?.call(screen);
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-          // const SizedBox(height: 15),
-          SizedBox(
-            width: 320,
-            child: LiveList(
-              shrinkWrap: true,
-              separatorBuilder: (ctx, _) => const SizedBox(height: 10),
-              padding: const EdgeInsets.all(15),
-              showItemInterval: const Duration(milliseconds: 200),
-              itemCount: Screen.values.length,
-              itemBuilder: animationItemBuilder((index) {
-                final screen = Screen.values[index];
-                return ListItem(
-                  title: screen.menuName,
-                  callback: () {
-                    Navigator.pop(context);
-                    context
-                        .read<ScreenBloc>()
-                        .add(UpdateScreen(screen: screen));
-                  },
-                  icon: screen.icon,
-                );
-
-              }),
-            ),
-          ),
-          const Spacer(),
-          // const CopyrightText(size: 15),
-          // const Spacer(),
-          const SizedBox(height: 25),
-        ],
-      ),
-    );
-  }
-}
-
-class ListItem extends StatefulWidget {
-  final String title;
-  final VoidCallback callback;
-  final IconData icon;
-  const ListItem({
-    required this.title,
-    required this.callback,
-    required this.icon,
-  });
-
-  @override
-  State<ListItem> createState() => _ListItemState();
-}
-
-class _ListItemState extends State<ListItem> {
-  bool isHovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Theme(
-      data: ThemeData(
-        splashColor: kTransparentColor,
-        highlightColor: kTransparentColor,
-      ),
-      child: MouseRegion(
-        opaque: false,
-        onEnter: (_) {
-          setState(() {
-            isHovering = true;
-          });
-        },
-        onExit: (val) {
-          setState(() {
-            isHovering = false;
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: ListTile(
-            dense: true,
-            hoverColor: kTransparentColor,
-            onTap: () {
-              widget.callback.call();
-              setState(() {});
-            },
-            leading: Icon(
-              widget.icon,
-              color: !isHovering ? context.primaryColor : context.hoverColor,
-            ),
-            title: Text(
-              widget.title,
-              style: context.displaySmall.copyWith(
-                color: !isHovering ? context.primaryColor : context.hoverColor,
-              ),
-            ),
-          ).showCursorOnHover,
-        ),
-      ),
+        );
+      },
     );
   }
 }

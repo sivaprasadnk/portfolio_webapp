@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 
 abstract class ThemeEvent {
   ThemeEvent();
@@ -43,6 +44,10 @@ class UpdateBgColor extends ThemeEvent {
 }
 
 class ToggleSpotLight extends ThemeEvent {
-  // final b;
   ToggleSpotLight();
+}
+
+class ChangePortfolioStyle extends ThemeEvent {
+  final PortfolioStyle style;
+  ChangePortfolioStyle({required this.style});
 }
