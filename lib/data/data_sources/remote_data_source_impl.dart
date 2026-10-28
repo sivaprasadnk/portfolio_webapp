@@ -28,7 +28,7 @@ class RemoteDataSourceImpl extends RemoteDataSource {
         return Right(Error());
       }
     } catch (err) {
-      throw Exception('Failed to load About Me details');
+      return Right(Error());
     }
     // return aboutMeDetailsContent;
   }
@@ -50,7 +50,7 @@ class RemoteDataSourceImpl extends RemoteDataSource {
         return Right(Error());
       }
     } catch (err) {
-      throw Exception('Failed to load contact details');
+      return Right(Error());
     }
   }
 
@@ -72,7 +72,7 @@ class RemoteDataSourceImpl extends RemoteDataSource {
         return Right(Error());
       }
     } catch (err) {
-      throw Exception('Failed to load exp details');
+      return Right(Error());
     }
   }
 
@@ -95,10 +95,10 @@ class RemoteDataSourceImpl extends RemoteDataSource {
         return Right(Error());
       }
     } catch (err) {
-      throw Exception('Failed to load project details');
+      return Right(Error());
     }
   }
-  
+
   @override
   Future<Either<List<SkillDetailsModel>, Error>> getSkillDetails() async {
     try {
@@ -116,7 +116,7 @@ class RemoteDataSourceImpl extends RemoteDataSource {
         return Right(Error());
       }
     } catch (err) {
-      throw Exception('Failed to load skill details');
+      return Right(Error());
     }
   }
 }

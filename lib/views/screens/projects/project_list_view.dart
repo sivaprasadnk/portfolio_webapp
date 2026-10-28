@@ -20,6 +20,7 @@ class _ProjectListViewState extends State<ProjectListView>
   late List<AnimationController> _controllers = [];
   late List<Animation<double>> _fadeAnimations = [];
   late List<Animation<double>> _scaleAnimations = [];
+  late List<Animation<Offset>> _slideAnimations = [];
 
   @override
   void initState() {
@@ -33,7 +34,7 @@ class _ProjectListViewState extends State<ProjectListView>
       );
     });
 
-    // Create fade + scale animations
+    // Create fade + scale + slide animations
     _fadeAnimations = _controllers.map((controller) {
       return CurvedAnimation(
         parent: controller,
@@ -47,6 +48,20 @@ class _ProjectListViewState extends State<ProjectListView>
         curve: Curves.easeOutBack,
       ));
     }).toList();
+
+    _slideAnimations = List.generate(_controllers.length, (index) {
+      bool isOdd = index.isOdd;
+
+      return Tween<Offset>(
+        begin: isMobilePlatform
+            ? (isOdd ? const Offset(-1, 0) : const Offset(1, 0))
+            : Offset.zero, // No slide on non-mobile devices
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _controllers[index],
+        curve: Curves.easeInOut,
+      ));
+    });
 
     // Start animations with a delay for each item
     Future.delayed(Duration.zero, () async {
@@ -80,37 +95,57 @@ class _ProjectListViewState extends State<ProjectListView>
                 ScrollConfiguration.of(context).copyWith(scrollbars: false),
             child: SingleChildScrollView(
               child: Scrollbar(
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: state.isLoading
-                      ? List.generate(3, (index) {
-                          return FadeTransition(
-                            opacity:
-                                _fadeAnimations[index % _fadeAnimations.length],
-                            child: const LoadingProjectContainer(),
-                          );
-                        })
-                      : List.generate(state.projectList.length, (index) {
-                          final project = state.projectList[index];
-                          return AnimatedBuilder(
-                            animation:
-                                _controllers[index % _controllers.length],
-                            builder: (context, child) {
-                              return ScaleTransition(
-                                scale: _scaleAnimations[
-                                    index % _scaleAnimations.length],
-                                child: FadeTransition(
-                                  opacity: _fadeAnimations[
-                                      index % _fadeAnimations.length],
-                                  child: ProjectContainer(
-                                    project: project,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.9, end: 1.0)
+                            .animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: state.isLoading
+                        ? List.generate(3, (index) {
+                            return FadeTransition(
+                              opacity: _fadeAnimations[
+                                  index % _fadeAnimations.length],
+                              child: const LoadingProjectContainer(),
+                            );
+                          })
+                        : List.generate(state.projectList.length, (index) {
+                            final project = state.projectList[index];
+                  
+                            return AnimatedBuilder(
+                              animation:
+                                  _controllers[index % _controllers.length],
+                              builder: (context, child) {
+                                return SlideTransition(
+                                  position: _slideAnimations[
+                                      index % _slideAnimations.length],
+                                  child: ScaleTransition(
+                                    scale: _scaleAnimations[
+                                        index % _scaleAnimations.length],
+                                    child: FadeTransition(
+                                      opacity: _fadeAnimations[
+                                          index % _fadeAnimations.length],
+                                      child: ProjectContainer(
+                                        project: project,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        }),
+                                );
+                              },
+                            );
+                          }),
+                  ),
                 ),
               ),
             ),

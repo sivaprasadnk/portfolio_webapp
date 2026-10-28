@@ -177,54 +177,57 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
                       return Positioned(
                         left: 200 + x - size / 2,
                         top: 200 + y - size / 2,
-                        child: Opacity(
-                          opacity: iconOpacity,
-                          child: FadeTransition(
-                            opacity: opacityAnimations[i],
-                            child: ScaleTransition(
-                              scale: scaleAnimations[i],
-                              child: MouseRegion(
-                                onEnter: (_) => orbitController.stop(),
-                                onExit: (_) => orbitController.repeat(),
-                                child: GestureDetector(
-                                  onTap: () => _handleIconTap(i),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: Container(
-                                      width: size,
-                                      height: size,
-                                      decoration: BoxDecoration(
-                                        gradient: i == 0
-                                            ? const LinearGradient(
-                                                colors: [
-                                                  Color(0xFF405DE6), // Blue
-                                                  Color(0xFF5851DB), // Purple
-                                                  Color(
-                                                      0xFF833AB4), // Dark Purple
-                                                  Color(0xFFE1306C), // Red-Pink
-                                                  Color(0xFFFD1D1D), // Red
-                                                  Color(0xFFFCAF45), // Yellow
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              )
-                                            : null,
-                                        color: i != 0 ? planetColors[i] : null,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.3),
-                                            blurRadius: shadowBlur,
-                                            offset: Offset(0, shadowOffset),
+                        child: RepaintBoundary(
+                          key: ValueKey(i),
+                          child: Opacity(
+                            opacity: iconOpacity,
+                            child: FadeTransition(
+                              opacity: opacityAnimations[i],
+                              child: ScaleTransition(
+                                scale: scaleAnimations[i],
+                                child: MouseRegion(
+                                  onEnter: (_) => orbitController.stop(),
+                                  onExit: (_) => orbitController.repeat(),
+                                  child: GestureDetector(
+                                    onTap: () => _handleIconTap(i),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        width: size,
+                                        height: size,
+                                        decoration: BoxDecoration(
+                                          gradient: i == 0
+                                              ? const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFF405DE6),
+                                                    Color(0xFF5851DB),
+                                                    Color(0xFF833AB4),
+                                                    Color(0xFFE1306C),
+                                                    Color(0xFFFD1D1D),
+                                                    Color(0xFFFCAF45),
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                )
+                                              : null,
+                                          color:
+                                              i != 0 ? planetColors[i] : null,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.3),
+                                              blurRadius: shadowBlur,
+                                              offset: Offset(0, shadowOffset),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            planetIcons[i],
+                                            color: Colors.white,
+                                            size: size * 0.5,
                                           ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Icon(
-                                          planetIcons[i],
-                                          color: Colors.white,
-                                          size: size * 0.5,
                                         ),
                                       ),
                                     ),

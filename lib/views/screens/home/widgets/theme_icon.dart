@@ -14,11 +14,35 @@ class ThemeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return Dialog(
+      onTap: () => _showAnimatedDialog(context),
+      child: CommonTooltip(
+        msg: 'Select color themes',
+        child: Icon(
+          Icons.color_lens,
+          color: context.primaryColor,
+        ).showCursorOnHover,
+      ),
+    );
+  }
+
+  void _showAnimatedDialog(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true, // Allows closing when tapping outside
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: CurvedAnimation(
+              parent: anim1,
+              curve: Curves.easeOutBack, // Smooth scale effect
+            ),
+            child: Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Container(
                 width: 200,
                 padding: const EdgeInsets.all(12),
@@ -46,11 +70,8 @@ class ThemeIcon extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
-                            // const SizedBox(width: 75),
                             GestureDetector(
-                              onTap: () {
-                                context.pop();
-                              },
+                              onTap: () => context.pop(),
                               child: Icon(
                                 Icons.close,
                                 color: context.primaryColor,
@@ -75,17 +96,22 @@ class ThemeIcon extends StatelessWidget {
                   },
                 ),
               ),
-            );
-          },
+            ),
+          ),
         );
       },
-      child: CommonTooltip(
-        msg: 'Select color themes',
-        child: Icon(
-          Icons.color_lens,
-          color: context.primaryColor,
-        ).showCursorOnHover,
-      ),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: CurvedAnimation(
+              parent: anim1,
+              curve: Curves.easeOutBack,
+            ),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }
