@@ -102,39 +102,44 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: accent
-                                    .withOpacity(state.isDark ? 0.16 : 0.10),
-                                borderRadius:
-                                    BorderRadius.circular(isCyber ? 6 : 999),
-                                border:
-                                    Border.all(color: accent.withOpacity(0.45)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.shield_rounded,
-                                    size: 15,
-                                    color: accent,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    isCyber
-                                        ? 'PLAYER_1 // CLASS: FLUTTER_ARCHITECT (LVL 37)'
-                                        : 'PLAYER 1 • CLASS: SENIOR FLUTTER DEVELOPER',
-                                    style: context.bodySmall.copyWith(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accent
+                                      .withOpacity(state.isDark ? 0.16 : 0.10),
+                                  borderRadius:
+                                      BorderRadius.circular(isCyber ? 6 : 999),
+                                  border: Border.all(
+                                      color: accent.withOpacity(0.45)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.shield_rounded,
+                                      size: 15,
                                       color: accent,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        isCyber
+                                            ? 'PLAYER_1 // CLASS: FLUTTER_ARCHITECT (LVL 37)'
+                                            : 'PLAYER 1 • CLASS: SENIOR FLUTTER DEVELOPER',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: context.bodySmall.copyWith(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: accent,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             const SizedBox(width: 14),

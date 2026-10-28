@@ -11,7 +11,8 @@ class LoadingSkillsContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: context.isLargeDevice ? 280 : double.infinity,
-      height: 205,
+      constraints: const BoxConstraints(minHeight: 205),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       margin: EdgeInsets.only(
         bottom: 20,
         right: context.isLargeDevice ? 20 : 0,
@@ -25,8 +26,8 @@ class LoadingSkillsContainer extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 75),
           LoadingShimmer.circle(size: 40, context: context),
           const SizedBox(height: 20),
           LoadingShimmer.rectangle(

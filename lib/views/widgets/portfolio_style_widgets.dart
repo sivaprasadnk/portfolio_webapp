@@ -346,9 +346,11 @@ class _PortfolioStyledCardState extends State<PortfolioStyledCard> {
                 ),
               ),
             ],
-            Padding(
-              padding: widget.padding,
-              child: widget.child,
+            Flexible(
+              child: Padding(
+                padding: widget.padding,
+                child: widget.child,
+              ),
             ),
           ],
         );

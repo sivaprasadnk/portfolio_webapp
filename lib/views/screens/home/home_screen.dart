@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = context.screenWidth > 1180;
+    final isDesktop = context.screenWidth > 1280;
 
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, state) {

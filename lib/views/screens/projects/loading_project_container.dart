@@ -16,11 +16,11 @@ class _LoadingProjectContainerState extends State<LoadingProjectContainer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // width: 340,
       width: context.isLargeDevice ? 340 : double.infinity,
       margin:
           EdgeInsets.only(bottom: 20, right: context.isLargeDevice ? 20 : 0),
-      height: 265,
+      constraints: const BoxConstraints(minHeight: 240),
+      padding: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.scaffoldColor,
         border: Border.all(

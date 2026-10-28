@@ -265,12 +265,16 @@ class GamificationHudPill extends StatelessWidget {
                         width: compact ? 48 : 70,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '${game.xp} XP',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: context.bodySmall.copyWith(
                                 fontSize: 11,
+                                height: 1.0,
                                 fontWeight: FontWeight.bold,
                                 color: accent,
                               ),
@@ -433,21 +437,27 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
 
               return Dialog(
                 backgroundColor: Colors.transparent,
-                insetPadding: const EdgeInsets.all(16),
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 540),
+                  constraints: BoxConstraints(
+                    maxWidth: 540,
+                    maxHeight: MediaQuery.of(context).size.height * 0.86,
+                  ),
                   child: PortfolioStyledCard(
                     cyberHeader: '~/spnk/quest_log.exe',
-                    padding: const EdgeInsets.all(24),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
+                    padding: EdgeInsets.all(context.isMobileDevice ? 18 : 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
                                 children: [
                                   const Icon(
                                     Icons.emoji_events_rounded,
@@ -455,175 +465,193 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                                     size: 28,
                                   ),
                                   const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'PLAYER QUEST LOG',
-                                        style: context.displaySmall.copyWith(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Rank: ${game.rankTitle} • Level ${game.level} (${game.xp} XP)',
-                                        style: context.bodySmall.copyWith(
-                                          fontSize: 14,
-                                          color: accent,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              IconButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                icon: Icon(
-                                  Icons.close_rounded,
-                                  color: context.primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: game.levelProgress,
-                              minHeight: 10,
-                              backgroundColor:
-                                  context.primaryColor.withOpacity(0.12),
-                              valueColor: AlwaysStoppedAnimation<Color>(accent),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${game.xpInCurrentLevel} / 100 XP to Level ${game.level + 1} • ${game.unlockedQuests.length}/${GamificationController.allQuests.length} Quests Completed',
-                            style: context.bodySmall.copyWith(
-                              fontSize: 13,
-                              color: context.primaryColor.withOpacity(0.65),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          ...GamificationController.allQuests.map((q) {
-                            final unlocked =
-                                game.unlockedQuests.contains(q.id);
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: unlocked
-                                    ? accent.withOpacity(0.12)
-                                    : context.primaryColor.withOpacity(0.04),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: unlocked
-                                      ? accent.withOpacity(0.5)
-                                      : context.primaryColor.withOpacity(0.1),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    unlocked
-                                        ? Icons.check_circle_rounded
-                                        : q.icon,
-                                    color: unlocked
-                                        ? const Color(0xFF10B981)
-                                        : context.primaryColor.withOpacity(0.45),
-                                    size: 22,
-                                  ),
-                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          q.title,
-                                          style: context.bodyMedium.copyWith(
-                                            fontSize: 16,
+                                          'PLAYER QUEST LOG',
+                                          style: context.displaySmall.copyWith(
+                                            fontSize: context.isMobileDevice
+                                                ? 19
+                                                : 22,
                                             fontWeight: FontWeight.bold,
-                                            color: unlocked
-                                                ? context.primaryColor
-                                                : context.primaryColor
-                                                    .withOpacity(0.65),
                                           ),
                                         ),
                                         Text(
-                                          q.description,
+                                          'Rank: ${game.rankTitle} • Level ${game.level} (${game.xp} XP)',
                                           style: context.bodySmall.copyWith(
                                             fontSize: 13,
-                                            color: context.primaryColor
-                                                .withOpacity(0.6),
+                                            color: accent,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: unlocked
-                                          ? const Color(0xFF10B981)
-                                              .withOpacity(0.18)
-                                          : secondary.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      unlocked
-                                          ? 'CLAIMED'
-                                          : '+${q.xpReward} XP',
-                                      style: context.bodySmall.copyWith(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: unlocked
-                                            ? const Color(0xFF10B981)
-                                            : secondary,
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               ),
-                            );
-                          }),
-                          if (onJumpToArcade != null) ...[
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: accent,
-                                  foregroundColor: themeState.isDark
-                                      ? const Color(0xFF090D16)
-                                      : Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  onJumpToArcade();
-                                },
-                                icon: const Icon(Icons.videogame_asset_rounded),
-                                label: const Text(
-                                  'PLAY DASH BUG-SQUASHER ARCADE',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: context.primaryColor,
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: game.levelProgress,
+                            minHeight: 9,
+                            backgroundColor:
+                                context.primaryColor.withOpacity(0.12),
+                            valueColor: AlwaysStoppedAnimation<Color>(accent),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${game.xpInCurrentLevel} / 100 XP to Level ${game.level + 1} • ${game.unlockedQuests.length}/${GamificationController.allQuests.length} Quests Completed',
+                          style: context.bodySmall.copyWith(
+                            fontSize: 13,
+                            color: context.primaryColor.withOpacity(0.65),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children:
+                                  GamificationController.allQuests.map((q) {
+                                final unlocked =
+                                    game.unlockedQuests.contains(q.id);
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: unlocked
+                                        ? accent.withOpacity(0.12)
+                                        : context.primaryColor
+                                            .withOpacity(0.04),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: unlocked
+                                          ? accent.withOpacity(0.5)
+                                          : context.primaryColor
+                                              .withOpacity(0.1),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        unlocked
+                                            ? Icons.check_circle_rounded
+                                            : q.icon,
+                                        color: unlocked
+                                            ? const Color(0xFF10B981)
+                                            : context.primaryColor
+                                                .withOpacity(0.45),
+                                        size: 22,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              q.title,
+                                              style:
+                                                  context.bodyMedium.copyWith(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: unlocked
+                                                    ? context.primaryColor
+                                                    : context.primaryColor
+                                                        .withOpacity(0.65),
+                                              ),
+                                            ),
+                                            Text(
+                                              q.description,
+                                              style: context.bodySmall.copyWith(
+                                                fontSize: 13,
+                                                color: context.primaryColor
+                                                    .withOpacity(0.6),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: unlocked
+                                              ? const Color(0xFF10B981)
+                                                  .withOpacity(0.18)
+                                              : secondary.withOpacity(0.15),
+                                          borderRadius:
+                                              BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          unlocked
+                                              ? 'CLAIMED'
+                                              : '+${q.xpReward} XP',
+                                          style: context.bodySmall.copyWith(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: unlocked
+                                                ? const Color(0xFF10B981)
+                                                : secondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        if (onJumpToArcade != null) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accent,
+                                foregroundColor: themeState.isDark
+                                    ? const Color(0xFF090D16)
+                                    : Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                onJumpToArcade();
+                              },
+                              icon: const Icon(Icons.videogame_asset_rounded),
+                              label: const Text(
+                                'PLAY DASH BUG-SQUASHER ARCADE',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -831,8 +859,15 @@ class _DashBugHuntGameSectionState extends State<DashBugHuntGameSection> {
                     ),
                     const SizedBox(height: 18),
                     Container(
-                      height: 230,
+                      height: _isPlaying ? 230 : null,
+                      constraints: const BoxConstraints(minHeight: 230),
                       width: double.infinity,
+                      padding: _isPlaying
+                          ? EdgeInsets.zero
+                          : const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 20,
+                            ),
                       decoration: BoxDecoration(
                         color: themeState.isDark
                             ? Colors.black.withOpacity(0.38)
@@ -854,7 +889,7 @@ class _DashBugHuntGameSectionState extends State<DashBugHuntGameSection> {
                                 children: [
                                   Image.asset(
                                     'assets/images/dash/dash1.png',
-                                    height: 68,
+                                    height: 64,
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
@@ -874,7 +909,7 @@ class _DashBugHuntGameSectionState extends State<DashBugHuntGameSection> {
                                       onTap: _startGame,
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
+                                          horizontal: 20,
                                           vertical: 11,
                                         ),
                                         decoration: BoxDecoration(
@@ -899,14 +934,18 @@ class _DashBugHuntGameSectionState extends State<DashBugHuntGameSection> {
                                               color: Colors.white,
                                             ),
                                             const SizedBox(width: 6),
-                                            Text(
-                                              _score > 0
-                                                  ? 'PLAY AGAIN (+XP)'
-                                                  : 'START ARCADE MISSION',
-                                              style: context.bodySmall.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
+                                            Flexible(
+                                              child: Text(
+                                                _score > 0
+                                                    ? 'PLAY AGAIN (+XP)'
+                                                    : 'START ARCADE MISSION',
+                                                overflow: TextOverflow.ellipsis,
+                                                style:
+                                                    context.bodySmall.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
+                                                ),
                                               ),
                                             ),
                                           ],

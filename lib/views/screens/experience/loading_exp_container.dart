@@ -15,8 +15,8 @@ class LoadingExpContainer extends StatelessWidget {
       margin:
           EdgeInsets.only(right: context.isLargeDevice ? 20 : 0, bottom: 20),
       width: context.isLargeDevice ? 340 : double.infinity,
-      height: 260,
-
+      constraints: const BoxConstraints(minHeight: 240),
+      padding: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.scaffoldColor,
         border: Border.all(
@@ -47,10 +47,12 @@ class LoadingExpContainer extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                LoadingShimmer.rectangle(
-                  height: height,
-                  width: 250,
-                  context: context,
+                Flexible(
+                  child: LoadingShimmer.rectangle(
+                    height: height,
+                    width: 250,
+                    context: context,
+                  ),
                 ),
               ],
             ),

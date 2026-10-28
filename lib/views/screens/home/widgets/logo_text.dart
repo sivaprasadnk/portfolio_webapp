@@ -13,7 +13,9 @@ class LogoText extends StatelessWidget {
       },
       child: Text(
         'SP',
-        style: Theme.of(context).textTheme.displayLarge,
+        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+              height: 1.0,
+            ),
       ),
     ).showCursorOnHover;
   }

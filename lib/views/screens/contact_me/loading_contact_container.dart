@@ -12,7 +12,8 @@ class LoadingContactContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: context.isLargeDevice ? 340 : double.infinity,
-      height: 265,
+      constraints: const BoxConstraints(minHeight: 220),
+      padding: const EdgeInsets.symmetric(vertical: 36),
       margin:
           EdgeInsets.only(bottom: 20, right: context.isLargeDevice ? 20 : 0),
       decoration: BoxDecoration(
@@ -25,8 +26,8 @@ class LoadingContactContainer extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 75),
           LoadingShimmer.circle(size: 40, context: context),
           const SizedBox(height: 20),
           LoadingShimmer.rectangle(
