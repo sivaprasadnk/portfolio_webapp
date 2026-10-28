@@ -8,6 +8,7 @@ import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/about_me/loading_abt_me_container.dart';
 import 'package:spnk/views/screens/screen_section.dart';
+import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class AboutMeScreen extends StatelessWidget {
@@ -38,21 +39,25 @@ class AboutMeScreen extends StatelessWidget {
                     Icons.bolt_rounded,
                     '3.7+ Years',
                     'Cross-Platform Flutter',
+                    'LVL 37',
                   ),
                   (
                     Icons.layers_rounded,
                     'Architecture',
                     'Clean Architecture & BLoC',
+                    'S-TIER',
                   ),
                   (
                     Icons.public_rounded,
                     'Open Source',
                     'Pub.dev & VS Code Themes',
+                    'GUILD',
                   ),
                   (
                     Icons.fitness_center_rounded,
                     'Lifestyle',
                     'Fitness & Felintrovert',
+                    '99 STA',
                   ),
                 ];
 
@@ -61,47 +66,82 @@ class AboutMeScreen extends StatelessWidget {
                   children: [
                     PortfolioStyledCard(
                       width: double.infinity,
-                      cyberHeader: '~/spnk/about_me.md',
+                      cyberHeader: '~/spnk/character_lore.md',
+                      onTap: () {
+                        GamificationController.instance
+                            .completeQuest('lore_reader');
+                      },
                       padding: EdgeInsets.all(
                         context.isLargeDevice ? 32 : 20,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 10,
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: accent.withOpacity(0.14),
-                                  borderRadius: BorderRadius.circular(12),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: accent.withOpacity(0.14),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  child: Icon(
+                                    Icons.auto_stories_rounded,
+                                    color: accent,
+                                    size: 24,
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.person_outline_rounded,
-                                  color: accent,
-                                  size: 24,
+                                const SizedBox(width: 14),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Character Lore & Origin Story',
+                                        style: context.displaySmall.copyWith(
+                                          fontSize: 21,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Spawn Point: Tripunithura, Ernakulam, Kerala, India',
+                                        style: context.bodySmall.copyWith(
+                                          color: context.primaryColor
+                                              .withOpacity(0.65),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              ],
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Crafting High-Performance Flutter Experiences',
-                                      style: context.displaySmall.copyWith(
-                                        fontSize: 21,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Based in Tripunithura, Ernakulam, Kerala, India',
-                                      style: context.bodySmall.copyWith(
-                                        color: context.primaryColor
-                                            .withOpacity(0.65),
-                                      ),
-                                    ),
-                                  ],
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: secondary.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: secondary.withOpacity(0.45),
+                                  ),
+                                ),
+                                child: Text(
+                                  'TAP CARDS FOR +XP',
+                                  style: context.bodySmall.copyWith(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: secondary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -129,7 +169,16 @@ class AboutMeScreen extends StatelessWidget {
                             horizontal: 20,
                             vertical: 16,
                           ),
-                          cyberHeader: '~/metrics/${item.$2.toLowerCase()}',
+                          cyberHeader: '~/attr/${item.$2.toLowerCase()}',
+                          onTap: () {
+                            GamificationController.instance
+                                .completeQuest('lore_reader');
+                            GamificationController.instance.addXp(
+                              15,
+                              reason: 'Unlocked ${item.$2} Perk (${item.$4})!',
+                              uniqueKey: 'attr_${item.$2}',
+                            );
+                          },
                           child: Row(
                             children: [
                               Container(
@@ -154,14 +203,39 @@ class AboutMeScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      item.$2,
-                                      style: context.displaySmall.copyWith(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          item.$2,
+                                          style: context.displaySmall.copyWith(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: accent.withOpacity(0.16),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            item.$4,
+                                            style: context.bodySmall.copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: accent,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 3),
                                     Text(
                                       item.$3,
                                       style: context.bodySmall.copyWith(

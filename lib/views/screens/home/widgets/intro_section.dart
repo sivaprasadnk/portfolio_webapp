@@ -4,12 +4,18 @@ import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/home/widgets/download_cv_btn.dart';
+import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class IntroSection extends StatelessWidget {
-  const IntroSection({super.key, this.onExploreProjects});
+  const IntroSection({
+    super.key,
+    this.onExploreProjects,
+    this.onPlayArcade,
+  });
 
   final VoidCallback? onExploreProjects;
+  final VoidCallback? onPlayArcade;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +28,7 @@ class IntroSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: PortfolioStyledCard(
             width: double.infinity,
-            cyberHeader: '~/spnk/hero_profile.sh',
+            cyberHeader: '~/spnk/player_1_select.sh',
             padding: const EdgeInsets.all(22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -37,27 +43,24 @@ class IntroSection extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: accent.withOpacity(state.isDark ? 0.14 : 0.10),
+                          color: accent.withOpacity(state.isDark ? 0.16 : 0.10),
                           borderRadius: BorderRadius.circular(isCyber ? 6 : 999),
-                          border: Border.all(color: accent.withOpacity(0.4)),
+                          border: Border.all(color: accent.withOpacity(0.45)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: accent,
-                                shape: BoxShape.circle,
-                              ),
+                            Icon(
+                              Icons.shield_rounded,
+                              size: 14,
+                              color: accent,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 isCyber
-                                    ? 'SYS.ONLINE // FLUTTER_DEV'
-                                    : 'Available for Flutter Projects',
+                                    ? 'PLAYER_1 // FLUTTER_MAGE (LVL 37)'
+                                    : 'PLAYER 1 • SENIOR FLUTTER DEV',
                                 overflow: TextOverflow.ellipsis,
                                 style: context.bodySmall.copyWith(
                                   fontSize: 12,
@@ -71,9 +74,18 @@ class IntroSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Image.asset(
-                      'assets/images/dash/dash1.png',
-                      height: 40,
+                    GestureDetector(
+                      onTap: () {
+                        GamificationController.instance.addXp(
+                          20,
+                          reason: 'High-fived Dash Mascot! 🐦',
+                          uniqueKey: 'dash_mascot_pet',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/images/dash/dash1.png',
+                        height: 42,
+                      ),
                     ),
                   ],
                 ),
@@ -87,15 +99,18 @@ class IntroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Flutter Developer and Fitness Enthusiast from Tripunithura, Kerala — building fast, clean, cross-platform mobile & web experiences.',
+                  'Flutter Developer & Fitness Enthusiast from Tripunithura, Kerala — explore quests below, power up skills, and squash bugs to level up!',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        fontSize: 18,
+                        fontSize: 17,
                         height: 1.45,
                         color: context.primaryColor.withOpacity(0.84),
                       ),
                 ),
                 const SizedBox(height: 22),
-                DownloadCvBtn(onExploreProjects: onExploreProjects),
+                DownloadCvBtn(
+                  onExploreProjects: onExploreProjects,
+                  onPlayArcade: onPlayArcade,
+                ),
               ],
             ),
           ),

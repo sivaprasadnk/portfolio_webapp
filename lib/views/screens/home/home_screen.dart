@@ -24,6 +24,7 @@ import 'package:spnk/views/screens/home/widgets/theme_switch.dart';
 import 'package:spnk/views/screens/home/widgets/torch_icon.dart';
 import 'package:spnk/views/screens/projects/projects_screen.dart';
 import 'package:spnk/views/screens/skills/skills_screen.dart';
+import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<Screen, GlobalKey> _sectionKeys = {
     for (final s in Screen.values) s: GlobalKey(),
   };
+  final GlobalKey _arcadeKey = GlobalKey();
 
   Offset _mousePosition = Offset.zero;
   Offset _pointerPosition = const Offset(0, 0);
@@ -58,6 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onScroll() {
+    if (_scrollController.offset > 220) {
+      GamificationController.instance.completeQuest('first_scroll');
+    }
     if (_isProgrammaticScroll || !mounted) return;
 
     Screen? activeScreen;
@@ -87,6 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _scrollToSection(Screen screen) async {
+    if (screen != Screen.home) {
+      GamificationController.instance.completeQuest('first_scroll');
+    }
     context.read<ScreenBloc>().add(UpdateScreen(screen: screen));
     final ctx = _sectionKeys[screen]?.currentContext;
     if (ctx != null) {
@@ -103,9 +111,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _scrollToArcade() async {
+    final ctx = _arcadeKey.currentContext;
+    if (ctx != null) {
+      _isProgrammaticScroll = true;
+      await Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.1,
+      );
+      if (mounted) {
+        _isProgrammaticScroll = false;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDesktop = context.screenWidth > 1080;
+    final isDesktop = context.screenWidth > 1180;
 
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, state) {
@@ -126,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               body: Stack(
                 children: [
-                  // Single-page smooth-scrolling content
+                  // Single-page smooth-scrolling gamified content
                   SingleChildScrollView(
                     controller: _scrollController,
                     padding: const EdgeInsets.only(top: 96, bottom: 32),
@@ -140,43 +164,52 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? HomeScreenSmall(
                                   onExploreProjects: () =>
                                       _scrollToSection(Screen.projects),
+                                  onPlayArcade: _scrollToArcade,
                                 )
                               : HomeScreenLarge(
                                   onExploreProjects: () =>
                                       _scrollToSection(Screen.projects),
+                                  onPlayArcade: _scrollToArcade,
                                 ),
+                        ),
+                        const SizedBox(height: 28),
+
+                        // INTERACTIVE MINI-GAME ARCADE SECTION
+                        Container(
+                          key: _arcadeKey,
+                          child: const DashBugHuntGameSection(),
                         ),
                         const SizedBox(height: 36),
 
-                        // 1. ABOUT ME SECTION
+                        // 1. ABOUT ME SECTION (CHARACTER LORE)
                         Container(
                           key: _sectionKeys[Screen.aboutMe],
                           child: const AboutMeScreen(),
                         ),
                         const SizedBox(height: 36),
 
-                        // 2. SKILLS SECTION
+                        // 2. SKILLS SECTION (SKILL TREE POWER-UPS)
                         Container(
                           key: _sectionKeys[Screen.skills],
                           child: SkillsScreen(),
                         ),
                         const SizedBox(height: 36),
 
-                        // 3. EXPERIENCE SECTION
+                        // 3. EXPERIENCE SECTION (CAMPAIGN STAGES)
                         Container(
                           key: _sectionKeys[Screen.experience],
                           child: ExperienceScreen(),
                         ),
                         const SizedBox(height: 36),
 
-                        // 4. PROJECTS SECTION
+                        // 4. PROJECTS SECTION (BOSS MISSIONS)
                         Container(
                           key: _sectionKeys[Screen.projects],
                           child: ProjectsScreen(),
                         ),
                         const SizedBox(height: 36),
 
-                        // 5. CONTACT ME SECTION
+                        // 5. CONTACT ME SECTION (GUILD COMMS)
                         Container(
                           key: _sectionKeys[Screen.contactMe],
                           child: ContactMeScreen(),
@@ -236,11 +269,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                  // Sticky Top Navbar
+                  // Floating Achievement & +XP Toast Overlay
+                  const AchievementToastBanner(),
+
+                  // Sticky Top Navbar + Player HUD
                   Positioned(
                     top: 12,
-                    left: isDesktop ? context.screenWidth * 0.04 : 12,
-                    right: isDesktop ? context.screenWidth * 0.04 : 12,
+                    left: isDesktop ? context.screenWidth * 0.03 : 10,
+                    right: isDesktop ? context.screenWidth * 0.03 : 10,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(
                         state.portfolioStyle == PortfolioStyle.cyber ? 8 : 999,
@@ -249,10 +285,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                         child: Container(
                           height: 68,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: context.isMobileDevice ? 12 : 20,
+                          ),
                           decoration: BoxDecoration(
                             color: state.cardSurfaceColor.withOpacity(
-                              state.isDark ? 0.78 : 0.88,
+                              state.isDark ? 0.82 : 0.90,
                             ),
                             borderRadius: BorderRadius.circular(
                               state.portfolioStyle == PortfolioStyle.cyber
@@ -269,9 +307,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               LogoText(
                                 onTap: () => _scrollToSection(Screen.home),
                               ),
-                              const SizedBox(width: 16),
-                              if (context.screenWidth > 620)
+                              const SizedBox(width: 10),
+                              GamificationHudPill(
+                                compact: !isDesktop,
+                                onOpenQuests: () => showQuestLogModal(
+                                  context,
+                                  onJumpToArcade: _scrollToArcade,
+                                ),
+                              ),
+                              if (context.screenWidth > 760) ...[
+                                const SizedBox(width: 10),
                                 const StyleSwitcherBar(compact: true),
+                              ],
                               const Spacer(),
                               if (isDesktop) ...[
                                 ...Screen.values.map(
@@ -281,17 +328,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onSelect: _scrollToSection,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 const TorchIcon(),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: 12),
                                 const BrightnessSwitch(),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: 12),
                                 const ThemeIcon(),
                               ] else ...[
                                 const BrightnessSwitch(),
-                                const SizedBox(width: 14),
+                                const SizedBox(width: 12),
                                 const ThemeIcon(),
-                                const SizedBox(width: 14),
+                                const SizedBox(width: 12),
                                 const MenuIcon(),
                               ],
                             ],

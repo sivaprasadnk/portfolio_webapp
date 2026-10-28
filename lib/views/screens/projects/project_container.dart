@@ -5,6 +5,7 @@ import 'package:spnk/domain/entity/project_details.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -17,6 +18,12 @@ class ProjectContainer extends StatelessWidget {
   final ProjectDetails project;
 
   Future<void> _launchProject() async {
+    GamificationController.instance.completeQuest('boss_raider');
+    GamificationController.instance.addXp(
+      20,
+      reason: 'Raided Mission: ${project.projName}!',
+      uniqueKey: 'proj_${project.projName}',
+    );
     final containsPlayStoreUrl = project.playStoreUrl.isNotEmpty;
     final containsWebUrl = project.webUrl.isNotEmpty;
     if (containsPlayStoreUrl && containsWebUrl) {
@@ -43,7 +50,7 @@ class ProjectContainer extends StatelessWidget {
         return PortfolioStyledCard(
           width: context.isLargeDevice ? 370 : double.infinity,
           cyberHeader:
-              '~/projects/${project.projName.toLowerCase().replaceAll(' ', '_')}',
+              '~/missions/${project.projName.toLowerCase().replaceAll(' ', '_')}.quest',
           onTap: _launchProject,
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -53,24 +60,48 @@ class ProjectContainer extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          accent.withOpacity(0.22),
-                          secondary.withOpacity(0.14),
-                        ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              accent.withOpacity(0.22),
+                              secondary.withOpacity(0.14),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          isPlayStore
+                              ? Icons.sports_esports_rounded
+                              : Icons.rocket_launch_rounded,
+                          color: accent,
+                          size: 22,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      isPlayStore
-                          ? Icons.phone_android_rounded
-                          : Icons.language_rounded,
-                      color: accent,
-                      size: 22,
-                    ),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF59E0B).withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'S-RANK • +60 XP',
+                          style: context.bodySmall.copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFF59E0B),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Wrap(
                     spacing: 6,
@@ -121,8 +152,8 @@ class ProjectContainer extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 7),
                         child: Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 15,
+                          Icons.bolt_rounded,
+                          size: 16,
                           color: accent,
                         ),
                       ),
@@ -151,7 +182,7 @@ class ProjectContainer extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isPlayStore ? 'Google Play Store' : 'Live Web App',
+                    isPlayStore ? 'Android Boss Arena' : 'Web Portal Mission',
                     style: context.bodySmall.copyWith(
                       fontSize: 14,
                       color: context.primaryColor.withOpacity(0.65),
@@ -174,7 +205,7 @@ class ProjectContainer extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'View Project',
+                          'Launch Mission',
                           style: context.bodySmall.copyWith(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -185,8 +216,8 @@ class ProjectContainer extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Icon(
-                          Icons.arrow_outward_rounded,
-                          size: 16,
+                          Icons.rocket_launch_rounded,
+                          size: 15,
                           color: themeState.isDark
                               ? const Color(0xFF090D16)
                               : Colors.white,

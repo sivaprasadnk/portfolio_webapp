@@ -5,9 +5,14 @@ import 'package:spnk/views/screens/home/widgets/orbit_animation3.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class HomeScreenSmall extends StatelessWidget {
-  const HomeScreenSmall({super.key, this.onExploreProjects});
+  const HomeScreenSmall({
+    super.key,
+    this.onExploreProjects,
+    this.onPlayArcade,
+  });
 
   final VoidCallback? onExploreProjects;
+  final VoidCallback? onPlayArcade;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +22,6 @@ class HomeScreenSmall extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Always show the 3-Style Switcher prominently at the top on mobile
           if (context.screenWidth <= 620) ...[
             const Center(
               child: StyleSwitcherBar(compact: true),
@@ -26,7 +30,10 @@ class HomeScreenSmall extends StatelessWidget {
           ],
           const OrbitAnimation3(),
           const SizedBox(height: 16),
-          IntroSection(onExploreProjects: onExploreProjects),
+          IntroSection(
+            onExploreProjects: onExploreProjects,
+            onPlayArcade: onPlayArcade,
+          ),
         ],
       ),
     );

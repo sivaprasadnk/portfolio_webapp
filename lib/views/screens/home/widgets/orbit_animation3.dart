@@ -8,6 +8,7 @@ import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/string_constants.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OrbitAnimation3 extends StatefulWidget {
@@ -118,6 +119,7 @@ class _OrbitAnimation3State extends State<OrbitAnimation3>
   }
 
   Future<void> _handleIconTap(int index) async {
+    GamificationController.instance.completeQuest('loot_collector');
     orbitController.stop();
     try {
       if (await canLaunchUrl(Uri.parse(urls[index]))) {

@@ -6,6 +6,7 @@ import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_event.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/widgets/gamification_engine.dart';
 
 class StyleSwitcherBar extends StatelessWidget {
   const StyleSwitcherBar({super.key, this.compact = false});
@@ -42,6 +43,8 @@ class StyleSwitcherBar extends StatelessWidget {
                     context
                         .read<ThemeBloc>()
                         .add(ChangePortfolioStyle(style: style));
+                    GamificationController.instance
+                        .completeQuest('style_shifter');
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
