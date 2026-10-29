@@ -16,6 +16,7 @@ import 'package:spnk/views/bloc/skills/skills_event.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
+import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
 
 void main() {
   setup();
@@ -78,6 +79,23 @@ class MyApp extends StatelessWidget {
             theme: state.themeData,
             routes: {
               '/': (context) => const SplashScreen(),
+              ChronoCraftPrivacyPolicyScreen.routeName: (context) =>
+                  const ChronoCraftPrivacyPolicyScreen(),
+              '${ChronoCraftPrivacyPolicyScreen.routeName}/': (context) =>
+                  const ChronoCraftPrivacyPolicyScreen(),
+            },
+            onGenerateRoute: (settings) {
+              final name = settings.name ?? '';
+              if (name.startsWith('/chronocraft/privacy-policy')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const ChronoCraftPrivacyPolicyScreen(),
+                );
+              }
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (_) => const SplashScreen(),
+              );
             },
           );
         },
@@ -91,6 +109,10 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final path = Uri.base.path;
+    if (path.startsWith('/chronocraft/privacy-policy')) {
+      return const ChronoCraftPrivacyPolicyScreen();
+    }
     return HomeScreen();
   }
 }
