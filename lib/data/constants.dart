@@ -71,6 +71,22 @@ List<ProjectDetailsModel> projectList = [
     webUrl: qrCodeToolLink,
     playStoreUrl: '',
   ),
+  ProjectDetailsModel(
+    isActive: true,
+    projName: 'SPNK Arcade Hub',
+    techStackList: [
+      'Flutter',
+      'Web',
+      'Canvas 2D',
+    ],
+    descList: [
+      arcadeStr1,
+      arcadeStr2,
+      arcadeStr3,
+    ],
+    webUrl: arcadeHubLink,
+    playStoreUrl: '',
+  ),
 ];
 
 List<ContactDetailsModel> contactDetailsList = [

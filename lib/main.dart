@@ -15,6 +15,7 @@ import 'package:spnk/views/bloc/skills/skills_bloc.dart';
 import 'package:spnk/views/bloc/skills/skills_event.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/screens/arcade/arcade_screen.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
@@ -86,6 +87,8 @@ class MyApp extends StatelessWidget {
                   const ChronoCraftPrivacyPolicyScreen(),
               QrCodeScreen.routeName: (context) => const QrCodeScreen(),
               '${QrCodeScreen.routeName}/': (context) => const QrCodeScreen(),
+              ArcadeScreen.routeName: (context) => const ArcadeScreen(),
+              '${ArcadeScreen.routeName}/': (context) => const ArcadeScreen(),
             },
             onGenerateRoute: (settings) {
               final name = settings.name ?? '';
@@ -99,6 +102,12 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   settings: settings,
                   builder: (_) => const QrCodeScreen(),
+                );
+              }
+              if (name.startsWith('/arcade')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const ArcadeScreen(),
                 );
               }
               return MaterialPageRoute(
@@ -126,6 +135,9 @@ class SplashScreen extends StatelessWidget {
     }
     if (path.startsWith('/qrcode') || fragment.startsWith('/qrcode')) {
       return const QrCodeScreen();
+    }
+    if (path.startsWith('/arcade') || fragment.startsWith('/arcade')) {
+      return const ArcadeScreen();
     }
     return HomeScreen();
   }
