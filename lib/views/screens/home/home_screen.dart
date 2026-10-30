@@ -294,8 +294,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 horizontal: context.isMobileDevice ? 10 : 16,
                               ),
                               decoration: BoxDecoration(
-                                color: state.cardSurfaceColor.withValues(
-                                  alpha: state.isDark ? 0.84 : 0.92,
+                                color: context.scaffoldColor.withValues(
+                                  alpha: state.isDark ? 0.76 : 0.88,
                                 ),
                                 borderRadius: BorderRadius.circular(
                                   state.portfolioStyle == PortfolioStyle.cyber
