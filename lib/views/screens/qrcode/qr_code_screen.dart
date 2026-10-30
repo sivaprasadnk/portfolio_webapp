@@ -23,13 +23,59 @@ class QrCodeScreen extends StatefulWidget {
 
 enum _QrTab { generate, scan }
 
+enum QrModuleStyle {
+  square('Square'),
+  rounded('Rounded'),
+  dots('Dots');
+
+  const QrModuleStyle(this.label);
+  final String label;
+}
+
+enum QrEyeStyle {
+  square('Square'),
+  rounded('Rounded'),
+  circle('Circle');
+
+  const QrEyeStyle(this.label);
+  final String label;
+}
+
 class _QrCodeScreenState extends State<QrCodeScreen> {
+  static const List<Color> _fgColorOptions = [
+    Color(0xFF000000), // Classic Black
+    Color(0xFF0F172A), // Deep Slate
+    Color(0xFF4F46E5), // Indigo
+    Color(0xFF0284C7), // Sky Blue
+    Color(0xFF059669), // Emerald
+    Color(0xFFE11D48), // Rose
+    Color(0xFF7C3AED), // Violet
+    Color(0xFFD97706), // Amber
+  ];
+
+  static const List<Color> _bgColorOptions = [
+    Color(0xFFFFFFFF), // Pure White
+    Color(0xFFF8FAFC), // Cool Alabaster
+    Color(0xFFFEFCE8), // Warm Cream
+    Color(0xFFECFDF5), // Mint Tint
+    Color(0xFFF0F9FF), // Sky Tint
+    Color(0xFFFDF2F8), // Rose Tint
+  ];
+
   final TextEditingController _textController = TextEditingController();
   final QrPlatformHelper _platformHelper = createQrPlatformHelper();
 
   _QrTab _activeTab = _QrTab.generate;
   String _qrData = '';
   bool _isDownloading = false;
+  bool _showCustomize = false;
+
+  // QR Customization state
+  QrModuleStyle _moduleStyle = QrModuleStyle.square;
+  QrEyeStyle _eyeStyle = QrEyeStyle.square;
+  Color _fgColor = _fgColorOptions.first;
+  Color _bgColor = _bgColorOptions.first;
+  int _errorCorrectLevel = QrErrorCorrectLevel.M;
 
   // Scanner state
   late final String _cameraViewType;
@@ -75,6 +121,16 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     }
     setState(() {
       _activeTab = tab;
+    });
+  }
+
+  void _resetCustomization() {
+    setState(() {
+      _moduleStyle = QrModuleStyle.square;
+      _eyeStyle = QrEyeStyle.square;
+      _fgColor = _fgColorOptions.first;
+      _bgColor = _bgColorOptions.first;
+      _errorCorrectLevel = QrErrorCorrectLevel.M;
     });
   }
 
@@ -172,7 +228,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     if (data.isEmpty) return null;
     final qrCode = QrCode.fromData(
       data: data,
-      errorCorrectLevel: QrErrorCorrectLevel.M,
+      errorCorrectLevel: _errorCorrectLevel,
     );
     final qrImage = QrImage(qrCode);
 
@@ -184,8 +240,10 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
     final painter = _QrMatrixPainter(
       qrImage: qrImage,
-      foregroundColor: const Color(0xFF000000),
-      backgroundColor: const Color(0xFFFFFFFF),
+      foregroundColor: _fgColor,
+      backgroundColor: _bgColor,
+      moduleStyle: _moduleStyle,
+      eyeStyle: _eyeStyle,
       quietZoneModules: 4,
     );
     painter.paint(canvas, Size(size.toDouble(), size.toDouble()));
@@ -388,7 +446,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
       try {
         final code = QrCode.fromData(
           data: _qrData,
-          errorCorrectLevel: QrErrorCorrectLevel.M,
+          errorCorrectLevel: _errorCorrectLevel,
         );
         qrImage = QrImage(code);
       } catch (_) {
@@ -468,14 +526,14 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         Center(
           child: Container(
             width: 240,
             height: 240,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: qrImage != null ? _bgColor : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: themeState.cardBorderColor,
@@ -493,8 +551,10 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                     size: const Size(212, 212),
                     painter: _QrMatrixPainter(
                       qrImage: qrImage,
-                      foregroundColor: const Color(0xFF000000),
-                      backgroundColor: const Color(0xFFFFFFFF),
+                      foregroundColor: _fgColor,
+                      backgroundColor: _bgColor,
+                      moduleStyle: _moduleStyle,
+                      eyeStyle: _eyeStyle,
                       quietZoneModules: 2,
                     ),
                   )
@@ -515,7 +575,49 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                   ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => setState(() => _showCustomize = !_showCustomize),
+            style: TextButton.styleFrom(
+              foregroundColor: accent,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            icon: Icon(
+              _showCustomize ? Icons.tune_rounded : Icons.palette_outlined,
+              size: 17,
+            ),
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _showCustomize ? 'Hide Customization' : 'Customize QR',
+                  style: context.bodySmall.copyWith(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _showCustomize
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: accent,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_showCustomize) ...[
+          const SizedBox(height: 8),
+          _buildCustomizationPanel(themeState, accent),
+        ],
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -574,6 +676,178 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildCustomizationPanel(ThemeState themeState, Color accent) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.primaryColor
+            .withValues(alpha: themeState.isDark ? 0.04 : 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: themeState.cardBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Pattern Style',
+                style: context.bodySmall.copyWith(
+                  fontSize: 13,
+                  color: context.primaryColor.withValues(alpha: 0.75),
+                ),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: _resetCustomization,
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  child: Text(
+                    'Reset',
+                    style: context.bodySmall.copyWith(
+                      fontSize: 12,
+                      color: accent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: QrModuleStyle.values.map((style) {
+              final selected = _moduleStyle == style;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: style != QrModuleStyle.values.last ? 6 : 0,
+                  ),
+                  child: _MiniOptionButton(
+                    label: style.label,
+                    selected: selected,
+                    accent: accent,
+                    borderColor: themeState.cardBorderColor,
+                    onTap: () => setState(() => _moduleStyle = style),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Corner Eye Shape',
+            style: context.bodySmall.copyWith(
+              fontSize: 13,
+              color: context.primaryColor.withValues(alpha: 0.75),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: QrEyeStyle.values.map((style) {
+              final selected = _eyeStyle == style;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: style != QrEyeStyle.values.last ? 6 : 0,
+                  ),
+                  child: _MiniOptionButton(
+                    label: style.label,
+                    selected: selected,
+                    accent: accent,
+                    borderColor: themeState.cardBorderColor,
+                    onTap: () => setState(() => _eyeStyle = style),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'QR Color',
+            style: context.bodySmall.copyWith(
+              fontSize: 13,
+              color: context.primaryColor.withValues(alpha: 0.75),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: _fgColorOptions.map((color) {
+              final selected = _fgColor.toARGB32() == color.toARGB32();
+              return _ColorSwatchDot(
+                color: color,
+                selected: selected,
+                accent: accent,
+                onTap: () => setState(() => _fgColor = color),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Background',
+            style: context.bodySmall.copyWith(
+              fontSize: 13,
+              color: context.primaryColor.withValues(alpha: 0.75),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: _bgColorOptions.map((color) {
+              final selected = _bgColor.toARGB32() == color.toARGB32();
+              return _ColorSwatchDot(
+                color: color,
+                selected: selected,
+                accent: accent,
+                showLightBorder: true,
+                onTap: () => setState(() => _bgColor = color),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Error Correction',
+            style: context.bodySmall.copyWith(
+              fontSize: 13,
+              color: context.primaryColor.withValues(alpha: 0.75),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final entry in const [
+                ('L (7%)', QrErrorCorrectLevel.L),
+                ('M (15%)', QrErrorCorrectLevel.M),
+                ('Q (25%)', QrErrorCorrectLevel.Q),
+                ('H (30%)', QrErrorCorrectLevel.H),
+              ])
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: entry.$2 != QrErrorCorrectLevel.H ? 6 : 0,
+                    ),
+                    child: _MiniOptionButton(
+                      label: entry.$1,
+                      selected: _errorCorrectLevel == entry.$2,
+                      accent: accent,
+                      borderColor: themeState.cardBorderColor,
+                      onTap: () =>
+                          setState(() => _errorCorrectLevel = entry.$2),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -824,6 +1098,98 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
   }
 }
 
+class _MiniOptionButton extends StatelessWidget {
+  const _MiniOptionButton({
+    required this.label,
+    required this.selected,
+    required this.accent,
+    required this.borderColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color accent;
+  final Color borderColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? accent.withValues(alpha: 0.16) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? accent : borderColor,
+            width: selected ? 1.3 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: context.bodySmall.copyWith(
+            fontSize: 12.5,
+            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+            color: selected
+                ? accent
+                : context.primaryColor.withValues(alpha: 0.75),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorSwatchDot extends StatelessWidget {
+  const _ColorSwatchDot({
+    required this.color,
+    required this.selected,
+    required this.accent,
+    required this.onTap,
+    this.showLightBorder = false,
+  });
+
+  final Color color;
+  final bool selected;
+  final Color accent;
+  final VoidCallback onTap;
+  final bool showLightBorder;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected
+                ? accent
+                : (showLightBorder
+                    ? const Color(0xFFCBD5E1)
+                    : Colors.white.withValues(alpha: 0.25)),
+            width: selected ? 2.5 : 1,
+          ),
+        ),
+        child: selected
+            ? Icon(
+                Icons.check_rounded,
+                size: 15,
+                color: showLightBorder ? const Color(0xFF0F172A) : Colors.white,
+              )
+            : null,
+      ),
+    );
+  }
+}
+
 class _TabPillButton extends StatelessWidget {
   const _TabPillButton({
     required this.label,
@@ -938,13 +1304,77 @@ class _QrMatrixPainter extends CustomPainter {
     required this.qrImage,
     required this.foregroundColor,
     required this.backgroundColor,
+    this.moduleStyle = QrModuleStyle.square,
+    this.eyeStyle = QrEyeStyle.square,
     this.quietZoneModules = 2,
   });
 
   final QrImage qrImage;
   final Color foregroundColor;
   final Color backgroundColor;
+  final QrModuleStyle moduleStyle;
+  final QrEyeStyle eyeStyle;
   final int quietZoneModules;
+
+  bool _isInFinderPattern(int row, int col, int moduleCount) {
+    final inTopLeft = row < 7 && col < 7;
+    final inTopRight = row < 7 && col >= moduleCount - 7;
+    final inBottomLeft = row >= moduleCount - 7 && col < 7;
+    return inTopLeft || inTopRight || inBottomLeft;
+  }
+
+  void _drawFinderPattern(
+    Canvas canvas,
+    int startRow,
+    int startCol,
+    double cellSize,
+    Paint fgPaint,
+    Paint bgPaint,
+  ) {
+    final left = (startCol + quietZoneModules) * cellSize;
+    final top = (startRow + quietZoneModules) * cellSize;
+
+    final outerRect = Rect.fromLTWH(left, top, 7 * cellSize, 7 * cellSize);
+    final middleRect = Rect.fromLTWH(
+      left + cellSize,
+      top + cellSize,
+      5 * cellSize,
+      5 * cellSize,
+    );
+    final innerRect = Rect.fromLTWH(
+      left + 2 * cellSize,
+      top + 2 * cellSize,
+      3 * cellSize,
+      3 * cellSize,
+    );
+
+    switch (eyeStyle) {
+      case QrEyeStyle.square:
+        canvas.drawRect(outerRect, fgPaint);
+        canvas.drawRect(middleRect, bgPaint);
+        canvas.drawRect(innerRect, fgPaint);
+        break;
+      case QrEyeStyle.rounded:
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(outerRect, Radius.circular(cellSize * 1.8)),
+          fgPaint,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(middleRect, Radius.circular(cellSize * 1.2)),
+          bgPaint,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(innerRect, Radius.circular(cellSize * 0.7)),
+          fgPaint,
+        );
+        break;
+      case QrEyeStyle.circle:
+        canvas.drawOval(outerRect, fgPaint);
+        canvas.drawOval(middleRect, bgPaint);
+        canvas.drawOval(innerRect, fgPaint);
+        break;
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -960,17 +1390,64 @@ class _QrMatrixPainter extends CustomPainter {
     final fgPaint = Paint()
       ..color = foregroundColor
       ..style = PaintingStyle.fill
-      ..isAntiAlias = false;
+      ..isAntiAlias = moduleStyle != QrModuleStyle.square ||
+          eyeStyle != QrEyeStyle.square;
 
+    // Draw the 3 corner finder patterns
+    _drawFinderPattern(canvas, 0, 0, cellSize, fgPaint, bgPaint);
+    _drawFinderPattern(
+      canvas,
+      0,
+      moduleCount - 7,
+      cellSize,
+      fgPaint,
+      bgPaint,
+    );
+    _drawFinderPattern(
+      canvas,
+      moduleCount - 7,
+      0,
+      cellSize,
+      fgPaint,
+      bgPaint,
+    );
+
+    // Draw remaining modules
     for (var row = 0; row < moduleCount; row++) {
       for (var col = 0; col < moduleCount; col++) {
+        if (_isInFinderPattern(row, col, moduleCount)) continue;
         if (qrImage.isDark(row, col)) {
           final left = (col + quietZoneModules) * cellSize;
           final top = (row + quietZoneModules) * cellSize;
-          canvas.drawRect(
-            Rect.fromLTWH(left, top, cellSize + 0.35, cellSize + 0.35),
-            fgPaint,
-          );
+          switch (moduleStyle) {
+            case QrModuleStyle.square:
+              canvas.drawRect(
+                Rect.fromLTWH(left, top, cellSize + 0.35, cellSize + 0.35),
+                fgPaint,
+              );
+              break;
+            case QrModuleStyle.rounded:
+              canvas.drawRRect(
+                RRect.fromRectAndRadius(
+                  Rect.fromLTWH(
+                    left + cellSize * 0.06,
+                    top + cellSize * 0.06,
+                    cellSize * 0.88,
+                    cellSize * 0.88,
+                  ),
+                  Radius.circular(cellSize * 0.32),
+                ),
+                fgPaint,
+              );
+              break;
+            case QrModuleStyle.dots:
+              canvas.drawCircle(
+                Offset(left + cellSize / 2, top + cellSize / 2),
+                cellSize * 0.44,
+                fgPaint,
+              );
+              break;
+          }
         }
       }
     }
@@ -981,6 +1458,8 @@ class _QrMatrixPainter extends CustomPainter {
     return oldDelegate.qrImage != qrImage ||
         oldDelegate.foregroundColor != foregroundColor ||
         oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.moduleStyle != moduleStyle ||
+        oldDelegate.eyeStyle != eyeStyle ||
         oldDelegate.quietZoneModules != quietZoneModules;
   }
 }
