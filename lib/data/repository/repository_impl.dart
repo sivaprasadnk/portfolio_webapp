@@ -31,10 +31,22 @@ class RepositoryImpl implements Repository {
 
   @override
   Future<List<ProjectDetails>> getProjectDetails() async {
+    final localProjects = locator<LocalDataSourceImpl>().getProjectDetails();
     final result = await locator<RemoteDataSourceImpl>().getProjectDetails();
     return result.fold(
-      (data) => data,
-      (_) => locator<LocalDataSourceImpl>().getProjectDetails(),
+      (remoteProjects) {
+        final existingNames = remoteProjects
+            .map((p) => p.projName.trim().toLowerCase())
+            .toSet();
+        final merged = List<ProjectDetails>.from(remoteProjects);
+        for (final local in localProjects) {
+          if (!existingNames.contains(local.projName.trim().toLowerCase())) {
+            merged.add(local);
+          }
+        }
+        return merged;
+      },
+      (_) => localProjects,
     );
   }
 

@@ -21,6 +21,7 @@ const String spQuotesLink =
     'https://play.google.com/store/apps/details?id=com.sptpra.spquotes';
 
 const String websiteLink = 'https://sivaprasadnk.github.io/#/';
+const String qrCodeToolLink = 'https://sivaprasadnk.dev/qrcode';
 
 const String spQuizLink =
     'https://play.google.com/store/apps/details?id=com.sptpra.spquiz';
@@ -54,6 +55,10 @@ String websiteStr2 = 'Responsive design for every screensize';
 String websiteStr3 = 'Light / Dark theme';
 String websiteStr4 = 'Bloc State Management';
 String websiteStr5 = 'Clean Architecture';
+
+String qrCodeStr1 = 'Minimal web utility for generating & scanning QR codes';
+String qrCodeStr2 = 'Custom pattern styles, corner eye shapes & color themes';
+String qrCodeStr3 = 'Real-time camera & image file QR scanner with PNG export';
 
 String quizStr1 =
     'Quiz App with light / dark mode \nwith various  color themes.';
