@@ -274,74 +274,163 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Sticky Top Navbar + Player HUD
                   Positioned(
-                    top: 12,
-                    left: isDesktop ? context.screenWidth * 0.03 : 10,
-                    right: isDesktop ? context.screenWidth * 0.03 : 10,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        state.portfolioStyle == PortfolioStyle.cyber ? 8 : 999,
-                      ),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                        child: Container(
-                          height: 68,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: context.isMobileDevice ? 12 : 20,
+                    top: 14,
+                    left: isDesktop ? context.screenWidth * 0.04 : 12,
+                    right: isDesktop ? context.screenWidth * 0.04 : 12,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1440),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            state.portfolioStyle == PortfolioStyle.cyber
+                                ? 10
+                                : 18,
                           ),
-                          decoration: BoxDecoration(
-                            color: state.cardSurfaceColor.withOpacity(
-                              state.isDark ? 0.82 : 0.90,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              state.portfolioStyle == PortfolioStyle.cyber
-                                  ? 8
-                                  : 999,
-                            ),
-                            border: Border.all(
-                              color: state.cardBorderColor,
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              LogoText(
-                                onTap: () => _scrollToSection(Screen.home),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                            child: Container(
+                              height: 64,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: context.isMobileDevice ? 10 : 16,
                               ),
-                              const SizedBox(width: 10),
-                              GamificationHudPill(
-                                compact: !isDesktop,
-                                onOpenQuests: () => showQuestLogModal(
-                                  context,
-                                  onJumpToArcade: _scrollToArcade,
+                              decoration: BoxDecoration(
+                                color: state.cardSurfaceColor.withValues(
+                                  alpha: state.isDark ? 0.84 : 0.92,
                                 ),
-                              ),
-                              if (context.screenWidth > 760) ...[
-                                const SizedBox(width: 10),
-                                const StyleSwitcherBar(compact: true),
-                              ],
-                              const Spacer(),
-                              if (isDesktop) ...[
-                                ...Screen.values.map(
-                                  (screen) => TabItem(
-                                    title: screen.menuName,
-                                    screen: screen,
-                                    onSelect: _scrollToSection,
+                                borderRadius: BorderRadius.circular(
+                                  state.portfolioStyle == PortfolioStyle.cyber
+                                      ? 10
+                                      : 18,
+                                ),
+                                border: Border.all(
+                                  color: state.cardBorderColor,
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: state.isDark ? 0.35 : 0.08,
+                                    ),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 8),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                const TorchIcon(),
-                                const SizedBox(width: 12),
-                                const BrightnessSwitch(),
-                                const SizedBox(width: 12),
-                                const ThemeIcon(),
-                              ] else ...[
-                                const BrightnessSwitch(),
-                                const SizedBox(width: 12),
-                                const ThemeIcon(),
-                                const SizedBox(width: 12),
-                                const MenuIcon(),
-                              ],
-                            ],
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  LogoText(
+                                    onTap: () => _scrollToSection(Screen.home),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    width: 1,
+                                    height: 24,
+                                    color: state.cardBorderColor,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  GamificationHudPill(
+                                    compact: context.screenWidth < 1460,
+                                    onOpenQuests: () => showQuestLogModal(
+                                      context,
+                                      onJumpToArcade: _scrollToArcade,
+                                    ),
+                                  ),
+                                  if (context.screenWidth > 860) ...[
+                                    const SizedBox(width: 10),
+                                    const StyleSwitcherBar(compact: true),
+                                  ],
+                                  const Spacer(),
+                                  if (isDesktop) ...[
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: context.primaryColor.withValues(
+                                          alpha: state.isDark ? 0.04 : 0.03,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          state.portfolioStyle ==
+                                                  PortfolioStyle.cyber
+                                              ? 7
+                                              : 13,
+                                        ),
+                                        border: Border.all(
+                                          color: state.cardBorderColor,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: Screen.values
+                                            .map(
+                                              (screen) => TabItem(
+                                                title: screen.menuName,
+                                                screen: screen,
+                                                onSelect: _scrollToSection,
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.primaryColor.withValues(
+                                          alpha: state.isDark ? 0.04 : 0.03,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          state.portfolioStyle ==
+                                                  PortfolioStyle.cyber
+                                              ? 7
+                                              : 12,
+                                        ),
+                                        border: Border.all(
+                                          color: state.cardBorderColor,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          TorchIcon(),
+                                          SizedBox(width: 10),
+                                          BrightnessSwitch(),
+                                          SizedBox(width: 10),
+                                          ThemeIcon(),
+                                        ],
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.primaryColor.withValues(
+                                          alpha: state.isDark ? 0.04 : 0.03,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: state.cardBorderColor,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          BrightnessSwitch(),
+                                          SizedBox(width: 10),
+                                          ThemeIcon(),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const MenuIcon(),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),

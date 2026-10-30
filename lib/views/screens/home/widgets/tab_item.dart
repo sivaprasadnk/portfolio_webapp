@@ -60,37 +60,59 @@ class _TabItemState extends State<TabItem> {
                   }
                 },
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? accent.withOpacity(themeState.isDark ? 0.18 : 0.12)
+                        ? accent.withValues(
+                            alpha: themeState.isDark ? 0.22 : 0.14,
+                          )
                         : (isHovering
-                            ? context.primaryColor.withOpacity(0.06)
+                            ? context.primaryColor.withValues(alpha: 0.06)
                             : Colors.transparent),
-                    borderRadius: BorderRadius.circular(isCyber ? 6 : 999),
+                    borderRadius: BorderRadius.circular(isCyber ? 5 : 10),
                     border: Border.all(
                       color: isSelected
-                          ? accent.withOpacity(0.55)
+                          ? accent.withValues(alpha: 0.6)
                           : Colors.transparent,
                       width: 1,
                     ),
                   ),
-                  child: AutoSizeText(
-                    isCyber ? '/${widget.title.toLowerCase()}' : widget.title,
-                    maxLines: 1,
-                    style: context.displaySmall.copyWith(
-                      fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected
-                          ? accent
-                          : (isHovering
-                              ? accent
-                              : context.primaryColor.withOpacity(0.8)),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isSelected) ...[
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      AutoSizeText(
+                        isCyber
+                            ? '/${widget.title.toLowerCase().replaceAll(' ', '_')}'
+                            : widget.title,
+                        maxLines: 1,
+                        style: context.displaySmall.copyWith(
+                          fontSize: 14,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color: isSelected
+                              ? (themeState.isDark ? Colors.white : accent)
+                              : (isHovering
+                                  ? accent
+                                  : context.primaryColor
+                                      .withValues(alpha: 0.78)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ).showCursorOnHover,
