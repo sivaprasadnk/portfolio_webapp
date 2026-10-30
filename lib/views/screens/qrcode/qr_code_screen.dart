@@ -24,13 +24,11 @@ class QrCodeScreen extends StatefulWidget {
 enum _QrTab { generate, scan }
 
 class _QrCodeScreenState extends State<QrCodeScreen> {
-  final TextEditingController _textController = TextEditingController(
-    text: 'https://sivaprasadnk.dev',
-  );
+  final TextEditingController _textController = TextEditingController();
   final QrPlatformHelper _platformHelper = createQrPlatformHelper();
 
   _QrTab _activeTab = _QrTab.generate;
-  String _qrData = 'https://sivaprasadnk.dev';
+  String _qrData = '';
   bool _isDownloading = false;
 
   // Scanner state
@@ -310,10 +308,18 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                 ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
-                  child: PortfolioStyledCard(
+                  child: Container(
                     width: double.infinity,
-                    cyberHeader: '~/tools/qrcode',
                     padding: EdgeInsets.all(isMobile ? 20 : 28),
+                    decoration: BoxDecoration(
+                      color: themeState.cardSurfaceColor,
+                      borderRadius:
+                          BorderRadius.circular(themeState.cardRadius),
+                      border: Border.all(
+                        color: themeState.cardBorderColor,
+                        width: 1.1,
+                      ),
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
