@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#0B0F19"/>
+  <rect x="3" y="3" width="58" height="58" rx="12" fill="none" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.45"/>
+  <!-- Top-left finder -->
+  <rect x="10" y="10" width="18" height="18" rx="4" fill="none" stroke="#38BDF8" stroke-width="3.5"/>
+  <rect x="15" y="15" width="8" height="8" rx="1.5" fill="#38BDF8"/>
+  <!-- Top-right finder -->
+  <rect x="36" y="10" width="18" height="18" rx="4" fill="none" stroke="#38BDF8" stroke-width="3.5"/>
+  <rect x="41" y="15" width="8" height="8" rx="1.5" fill="#38BDF8"/>
+  <!-- Bottom-left finder -->
+  <rect x="10" y="36" width="18" height="18" rx="4" fill="none" stroke="#38BDF8" stroke-width="3.5"/>
+  <rect x="15" y="41" width="8" height="8" rx="1.5" fill="#38BDF8"/>
+  <!-- Data modules -->
+  <rect x="36" y="36" width="6" height="6" rx="1.5" fill="#F8FAFC"/>
+  <rect x="46" y="36" width="8" height="6" rx="1.5" fill="#38BDF8"/>
+  <rect x="36" y="46" width="8" height="8" rx="1.5" fill="#38BDF8"/>
+  <rect x="48" y="46" width="6" height="8" rx="1.5" fill="#F8FAFC"/>
+</svg>

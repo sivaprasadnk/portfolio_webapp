@@ -37,6 +37,14 @@ class _WebQrPlatformHelper implements QrPlatformHelper {
 
   void _ensureJsBridgeInjected() {
     final doc = web.document;
+    doc.title = 'QR Code Studio';
+    final existingIcon =
+        doc.querySelector("link[rel*='icon']") as web.HTMLLinkElement?;
+    if (existingIcon != null) {
+      existingIcon
+        ..type = 'image/svg+xml'
+        ..href = 'qrcode/favicon.svg?v=2';
+    }
     if (doc.getElementById('spnk-jsqr-lib') == null) {
       final jsqrScript = doc.createElement('script') as web.HTMLScriptElement
         ..id = 'spnk-jsqr-lib'

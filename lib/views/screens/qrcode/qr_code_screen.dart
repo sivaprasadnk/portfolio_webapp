@@ -315,86 +315,80 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     final isMobile = context.isMobileDevice;
 
     return PortfolioStyleBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            tooltip: 'Home',
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: context.primaryColor,
-            ),
-            onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                Navigator.of(context).pushReplacementNamed('/');
-              }
-            },
-          ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.qr_code_2_rounded,
-                size: 22,
-                color: context.primaryColor,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'QR Code Studio',
-                style: context.displaySmall.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          hoverColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
         ),
-        body: BlocBuilder<ThemeBloc, ThemeState>(
-          builder: (context, themeState) {
-            final accent = themeState.accentColor;
-
-            return Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 16 : 24,
-                  vertical: isMobile ? 16 : 28,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            automaticallyImplyLeading: false,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.qr_code_2_rounded,
+                  size: 22,
+                  color: context.primaryColor,
                 ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(isMobile ? 20 : 28),
-                    decoration: BoxDecoration(
-                      color: themeState.cardSurfaceColor,
-                      borderRadius:
-                          BorderRadius.circular(themeState.cardRadius),
-                      border: Border.all(
-                        color: themeState.cardBorderColor,
-                        width: 1.1,
+                const SizedBox(width: 8),
+                Text(
+                  'QR Code Studio',
+                  style: context.displaySmall.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          body: BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, themeState) {
+              final accent = themeState.accentColor;
+
+              return Center(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : 24,
+                    vertical: isMobile ? 16 : 28,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(isMobile ? 20 : 28),
+                      decoration: BoxDecoration(
+                        color: themeState.cardSurfaceColor,
+                        borderRadius:
+                            BorderRadius.circular(themeState.cardRadius),
+                        border: Border.all(
+                          color: themeState.cardBorderColor,
+                          width: 1.1,
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildTabSelector(themeState, accent),
-                        const SizedBox(height: 24),
-                        if (_activeTab == _QrTab.generate)
-                          _buildGeneratorSection(themeState, accent)
-                        else
-                          _buildScannerSection(themeState, accent),
-                      ],
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTabSelector(themeState, accent),
+                          const SizedBox(height: 24),
+                          if (_activeTab == _QrTab.generate)
+                            _buildGeneratorSection(themeState, accent)
+                          else
+                            _buildScannerSection(themeState, accent),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -477,6 +471,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
               color: context.primaryColor.withValues(alpha: 0.4),
             ),
             filled: true,
+            hoverColor: Colors.transparent,
             fillColor: context.primaryColor
                 .withValues(alpha: themeState.isDark ? 0.05 : 0.04),
             contentPadding: const EdgeInsets.symmetric(
