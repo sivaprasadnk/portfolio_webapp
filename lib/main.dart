@@ -17,6 +17,7 @@ import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
+import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 
 void main() {
   setup();
@@ -83,6 +84,8 @@ class MyApp extends StatelessWidget {
                   const ChronoCraftPrivacyPolicyScreen(),
               '${ChronoCraftPrivacyPolicyScreen.routeName}/': (context) =>
                   const ChronoCraftPrivacyPolicyScreen(),
+              QrCodeScreen.routeName: (context) => const QrCodeScreen(),
+              '${QrCodeScreen.routeName}/': (context) => const QrCodeScreen(),
             },
             onGenerateRoute: (settings) {
               final name = settings.name ?? '';
@@ -90,6 +93,12 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   settings: settings,
                   builder: (_) => const ChronoCraftPrivacyPolicyScreen(),
+                );
+              }
+              if (name.startsWith('/qrcode')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const QrCodeScreen(),
                 );
               }
               return MaterialPageRoute(
@@ -110,8 +119,13 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = Uri.base.path;
-    if (path.startsWith('/chronocraft/privacy-policy')) {
+    final fragment = Uri.base.fragment;
+    if (path.startsWith('/chronocraft/privacy-policy') ||
+        fragment.startsWith('/chronocraft/privacy-policy')) {
       return const ChronoCraftPrivacyPolicyScreen();
+    }
+    if (path.startsWith('/qrcode') || fragment.startsWith('/qrcode')) {
+      return const QrCodeScreen();
     }
     return HomeScreen();
   }
