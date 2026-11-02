@@ -18,6 +18,7 @@ import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/arcade/arcade_screen.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
+import 'package:spnk/views/screens/privacy_policy/qrcode_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 
 void main() {
@@ -85,6 +86,10 @@ class MyApp extends StatelessWidget {
                   const ChronoCraftPrivacyPolicyScreen(),
               '${ChronoCraftPrivacyPolicyScreen.routeName}/': (context) =>
                   const ChronoCraftPrivacyPolicyScreen(),
+              QrCodePrivacyPolicyScreen.routeName: (context) =>
+                  const QrCodePrivacyPolicyScreen(),
+              '${QrCodePrivacyPolicyScreen.routeName}/': (context) =>
+                  const QrCodePrivacyPolicyScreen(),
               QrCodeScreen.routeName: (context) => const QrCodeScreen(),
               '${QrCodeScreen.routeName}/': (context) => const QrCodeScreen(),
               ArcadeScreen.routeName: (context) => const ArcadeScreen(),
@@ -96,6 +101,12 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   settings: settings,
                   builder: (_) => const ChronoCraftPrivacyPolicyScreen(),
+                );
+              }
+              if (name.startsWith('/qrcode/privacy-policy')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const QrCodePrivacyPolicyScreen(),
                 );
               }
               if (name.startsWith('/qrcode')) {
@@ -132,6 +143,10 @@ class SplashScreen extends StatelessWidget {
     if (path.startsWith('/chronocraft/privacy-policy') ||
         fragment.startsWith('/chronocraft/privacy-policy')) {
       return const ChronoCraftPrivacyPolicyScreen();
+    }
+    if (path.startsWith('/qrcode/privacy-policy') ||
+        fragment.startsWith('/qrcode/privacy-policy')) {
+      return const QrCodePrivacyPolicyScreen();
     }
     if (path.startsWith('/qrcode') || fragment.startsWith('/qrcode')) {
       return const QrCodeScreen();
