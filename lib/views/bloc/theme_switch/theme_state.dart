@@ -14,7 +14,7 @@ extension PortfolioStyleExt on PortfolioStyle {
       case PortfolioStyle.glass:
         return 'Glass';
       case PortfolioStyle.bento:
-        return 'Bento';
+        return 'Spatial';
       case PortfolioStyle.cyber:
         return 'Cyber';
     }
@@ -25,7 +25,7 @@ extension PortfolioStyleExt on PortfolioStyle {
       case PortfolioStyle.glass:
         return 'Glassmorphic & Neon';
       case PortfolioStyle.bento:
-        return 'Minimalist Bento';
+        return 'Minimalist Spatial';
       case PortfolioStyle.cyber:
         return 'Futuristic Cyber';
     }
@@ -36,7 +36,7 @@ extension PortfolioStyleExt on PortfolioStyle {
       case PortfolioStyle.glass:
         return Icons.auto_awesome_rounded;
       case PortfolioStyle.bento:
-        return Icons.grid_view_rounded;
+        return Icons.blur_circular_rounded;
       case PortfolioStyle.cyber:
         return Icons.terminal_rounded;
     }
@@ -86,14 +86,14 @@ class ThemeState extends Equatable {
     switch (portfolioStyle) {
       case PortfolioStyle.glass:
         return isDark
-            ? Colors.white.withOpacity(0.05)
-            : Colors.white.withOpacity(0.75);
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.white.withValues(alpha: 0.75);
       case PortfolioStyle.bento:
         return isDark ? const Color(0xFF141418) : const Color(0xFFFFFFFF);
       case PortfolioStyle.cyber:
         return isDark
-            ? const Color(0xFF0B1324).withOpacity(0.88)
-            : const Color(0xFFFFFFFF).withOpacity(0.92);
+            ? const Color(0xFF0B1324).withValues(alpha: 0.88)
+            : const Color(0xFFFFFFFF).withValues(alpha: 0.92);
     }
   }
 
@@ -101,14 +101,14 @@ class ThemeState extends Equatable {
     switch (portfolioStyle) {
       case PortfolioStyle.glass:
         return isDark
-            ? Colors.white.withOpacity(0.14)
-            : const Color(0xFF4F46E5).withOpacity(0.18);
+            ? Colors.white.withValues(alpha: 0.14)
+            : const Color(0xFF4F46E5).withValues(alpha: 0.18);
       case PortfolioStyle.bento:
         return isDark ? const Color(0xFF27272A) : const Color(0xFFE4E4E7);
       case PortfolioStyle.cyber:
         return isDark
-            ? const Color(0xFF00F0FF).withOpacity(0.45)
-            : const Color(0xFF0077B6).withOpacity(0.45);
+            ? const Color(0xFF00F0FF).withValues(alpha: 0.45)
+            : const Color(0xFF0077B6).withValues(alpha: 0.45);
     }
   }
 
@@ -190,10 +190,10 @@ class ThemeState extends Equatable {
       scaffoldBackgroundColor: bgColor,
       scrollbarTheme: const ScrollbarThemeData().copyWith(
         thumbVisibility: const WidgetStatePropertyAll(false),
-        thumbColor: WidgetStateProperty.all(hoverColor.withOpacity(0.5)),
+        thumbColor: WidgetStateProperty.all(hoverColor.withValues(alpha: 0.5)),
       ),
-      shadowColor: hoverColor.withOpacity(0.25),
-      splashColor: hoverColor.withOpacity(0.15),
+      shadowColor: hoverColor.withValues(alpha: 0.25),
+      splashColor: hoverColor.withValues(alpha: 0.15),
       textTheme: TextTheme(
         bodyLarge: TextStyle(
           fontSize: 21,
