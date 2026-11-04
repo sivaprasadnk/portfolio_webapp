@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
@@ -78,7 +80,6 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
       builder: (context, state) {
         final accent = state.accentColor;
         final secondary = state.secondaryAccent;
-        final isCyber = state.portfolioStyle == PortfolioStyle.cyber;
 
         return Padding(
           padding: EdgeInsets.symmetric(
@@ -99,50 +100,35 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Open-Air Commander Telemetry Header (Zero Box Container)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            Icon(
+                              Icons.flare_rounded,
+                              size: 16,
+                              color: accent,
+                            ),
+                            const SizedBox(width: 10),
                             Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: accent
-                                      .withOpacity(state.isDark ? 0.16 : 0.10),
-                                  borderRadius:
-                                      BorderRadius.circular(isCyber ? 6 : 999),
-                                  border: Border.all(
-                                      color: accent.withOpacity(0.45)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.shield_rounded,
-                                      size: 15,
-                                      color: accent,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        isCyber
-                                            ? 'PLAYER_1 // CLASS: FLUTTER_ARCHITECT (LVL 37)'
-                                            : 'PLAYER 1 • CLASS: SENIOR FLUTTER DEVELOPER',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: context.bodySmall.copyWith(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          color: accent,
-                                        ),
-                                      ),
+                              child: Text(
+                                'COMMANDER_01 // CLASS: SENIOR FLUTTER ARCHITECT (LVL 37)',
+                                overflow: TextOverflow.ellipsis,
+                                style: context.bodySmall.copyWith(
+                                  fontSize: 13,
+                                  letterSpacing: 2.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: accent,
+                                  shadows: [
+                                    Shadow(
+                                      color: accent.withValues(alpha: 0.55),
+                                      blurRadius: 12,
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 16),
                             if (showImage)
                               MouseRegion(
                                 cursor: SystemMouseCursors.click,
@@ -158,7 +144,7 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
                                     message: 'Tap Dash for +20 XP!',
                                     child: Image.asset(
                                       'assets/images/dash/dash1.png',
-                                      height: 56,
+                                      height: 54,
                                     ),
                                   ),
                                 ),
@@ -170,7 +156,9 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
                           "Hi, I'm",
                           style: context.displaySmall.copyWith(
                             fontSize: 22,
-                            color: context.primaryColor.withOpacity(0.75),
+                            letterSpacing: 1.5,
+                            color:
+                                context.primaryColor.withValues(alpha: 0.72),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -180,53 +168,57 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
                               .textTheme
                               .displayMedium
                               ?.copyWith(
-                                fontSize: 54,
-                                height: 1.08,
-                                letterSpacing: -1.0,
+                                fontSize: 60,
+                                height: 1.05,
+                                letterSpacing: -1.2,
+                                shadows: [
+                                  Shadow(
+                                    color: accent.withValues(alpha: 0.25),
+                                    blurRadius: 24,
+                                  ),
+                                ],
                               ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 540),
+                          constraints: const BoxConstraints(maxWidth: 560),
                           child: Text(
-                            'Flutter Developer and Fitness Enthusiast from Tripunithura, Kerala — explore quests below, power up skills, and squash bugs to level up!',
+                            'Flutter Developer & Fitness Enthusiast from Tripunithura, Kerala — navigate the open-air astral HUD below, overclock skill stars, and intercept rogue bugs to level up!',
                             style: context.displaySmall.copyWith(
                               fontSize: 20,
-                              height: 1.45,
-                              color: context.primaryColor.withOpacity(0.82),
+                              height: 1.5,
+                              color:
+                                  context.primaryColor.withValues(alpha: 0.84),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 22),
-                        // Interactive RPG Stat Bars
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 500),
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 10,
-                            children: [
-                              _HeroRpgStatChip(
-                                label: 'FLUTTER & DART',
-                                stat: '98 / 100',
-                                progress: 0.98,
-                                color: accent,
-                              ),
-                              _HeroRpgStatChip(
-                                label: 'CLEAN ARCH & BLOC',
-                                stat: '95 / 100',
-                                progress: 0.95,
-                                color: secondary,
-                              ),
-                              _HeroRpgStatChip(
-                                label: 'STAMINA & FITNESS',
-                                stat: '99 / 100',
-                                progress: 0.99,
-                                color: const Color(0xFF10B981),
-                              ),
-                            ],
-                          ),
-                        ),
                         const SizedBox(height: 28),
+                        // Open-Air Circular Arc Stat Gauges (Zero Box Containers)
+                        Wrap(
+                          spacing: 28,
+                          runSpacing: 16,
+                          children: [
+                            _OpenAirStatRing(
+                              label: 'FLUTTER & DART',
+                              valueText: '98%',
+                              progress: 0.98,
+                              color: accent,
+                            ),
+                            _OpenAirStatRing(
+                              label: 'CLEAN ARCH & BLOC',
+                              valueText: '95%',
+                              progress: 0.95,
+                              color: secondary,
+                            ),
+                            const _OpenAirStatRing(
+                              label: 'FITNESS STAMINA',
+                              valueText: '99%',
+                              progress: 0.99,
+                              color: Color(0xFF10B981),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
                         DownloadCvBtn(
                           onExploreProjects: widget.onExploreProjects,
                           onPlayArcade: widget.onPlayArcade,
@@ -249,16 +241,16 @@ class _HomeScreenLargeState extends State<HomeScreenLarge>
   }
 }
 
-class _HeroRpgStatChip extends StatelessWidget {
-  const _HeroRpgStatChip({
+class _OpenAirStatRing extends StatelessWidget {
+  const _OpenAirStatRing({
     required this.label,
-    required this.stat,
+    required this.valueText,
     required this.progress,
     required this.color,
   });
 
   final String label;
-  final String stat;
+  final String valueText;
   final double progress;
   final Color color;
 
@@ -270,58 +262,103 @@ class _HeroRpgStatChip extends StatelessWidget {
         onTap: () {
           GamificationController.instance.addXp(
             10,
-            reason: 'Inspected $label stat!',
+            reason: 'Scanned $label reactor stat!',
             uniqueKey: 'hero_stat_$label',
           );
         },
-        child: Container(
-          width: 155,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withOpacity(0.35)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      label,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.bodySmall.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    stat,
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CustomPaint(
+                painter: _StatArcPainter(
+                  progress: progress,
+                  color: color,
+                  trackColor: context.primaryColor.withValues(alpha: 0.14),
+                ),
+                child: Center(
+                  child: Text(
+                    valueText,
                     style: context.bodySmall.copyWith(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: color,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 5,
-                  backgroundColor: context.primaryColor.withOpacity(0.12),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: context.bodySmall.copyWith(
+                    fontSize: 11.5,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'REACTOR ONLINE',
+                  style: context.bodySmall.copyWith(
+                    fontSize: 10,
+                    letterSpacing: 1.0,
+                    color: color.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _StatArcPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color trackColor;
+
+  _StatArcPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 3;
+
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    final arcPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 3.2;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * progress,
+      false,
+      arcPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _StatArcPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
 }

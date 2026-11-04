@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
@@ -9,7 +11,6 @@ import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/about_me/loading_abt_me_container.dart';
 import 'package:spnk/views/screens/screen_section.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
-import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 
 class AboutMeScreen extends StatefulWidget {
   const AboutMeScreen({super.key});
@@ -18,7 +19,9 @@ class AboutMeScreen extends StatefulWidget {
   State<AboutMeScreen> createState() => _AboutMeScreenState();
 }
 
-class _AboutMeScreenState extends State<AboutMeScreen> {
+class _AboutMeScreenState extends State<AboutMeScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _compassController;
   int _selectedPerkIndex = 0;
 
   static const _perks = [
@@ -52,6 +55,21 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _compassController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _compassController.dispose();
+    super.dispose();
+  }
+
   void _selectPerk(int index) {
     final item = _perks[index];
     setState(() {
@@ -60,7 +78,7 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
     GamificationController.instance.completeQuest('lore_reader');
     GamificationController.instance.addXp(
       15,
-      reason: 'Unlocked ${item.$2} Perk (${item.$4})!',
+      reason: 'Aligned ${item.$2} Star Perk (${item.$4})!',
       uniqueKey: 'attr_${item.$2}',
     );
   }
@@ -88,146 +106,49 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
                 final activePerk = _perks[_selectedPerkIndex];
                 final isDesktop = context.isLargeDevice;
 
-                return PortfolioStyledCard(
-                  width: double.infinity,
-                  cyberHeader: '~/spnk/character_lore_holodeck.md',
-                  onTap: () {
-                    GamificationController.instance
-                        .completeQuest('lore_reader');
-                  },
-                  padding: EdgeInsets.all(isDesktop ? 36 : 22),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top Header Bar
-                      Row(
+                return isDesktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  accent.withValues(alpha: 0.22),
-                                  secondary.withValues(alpha: 0.14),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: accent.withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.auto_stories_rounded,
-                              color: accent,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Character Lore & Origin Holodeck',
-                                  style: context.displaySmall.copyWith(
-                                    fontSize: isDesktop ? 22 : 19,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Spawn Point: Tripunithura, Ernakulam, Kerala, India',
-                                  style: context.bodySmall.copyWith(
-                                    color: context.primaryColor
-                                        .withValues(alpha: 0.65),
-                                  ),
-                                ),
-                              ],
+                            flex: 6,
+                            child: _buildOpenAirNarrative(
+                              context,
+                              state.content.trim(),
+                              accent,
+                              secondary,
                             ),
                           ),
-                          if (!context.isMobileDevice)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: secondary.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: secondary.withValues(alpha: 0.45),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.touch_app_rounded,
-                                    size: 14,
-                                    color: secondary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'SWITCH PERK ORBS FOR +15 XP',
-                                    style: context.bodySmall.copyWith(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: secondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          const SizedBox(width: 48),
+                          Expanded(
+                            flex: 5,
+                            child: _buildOpenAirPerkCompass(
+                              context,
+                              activePerk,
+                              accent,
+                              secondary,
                             ),
+                          ),
                         ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Asymmetric Editorial Split (Desktop) or Unified Flow (Mobile)
-                      if (isDesktop)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 6,
-                              child: _buildNarrativePanel(
-                                context,
-                                state.content.trim(),
-                                accent,
-                                secondary,
-                              ),
-                            ),
-                            const SizedBox(width: 28),
-                            Expanded(
-                              flex: 5,
-                              child: _buildPerkSpotlightConsole(
-                                context,
-                                activePerk,
-                                accent,
-                                secondary,
-                                themeState,
-                              ),
-                            ),
-                          ],
-                        )
-                      else ...[
-                        _buildNarrativePanel(
-                          context,
-                          state.content.trim(),
-                          accent,
-                          secondary,
-                        ),
-                        const SizedBox(height: 22),
-                        _buildPerkSpotlightConsole(
-                          context,
-                          activePerk,
-                          accent,
-                          secondary,
-                          themeState,
-                        ),
-                      ],
-                    ],
-                  ),
-                );
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildOpenAirNarrative(
+                            context,
+                            state.content.trim(),
+                            accent,
+                            secondary,
+                          ),
+                          const SizedBox(height: 36),
+                          _buildOpenAirPerkCompass(
+                            context,
+                            activePerk,
+                            accent,
+                            secondary,
+                          ),
+                        ],
+                      );
               },
             );
           },
@@ -237,194 +158,176 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
     );
   }
 
-  Widget _buildNarrativePanel(
+  Widget _buildOpenAirNarrative(
     BuildContext context,
     String narrative,
     Color accent,
     Color secondary,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: context.primaryColor.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: accent.withValues(alpha: 0.18),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: accent,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.6),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'ORIGIN TRANSMISSION // BIOGRAPHY',
-                    style: context.bodySmall.copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: accent,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                narrative,
-                style: context.bodyLarge.copyWith(
-                  height: 1.65,
-                  fontSize: context.isLargeDevice ? 19 : 16.5,
-                  color: context.primaryColor.withValues(alpha: 0.9),
+    return CustomPaint(
+      painter: _LoreSpinePainter(accent: accent, secondary: secondary),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 24, top: 6, bottom: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_stories_rounded,
+                  color: accent,
+                  size: 18,
                 ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    'ORIGIN CODEX // SPAWN: TRIPUNITHURA, KERALA, INDIA',
+                    style: context.bodySmall.copyWith(
+                      fontSize: 12,
+                      letterSpacing: 1.8,
+                      fontWeight: FontWeight.bold,
+                      color: accent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              narrative,
+              style: context.bodyLarge.copyWith(
+                height: 1.7,
+                fontSize: context.isLargeDevice ? 20 : 17,
+                color: context.primaryColor.withValues(alpha: 0.9),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPerkSpotlightConsole(
+  Widget _buildOpenAirPerkCompass(
     BuildContext context,
     (IconData, String, String, String, String) activePerk,
     Color accent,
     Color secondary,
-    ThemeState themeState,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: themeState.isDark ? 0.12 : 0.08),
-            secondary.withValues(alpha: themeState.isDark ? 0.08 : 0.04),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.35),
-          width: 1.2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'ACTIVE PERK MATRIX',
-                style: context.bodySmall.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.3,
-                  color: context.primaryColor.withValues(alpha: 0.65),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '0${_selectedPerkIndex + 1} / 0${_perks.length}',
-                  style: context.bodySmall.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: accent,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+    const double compassSize = 260;
+    const Offset center = Offset(compassSize / 2, compassSize / 2);
+    const double radius = 92;
 
-          // Interactive Perk Selector Dock (No Grid/List — tactile orb selector bar)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(_perks.length, (index) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'ASTRAL PERK COMPASS // TAP ANY STAR (+15 XP)',
+          style: context.bodySmall.copyWith(
+            fontSize: 11,
+            letterSpacing: 1.8,
+            fontWeight: FontWeight.bold,
+            color: secondary,
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: compassSize,
+          height: compassSize,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _compassController,
+                  builder: (context, _) {
+                    return CustomPaint(
+                      painter: _PerkCompassPainter(
+                        phase: _compassController.value,
+                        selectedIndex: _selectedPerkIndex,
+                        accent: accent,
+                        secondary: secondary,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Center Active Perk Readout (Open-Air, No Box)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    activePerk.$1,
+                    color: accent,
+                    size: 28,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    activePerk.$4,
+                    style: context.bodySmall.copyWith(
+                      fontSize: 12,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.bold,
+                      color: secondary,
+                      shadows: [
+                        Shadow(
+                          color: secondary.withValues(alpha: 0.7),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              // 4 Orbiting Perk Star Beacons in Open Space
+              ...List.generate(_perks.length, (index) {
                 final item = _perks[index];
                 final isSelected = index == _selectedPerkIndex;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: InkWell(
-                    onTap: () => _selectPerk(index),
-                    borderRadius: BorderRadius.circular(999),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 14 : 12,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? accent
-                            : context.primaryColor.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: isSelected
-                              ? accent
-                              : accent.withValues(alpha: 0.25),
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: accent.withValues(alpha: 0.35),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                final angle = (-math.pi / 2) + (index * math.pi / 2);
+                final pos = Offset(
+                  center.dx + radius * math.cos(angle),
+                  center.dy + radius * math.sin(angle),
+                );
+
+                return Positioned(
+                  left: pos.dx - 46,
+                  top: pos.dy - 24,
+                  width: 92,
+                  height: 48,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => _selectPerk(index),
+                      behavior: HitTestBehavior.opaque,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             item.$1,
-                            size: 16,
+                            size: isSelected ? 22 : 18,
                             color: isSelected
-                                ? (themeState.isDark
-                                    ? const Color(0xFF090D16)
-                                    : Colors.white)
-                                : accent,
+                                ? accent
+                                : context.primaryColor.withValues(alpha: 0.55),
                           ),
-                          const SizedBox(width: 7),
+                          const SizedBox(height: 2),
                           Text(
-                            item.$2,
+                            item.$2.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: context.bodySmall.copyWith(
-                              fontSize: 13,
+                              fontSize: 10.5,
+                              letterSpacing: 1.1,
                               fontWeight: FontWeight.bold,
                               color: isSelected
-                                  ? (themeState.isDark
-                                      ? const Color(0xFF090D16)
-                                      : Colors.white)
-                                  : context.primaryColor.withValues(alpha: 0.85),
+                                  ? accent
+                                  : context.primaryColor.withValues(alpha: 0.7),
+                              shadows: isSelected
+                                  ? [
+                                      Shadow(
+                                        color: accent.withValues(alpha: 0.8),
+                                        blurRadius: 10,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           ),
                         ],
@@ -433,123 +336,122 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
                   ),
                 );
               }),
-            ),
+            ],
           ),
-          const SizedBox(height: 20),
-
-          // Spotlight Display for Selected Perk
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.04, 0),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              );
-            },
-            child: Container(
-              key: ValueKey(_selectedPerkIndex),
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: context.scaffoldColor.withValues(
-                  alpha: themeState.isDark ? 0.55 : 0.75,
-                ),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.25),
+        ),
+        const SizedBox(height: 14),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          child: Column(
+            key: ValueKey(_selectedPerkIndex),
+            children: [
+              Text(
+                '${activePerk.$2.toUpperCase()} // ${activePerk.$3.toUpperCase()}',
+                textAlign: TextAlign.center,
+                style: context.displaySmall.copyWith(
+                  fontSize: 18,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.bold,
+                  color: accent,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(
-                          activePerk.$1,
-                          color: accent,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    activePerk.$2,
-                                    style: context.displaySmall.copyWith(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: secondary.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: secondary.withValues(alpha: 0.45),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    activePerk.$4,
-                                    style: context.bodySmall.copyWith(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: secondary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              activePerk.$3,
-                              style: context.bodySmall.copyWith(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w600,
-                                color: accent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    activePerk.$5,
-                    style: context.bodyMedium.copyWith(
-                      fontSize: 15,
-                      height: 1.5,
-                      color: context.primaryColor.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 8),
+              Text(
+                activePerk.$5,
+                textAlign: TextAlign.center,
+                style: context.bodyMedium.copyWith(
+                  fontSize: 15.5,
+                  height: 1.5,
+                  color: context.primaryColor.withValues(alpha: 0.82),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
+
+class _LoreSpinePainter extends CustomPainter {
+  final Color accent;
+  final Color secondary;
+
+  _LoreSpinePainter({required this.accent, required this.secondary});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          accent,
+          secondary,
+          secondary.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, 4, size.height))
+      ..strokeWidth = 2.0;
+
+    canvas.drawLine(const Offset(2, 0), Offset(2, size.height), linePaint);
+    canvas.drawCircle(const Offset(2, 12), 4.5, Paint()..color = accent);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LoreSpinePainter oldDelegate) =>
+      oldDelegate.accent != accent;
+}
+
+class _PerkCompassPainter extends CustomPainter {
+  final double phase;
+  final int selectedIndex;
+  final Color accent;
+  final Color secondary;
+
+  _PerkCompassPainter({
+    required this.phase,
+    required this.selectedIndex,
+    required this.accent,
+    required this.secondary,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // Outer & inner compass rings
+    final ringPaint = Paint()
+      ..color = accent.withValues(alpha: 0.22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1;
+    canvas.drawCircle(center, 92, ringPaint);
+    canvas.drawCircle(
+      center,
+      46,
+      Paint()
+        ..color = secondary.withValues(alpha: 0.28)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // Pointer beam to selected perk star
+    final targetAngle = (-math.pi / 2) + (selectedIndex * math.pi / 2);
+    final targetPos = Offset(
+      center.dx + 72 * math.cos(targetAngle),
+      center.dy + 72 * math.sin(targetAngle),
+    );
+    canvas.drawLine(
+      center,
+      targetPos,
+      Paint()
+        ..color = accent.withValues(alpha: 0.8)
+        ..strokeWidth = 2.0,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PerkCompassPainter oldDelegate) =>
+      oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.phase != phase ||
+      oldDelegate.accent != accent;
 }

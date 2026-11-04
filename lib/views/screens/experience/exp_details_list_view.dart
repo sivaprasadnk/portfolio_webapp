@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/domain/entity/experience_details.dart';
@@ -17,8 +19,25 @@ class ExpDetailsListView extends StatefulWidget {
   State<ExpDetailsListView> createState() => _ExpDetailsListViewState();
 }
 
-class _ExpDetailsListViewState extends State<ExpDetailsListView> {
+class _ExpDetailsListViewState extends State<ExpDetailsListView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _waveController;
   int _selectedStageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _waveController.dispose();
+    super.dispose();
+  }
 
   void _selectStage(int index, ExperienceDetails exp) {
     final stageNum = exp.order + 1;
@@ -28,7 +47,7 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
     GamificationController.instance.completeQuest('career_chronicler');
     GamificationController.instance.addXp(
       15,
-      reason: 'Cleared Stage 0$stageNum: ${exp.title}!',
+      reason: 'Activated Warp Gate 0$stageNum: ${exp.title}!',
       uniqueKey: 'exp_stage_$stageNum',
     );
   }
@@ -57,88 +76,53 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
               final stageNum = activeExp.order + 1;
               final isDesktop = context.isLargeDevice;
 
-              return PortfolioStyledCard(
-                width: double.infinity,
-                cyberHeader:
-                    '~/odyssey/stage_0${stageNum}_${activeExp.orgName.split(' ').first.toLowerCase()}.log',
-                onTap: () => _selectStage(activeIdx, activeExp),
-                padding: EdgeInsets.all(isDesktop ? 36 : 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Interactive Flight-Path Trajectory Selector Bar
-                    _buildTrajectoryBar(
-                      context,
-                      stages,
-                      activeIdx,
-                      accent,
-                      secondary,
-                      themeState,
-                    ),
-                    const SizedBox(height: 28),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Open-Air Sine-Wave Chrono Warp Path (Zero Box Containers)
+                  _buildOpenAirWarpWave(
+                    context,
+                    stages,
+                    activeIdx,
+                    accent,
+                    secondary,
+                  ),
+                  const SizedBox(height: 36),
 
-                    // 2. Single Cinematic Stage Spotlight Theatre
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 350),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0.03, 0.0),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: Container(
-                        key: ValueKey(activeIdx),
-                        padding: EdgeInsets.all(isDesktop ? 28 : 20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              accent.withValues(
-                                alpha: themeState.isDark ? 0.14 : 0.08,
-                              ),
-                              secondary.withValues(
-                                alpha: themeState.isDark ? 0.07 : 0.04,
-                              ),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: accent.withValues(alpha: 0.35),
-                            width: 1.2,
-                          ),
-                        ),
+                  // 2. Open-Air Holographic Stage Projection (Zero Box Containers)
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 340),
+                    child: CustomPaint(
+                      key: ValueKey(activeIdx),
+                      painter: _StageHorizonPainter(
+                        accent: accent,
+                        secondary: secondary,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         child: isDesktop
                             ? Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Expanded(
                                     flex: 6,
-                                    child: _buildStagePrimaryInfo(
+                                    child: _buildOpenAirStageInfo(
                                       context,
                                       activeExp,
                                       stageNum,
                                       accent,
                                       secondary,
-                                      themeState,
                                     ),
                                   ),
-                                  const SizedBox(width: 32),
+                                  const SizedBox(width: 44),
                                   Expanded(
                                     flex: 5,
-                                    child: _buildStageLootCluster(
+                                    child: _buildOpenAirSkillRunes(
                                       context,
                                       activeExp,
                                       stageNum,
                                       accent,
                                       secondary,
-                                      themeState,
                                     ),
                                   ),
                                 ],
@@ -146,29 +130,27 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildStagePrimaryInfo(
+                                  _buildOpenAirStageInfo(
                                     context,
                                     activeExp,
                                     stageNum,
                                     accent,
                                     secondary,
-                                    themeState,
                                   ),
-                                  const SizedBox(height: 22),
-                                  _buildStageLootCluster(
+                                  const SizedBox(height: 28),
+                                  _buildOpenAirSkillRunes(
                                     context,
                                     activeExp,
                                     stageNum,
                                     accent,
                                     secondary,
-                                    themeState,
                                   ),
                                 ],
                               ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
           );
@@ -177,13 +159,12 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
     );
   }
 
-  Widget _buildTrajectoryBar(
+  Widget _buildOpenAirWarpWave(
     BuildContext context,
     List<ExperienceDetails> stages,
     int activeIdx,
     Color accent,
     Color secondary,
-    ThemeState themeState,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,27 +173,14 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.timeline_rounded,
-                    color: accent,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      'CAREER ODYSSEY FLIGHT-PATH // SELECT STAGE BEACON',
-                      style: context.bodySmall.copyWith(
-                        fontSize: context.isMobileDevice ? 10.5 : 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
-                        color: context.primaryColor.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Text(
+                'CHRONO WARP ODYSSEY // SELECT STAR-GATE BEACON (+15 XP)',
+                style: context.bodySmall.copyWith(
+                  fontSize: context.isMobileDevice ? 10.5 : 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.8,
+                  color: accent,
+                ),
               ),
             ),
             Row(
@@ -224,150 +192,183 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
                         (activeIdx - 1 + stages.length) % stages.length;
                     _selectStage(next, stages[next]);
                   },
-                  icon: Icon(Icons.arrow_back_rounded, color: accent, size: 20),
-                  tooltip: 'Previous Stage',
+                  icon: Icon(Icons.west_rounded, color: accent, size: 18),
                 ),
                 IconButton(
                   onPressed: () {
                     final next = (activeIdx + 1) % stages.length;
                     _selectStage(next, stages[next]);
                   },
-                  icon: Icon(
-                    Icons.arrow_forward_rounded,
-                    color: accent,
-                    size: 20,
-                  ),
-                  tooltip: 'Next Stage',
+                  icon: Icon(Icons.east_rounded, color: accent, size: 18),
                 ),
               ],
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            // Glowing connecting track line
-            Container(
-              height: 3,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    accent.withValues(alpha: 0.15),
-                    accent,
-                    secondary,
-                    secondary.withValues(alpha: 0.15),
-                  ],
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 86,
+          width: double.infinity,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _waveController,
+                  builder: (context, _) {
+                    return CustomPaint(
+                      painter: _ChronoWavePainter(
+                        phase: _waveController.value,
+                        accent: accent,
+                        secondary: secondary,
+                      ),
+                    );
+                  },
                 ),
-                borderRadius: BorderRadius.circular(999),
               ),
-            ),
-            // Stage Beacons along the flight path
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(stages.length, (index) {
-                final exp = stages[index];
-                final isSelected = index == activeIdx;
-                final stageNo = exp.order + 1;
-                final shortOrg = exp.orgName.split(' ').first;
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(stages.length, (index) {
+                  final exp = stages[index];
+                  final isSelected = index == activeIdx;
+                  final stageNo = exp.order + 1;
+                  final shortOrg = exp.orgName.split(' ').first.toUpperCase();
 
-                return GestureDetector(
-                  onTap: () => _selectStage(index, exp),
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeOutBack,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: context.isMobileDevice ? 12 : 18,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? accent
-                            : context.scaffoldColor.withValues(
-                                alpha: themeState.isDark ? 0.92 : 0.96,
-                              ),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: isSelected
-                              ? accent
-                              : accent.withValues(alpha: 0.4),
-                          width: isSelected ? 2.0 : 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(
-                              alpha: isSelected ? 0.42 : 0.10,
-                            ),
-                            blurRadius: isSelected ? 18 : 6,
-                          ),
-                        ],
-                      ),
-                      child: Row(
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _selectStage(index, exp),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                          Text(
+                            'GATE 0$stageNo',
+                            style: context.bodySmall.copyWith(
+                              fontSize: 10.5,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.bold,
                               color: isSelected
-                                  ? (themeState.isDark
-                                      ? const Color(0xFF090D16)
-                                      : Colors.white)
-                                  : accent.withValues(alpha: 0.18),
-                            ),
-                            child: Text(
-                              '0$stageNo',
-                              style: context.bodySmall.copyWith(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? accent : accent,
-                              ),
+                                  ? accent
+                                  : context.primaryColor.withValues(alpha: 0.5),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                shortOrg,
-                                style: context.bodySmall.copyWith(
-                                  fontSize: context.isMobileDevice ? 12 : 13.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected
-                                      ? (themeState.isDark
-                                          ? const Color(0xFF090D16)
-                                          : Colors.white)
-                                      : context.primaryColor,
-                                ),
-                              ),
-                              if (!context.isMobileDevice)
-                                Text(
-                                  exp.startDate,
-                                  style: context.bodySmall.copyWith(
-                                    fontSize: 10,
-                                    color: isSelected
-                                        ? (themeState.isDark
-                                                ? const Color(0xFF090D16)
-                                                : Colors.white)
-                                            .withValues(alpha: 0.75)
-                                        : context.primaryColor
-                                            .withValues(alpha: 0.6),
-                                  ),
-                                ),
-                            ],
+                          const SizedBox(height: 6),
+                          Icon(
+                            isSelected
+                                ? Icons.flare_rounded
+                                : Icons.radio_button_checked_rounded,
+                            size: isSelected ? 26 : 18,
+                            color: isSelected ? accent : secondary,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            shortOrg,
+                            style: context.bodySmall.copyWith(
+                              fontSize: context.isMobileDevice ? 12 : 14,
+                              letterSpacing: 1.3,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected
+                                  ? accent
+                                  : context.primaryColor
+                                      .withValues(alpha: 0.75),
+                              shadows: isSelected
+                                  ? [
+                                      Shadow(
+                                        color: accent.withValues(alpha: 0.8),
+                                        blurRadius: 12,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOpenAirStageInfo(
+    BuildContext context,
+    ExperienceDetails activeExp,
+    int stageNum,
+    Color accent,
+    Color secondary,
+  ) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Giant Sculptural Open-Air Stage Watermark
+        Positioned(
+          left: -8,
+          top: -28,
+          child: IgnorePointer(
+            child: Text(
+              '0$stageNum',
+              style: context.displayMedium.copyWith(
+                fontSize: context.isLargeDevice ? 110 : 80,
+                fontWeight: FontWeight.bold,
+                color: accent.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'WARP GATE 0$stageNum // ${activeExp.startDate.toUpperCase()} — ${activeExp.endDate.toUpperCase()}',
+              style: context.bodySmall.copyWith(
+                fontSize: 12,
+                letterSpacing: 2.0,
+                fontWeight: FontWeight.bold,
+                color: accent,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              activeExp.title,
+              style: context.displaySmall.copyWith(
+                fontSize: context.isLargeDevice ? 36 : 26,
+                height: 1.15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.castle_rounded,
+                  size: 18,
+                  color: secondary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'GUILD: ${activeExp.orgName.toUpperCase()}',
+                    style: context.bodyMedium.copyWith(
+                      fontSize: 16,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.bold,
+                      color: secondary,
+                    ),
                   ),
-                );
-              }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            OpenAirActionTrigger(
+              label: 'Synchronize Stage Telemetry (+15 XP)',
+              icon: Icons.bolt_rounded,
+              color: accent,
+              onTap: () => _selectStage(_selectedStageIndex, activeExp),
             ),
           ],
         ),
@@ -375,187 +376,135 @@ class _ExpDetailsListViewState extends State<ExpDetailsListView> {
     );
   }
 
-  Widget _buildStagePrimaryInfo(
+  Widget _buildOpenAirSkillRunes(
     BuildContext context,
     ExperienceDetails activeExp,
     int stageNum,
     Color accent,
     Color secondary,
-    ThemeState themeState,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 5,
-              ),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.45),
-                ),
-              ),
-              child: Text(
-                'STAGE 0$stageNum • ${activeExp.startDate} – ${activeExp.endDate}',
-                style: context.bodySmall.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: accent,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 9,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '✓ CLEARED (+15 XP)',
-                style: context.bodySmall.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF10B981),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
         Text(
-          activeExp.title,
-          style: context.displaySmall.copyWith(
-            fontSize: context.isLargeDevice ? 30 : 23,
+          'ACQUIRED STAR-RUNES & ARSENAL',
+          style: context.bodySmall.copyWith(
+            fontSize: 11.5,
+            letterSpacing: 2.0,
             fontWeight: FontWeight.bold,
+            color: context.primaryColor.withValues(alpha: 0.65),
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: secondary.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.castle_rounded,
-                size: 18,
-                color: secondary,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Guild: ${activeExp.orgName}',
-                style: context.bodyMedium.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: context.primaryColor.withValues(alpha: 0.85),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 24,
+          runSpacing: 16,
+          children: activeExp.detailsList.map((desc) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 15,
+                  color: accent,
                 ),
-              ),
-            ),
-          ],
+                const SizedBox(width: 8),
+                Text(
+                  desc.toUpperCase(),
+                  style: context.bodySmall.copyWith(
+                    fontSize: 14,
+                    letterSpacing: 1.3,
+                    fontWeight: FontWeight.bold,
+                    color: context.primaryColor.withValues(alpha: 0.9),
+                    shadows: [
+                      Shadow(
+                        color: accent.withValues(alpha: 0.45),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
         ),
       ],
     );
   }
+}
 
-  Widget _buildStageLootCluster(
-    BuildContext context,
-    ExperienceDetails activeExp,
-    int stageNum,
-    Color accent,
-    Color secondary,
-    ThemeState themeState,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.scaffoldColor.withValues(
-          alpha: themeState.isDark ? 0.65 : 0.82,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.22),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 16,
-                color: accent,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'ACQUIRED TECH ARSENAL & LOOT',
-                style: context.bodySmall.copyWith(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  color: context.primaryColor.withValues(alpha: 0.65),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: activeExp.detailsList.map((desc) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      accent.withValues(alpha: 0.14),
-                      secondary.withValues(alpha: 0.10),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: accent.withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.bolt_rounded,
-                      size: 15,
-                      color: accent,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      desc,
-                      style: context.bodySmall.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+class _ChronoWavePainter extends CustomPainter {
+  final double phase;
+  final Color accent;
+  final Color secondary;
+
+  _ChronoWavePainter({
+    required this.phase,
+    required this.accent,
+    required this.secondary,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cy = size.height / 2;
+    final path = Path();
+    for (double x = 0; x <= size.width; x += 6) {
+      final y = cy +
+          10 * math.sin((x / size.width * 2 * math.pi) + (phase * 2 * math.pi));
+      if (x == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    final wavePaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          accent.withValues(alpha: 0.1),
+          accent.withValues(alpha: 0.65),
+          secondary.withValues(alpha: 0.65),
+          secondary.withValues(alpha: 0.1),
         ],
-      ),
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    canvas.drawPath(path, wavePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ChronoWavePainter oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.accent != accent;
+}
+
+class _StageHorizonPainter extends CustomPainter {
+  final Color accent;
+  final Color secondary;
+
+  _StageHorizonPainter({required this.accent, required this.secondary});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          accent.withValues(alpha: 0.5),
+          secondary.withValues(alpha: 0.2),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..strokeWidth = 1.2;
+
+    canvas.drawLine(const Offset(0, 0), Offset(size.width * 0.75, 0), paint);
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(size.width * 0.45, size.height),
+      paint,
     );
   }
+
+  @override
+  bool shouldRepaint(covariant _StageHorizonPainter oldDelegate) =>
+      oldDelegate.accent != accent;
 }

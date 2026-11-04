@@ -36,7 +36,6 @@ class _TabItemState extends State<TabItem> {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         final accent = themeState.accentColor;
-        final isCyber = themeState.portfolioStyle == PortfolioStyle.cyber;
 
         return BlocBuilder<ScreenBloc, ScreenState>(
           builder: (context, screenState) {
@@ -46,6 +45,7 @@ class _TabItemState extends State<TabItem> {
               onEnter: (_) => setState(() => isHovering = true),
               onExit: (_) => setState(() => isHovering = false),
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   context
                       .read<ScreenBloc>()
@@ -59,57 +59,52 @@ class _TabItemState extends State<TabItem> {
                     );
                   }
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? accent.withValues(
-                            alpha: themeState.isDark ? 0.22 : 0.14,
-                          )
-                        : (isHovering
-                            ? context.primaryColor.withValues(alpha: 0.06)
-                            : Colors.transparent),
-                    borderRadius: BorderRadius.circular(isCyber ? 5 : 10),
-                    border: Border.all(
-                      color: isSelected
-                          ? accent.withValues(alpha: 0.6)
-                          : Colors.transparent,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (isSelected) ...[
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: accent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
                       AutoSizeText(
-                        isCyber
-                            ? '/${widget.title.toLowerCase().replaceAll(' ', '_')}'
-                            : widget.title,
+                        widget.title.toUpperCase(),
                         maxLines: 1,
                         style: context.displaySmall.copyWith(
-                          fontSize: 14,
+                          fontSize: 13,
+                          letterSpacing: 1.5,
                           fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w600,
+                              isSelected ? FontWeight.bold : FontWeight.w600,
                           color: isSelected
-                              ? (themeState.isDark ? Colors.white : accent)
+                              ? accent
                               : (isHovering
                                   ? accent
                                   : context.primaryColor
-                                      .withValues(alpha: 0.78)),
+                                      .withValues(alpha: 0.72)),
+                          shadows: isSelected
+                              ? [
+                                  Shadow(
+                                    color: accent.withValues(alpha: 0.75),
+                                    blurRadius: 12,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        height: 2,
+                        width: isSelected ? 24 : (isHovering ? 12 : 0),
+                        decoration: BoxDecoration(
+                          color: accent,
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: accent.withValues(alpha: 0.85),
+                                    blurRadius: 8,
+                                  ),
+                                ]
+                              : null,
                         ),
                       ),
                     ],

@@ -150,15 +150,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               body: Stack(
                 children: [
-                  // Single-page smooth-scrolling gamified content
+                  // Open-air containerless Astral Cosmos stream
                   SingleChildScrollView(
                     controller: _scrollController,
-                    padding: const EdgeInsets.only(top: 96, bottom: 32),
+                    padding: const EdgeInsets.only(top: 90, bottom: 36),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 0. HERO SECTION
-                        Container(
+                        // 0. HERO SECTOR
+                        KeyedSubtree(
                           key: _sectionKeys[Screen.home],
                           child: context.screenWidth < 995
                               ? HomeScreenSmall(
@@ -172,45 +172,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onPlayArcade: _scrollToArcade,
                                 ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 36),
 
-                        // INTERACTIVE MINI-GAME ARCADE SECTION
-                        Container(
+                        // OPEN-AIR RADAR INTERCEPTOR SIMULATOR
+                        KeyedSubtree(
                           key: _arcadeKey,
                           child: const DashBugHuntGameSection(),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 44),
 
-                        // 1. ABOUT ME SECTION (CHARACTER LORE)
-                        Container(
+                        // 1. ABOUT ME SECTOR (LORE & PERK COMPASS)
+                        KeyedSubtree(
                           key: _sectionKeys[Screen.aboutMe],
                           child: const AboutMeScreen(),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 44),
 
-                        // 2. SKILLS SECTION (SKILL TREE POWER-UPS)
-                        Container(
+                        // 2. SKILLS SECTOR (ASTRAL CONSTELLATION)
+                        KeyedSubtree(
                           key: _sectionKeys[Screen.skills],
                           child: SkillsScreen(),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 44),
 
-                        // 3. EXPERIENCE SECTION (CAMPAIGN STAGES)
-                        Container(
+                        // 3. EXPERIENCE SECTOR (CHRONO WARP ODYSSEY)
+                        KeyedSubtree(
                           key: _sectionKeys[Screen.experience],
                           child: ExperienceScreen(),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 44),
 
-                        // 4. PROJECTS SECTION (BOSS MISSIONS)
-                        Container(
+                        // 4. PROJECTS SECTOR (HOLOGRAPHIC MISSION PROJECTOR)
+                        KeyedSubtree(
                           key: _sectionKeys[Screen.projects],
                           child: ProjectsScreen(),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 44),
 
-                        // 5. CONTACT ME SECTION (GUILD COMMS)
-                        Container(
+                        // 5. CONTACT ME SECTOR (SUBSPACE COMMS ARRAY)
+                        KeyedSubtree(
                           key: _sectionKeys[Screen.contactMe],
                           child: ContactMeScreen(),
                         ),
@@ -233,19 +233,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       left: _mousePosition.dx - 35,
                       top: _mousePosition.dy - 35,
                       child: IgnorePointer(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 500),
+                        child: SizedBox(
                           width: 70,
                           height: 70,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: state.accentColor.withOpacity(0.32),
-                                spreadRadius: 40,
-                                blurRadius: 90,
-                              ),
-                            ],
+                          child: CustomPaint(
+                            painter: _CursorAuraPainter(
+                              color: state.accentColor.withValues(alpha: 0.28),
+                            ),
                           ),
                         ),
                       ),
@@ -269,167 +263,84 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                  // Floating Achievement & +XP Toast Overlay
+                  // Open-Air Floating Achievement & +XP Banner
                   const AchievementToastBanner(),
 
-                  // Sticky Top Navbar + Player HUD
+                  // Open-Air Top Astral HUD Horizon (Zero Box Containers)
                   Positioned(
-                    top: 14,
-                    left: isDesktop ? context.screenWidth * 0.04 : 12,
-                    right: isDesktop ? context.screenWidth * 0.04 : 12,
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1440),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                            state.portfolioStyle == PortfolioStyle.cyber
-                                ? 10
-                                : 18,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: CustomPaint(
+                          painter: _HudHorizonLinePainter(
+                            accent: state.accentColor,
+                            secondary: state.secondaryAccent,
                           ),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                            child: Container(
-                              height: 64,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: context.isMobileDevice ? 10 : 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.scaffoldColor.withValues(
-                                  alpha: state.isDark ? 0.76 : 0.88,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isDesktop
+                                  ? context.screenWidth * 0.05
+                                  : 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                LogoText(
+                                  onTap: () => _scrollToSection(Screen.home),
                                 ),
-                                borderRadius: BorderRadius.circular(
-                                  state.portfolioStyle == PortfolioStyle.cyber
-                                      ? 10
-                                      : 18,
-                                ),
-                                border: Border.all(
-                                  color: state.cardBorderColor,
-                                  width: 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(
-                                      alpha: state.isDark ? 0.35 : 0.08,
-                                    ),
-                                    blurRadius: 24,
-                                    offset: const Offset(0, 8),
+                                const SizedBox(width: 18),
+                                GamificationHudPill(
+                                  compact: context.screenWidth < 1460,
+                                  onOpenQuests: () => showQuestLogModal(
+                                    context,
+                                    onJumpToArcade: _scrollToArcade,
                                   ),
+                                ),
+                                if (context.screenWidth > 880) ...[
+                                  const SizedBox(width: 18),
+                                  const StyleSwitcherBar(compact: true),
                                 ],
-                              ),
-                              child: Row(
-                                children: [
-                                  LogoText(
-                                    onTap: () => _scrollToSection(Screen.home),
+                                const Spacer(),
+                                if (isDesktop) ...[
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: Screen.values
+                                        .map(
+                                          (screen) => TabItem(
+                                            title: screen.menuName,
+                                            screen: screen,
+                                            onSelect: _scrollToSection,
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    width: 1,
-                                    height: 24,
-                                    color: state.cardBorderColor,
+                                  const SizedBox(width: 18),
+                                  const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TorchIcon(),
+                                      SizedBox(width: 12),
+                                      BrightnessSwitch(),
+                                      SizedBox(width: 12),
+                                      ThemeIcon(),
+                                    ],
+                                  ),
+                                ] else ...[
+                                  const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      BrightnessSwitch(),
+                                      SizedBox(width: 12),
+                                      ThemeIcon(),
+                                    ],
                                   ),
                                   const SizedBox(width: 10),
-                                  GamificationHudPill(
-                                    compact: context.screenWidth < 1460,
-                                    onOpenQuests: () => showQuestLogModal(
-                                      context,
-                                      onJumpToArcade: _scrollToArcade,
-                                    ),
-                                  ),
-                                  if (context.screenWidth > 860) ...[
-                                    const SizedBox(width: 10),
-                                    const StyleSwitcherBar(compact: true),
-                                  ],
-                                  const Spacer(),
-                                  if (isDesktop) ...[
-                                    Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: context.primaryColor.withValues(
-                                          alpha: state.isDark ? 0.04 : 0.03,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          state.portfolioStyle ==
-                                                  PortfolioStyle.cyber
-                                              ? 7
-                                              : 13,
-                                        ),
-                                        border: Border.all(
-                                          color: state.cardBorderColor,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: Screen.values
-                                            .map(
-                                              (screen) => TabItem(
-                                                title: screen.menuName,
-                                                screen: screen,
-                                                onSelect: _scrollToSection,
-                                              ),
-                                            )
-                                            .toList(),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: context.primaryColor.withValues(
-                                          alpha: state.isDark ? 0.04 : 0.03,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          state.portfolioStyle ==
-                                                  PortfolioStyle.cyber
-                                              ? 7
-                                              : 12,
-                                        ),
-                                        border: Border.all(
-                                          color: state.cardBorderColor,
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          TorchIcon(),
-                                          SizedBox(width: 10),
-                                          BrightnessSwitch(),
-                                          SizedBox(width: 10),
-                                          ThemeIcon(),
-                                        ],
-                                      ),
-                                    ),
-                                  ] else ...[
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: context.primaryColor.withValues(
-                                          alpha: state.isDark ? 0.04 : 0.03,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: state.cardBorderColor,
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          BrightnessSwitch(),
-                                          SizedBox(width: 10),
-                                          ThemeIcon(),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const MenuIcon(),
-                                  ],
+                                  const MenuIcon(),
                                 ],
-                              ),
+                              ],
                             ),
                           ),
                         ),
@@ -446,6 +357,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _HudHorizonLinePainter extends CustomPainter {
+  final Color accent;
+  final Color secondary;
+
+  _HudHorizonLinePainter({required this.accent, required this.secondary});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          accent.withValues(alpha: 0.0),
+          accent.withValues(alpha: 0.65),
+          secondary.withValues(alpha: 0.65),
+          secondary.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, size.height - 2, size.width, 2))
+      ..strokeWidth = 1.2;
+
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(size.width, size.height),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HudHorizonLinePainter oldDelegate) =>
+      oldDelegate.accent != accent || oldDelegate.secondary != secondary;
+}
+
+class _CursorAuraPainter extends CustomPainter {
+  final Color color;
+  _CursorAuraPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 45);
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 45, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CursorAuraPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
 class SpotlightPainter extends CustomPainter {
   final Offset pointerPosition;
   final Color bgColor;
@@ -455,7 +414,7 @@ class SpotlightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.95)
+      ..color = Colors.black.withValues(alpha: 0.95)
       ..style = PaintingStyle.fill;
 
     final fullScreenPath = Path()

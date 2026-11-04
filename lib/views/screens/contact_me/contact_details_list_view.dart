@@ -46,7 +46,7 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
   Future<void> _transmitChannel(ContactDetails contactDetails) async {
     GamificationController.instance.addXp(
       25,
-      reason: 'Opened Guild Comms: ${contactDetails.title.trim()}!',
+      reason: 'Transmitted Signal on ${contactDetails.title.trim()}!',
       uniqueKey: 'contact_${contactDetails.type}',
     );
     var link = '';
@@ -88,44 +88,13 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
               final activeChannel = channels[activeIdx];
               final isDesktop = context.isLargeDevice;
 
-              return PortfolioStyledCard(
-                width: double.infinity,
-                cyberHeader:
-                    '~/comms/transceiver_${activeChannel.type.toLowerCase()}.channel',
-                padding: EdgeInsets.all(isDesktop ? 36 : 20),
-                child: isDesktop
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: _buildRadarVisualizer(
-                              context,
-                              channels,
-                              activeIdx,
-                              accent,
-                              secondary,
-                              themeState,
-                            ),
-                          ),
-                          const SizedBox(width: 36),
-                          Expanded(
-                            flex: 7,
-                            child: _buildTransceiverConsole(
-                              context,
-                              channels,
-                              activeChannel,
-                              activeIdx,
-                              accent,
-                              secondary,
-                              themeState,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          _buildRadarVisualizer(
+              return isDesktop
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _buildOpenAirRadarVisualizer(
                             context,
                             channels,
                             activeIdx,
@@ -133,19 +102,42 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
                             secondary,
                             themeState,
                           ),
-                          const SizedBox(height: 24),
-                          _buildTransceiverConsole(
+                        ),
+                        const SizedBox(width: 48),
+                        Expanded(
+                          flex: 7,
+                          child: _buildOpenAirTransceiver(
                             context,
                             channels,
                             activeChannel,
                             activeIdx,
                             accent,
                             secondary,
-                            themeState,
                           ),
-                        ],
-                      ),
-              );
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        _buildOpenAirRadarVisualizer(
+                          context,
+                          channels,
+                          activeIdx,
+                          accent,
+                          secondary,
+                          themeState,
+                        ),
+                        const SizedBox(height: 32),
+                        _buildOpenAirTransceiver(
+                          context,
+                          channels,
+                          activeChannel,
+                          activeIdx,
+                          accent,
+                          secondary,
+                        ),
+                      ],
+                    );
             },
           );
         },
@@ -153,7 +145,7 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
     );
   }
 
-  Widget _buildRadarVisualizer(
+  Widget _buildOpenAirRadarVisualizer(
     BuildContext context,
     List<ContactDetails> channels,
     int activeIdx,
@@ -163,7 +155,7 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
   ) {
     const radarSize = 250.0;
     const center = Offset(radarSize / 2, radarSize / 2);
-    const orbitRadius = 86.0;
+    const orbitRadius = 88.0;
 
     return Center(
       child: SizedBox(
@@ -187,32 +179,13 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
                 },
               ),
             ),
-            // Center Transceiver Core
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: accent.withValues(alpha: 0.18),
-                border: Border.all(
-                  color: accent,
-                  width: 1.8,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.35),
-                    blurRadius: 20,
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.radar_rounded,
-                color: accent,
-                size: 30,
-              ),
+            Icon(
+              Icons.radar_rounded,
+              color: accent,
+              size: 32,
             ),
 
-            // Orbiting Channel Beacons
+            // Open-Air Orbiting Signal Stars (Zero Box Containers)
             ...List.generate(channels.length, (index) {
               final item = channels[index];
               final isSelected = index == activeIdx;
@@ -233,11 +206,12 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
               }
 
               return Positioned(
-                left: pos.dx - 24,
-                top: pos.dy - 24,
-                width: 48,
-                height: 48,
+                left: pos.dx - 32,
+                top: pos.dy - 26,
+                width: 64,
+                height: 52,
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () {
                     setState(() {
                       _selectedChannelIndex = index;
@@ -245,39 +219,29 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
                   },
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected
-                            ? accent
-                            : context.scaffoldColor.withValues(
-                                alpha: themeState.isDark ? 0.90 : 0.95,
-                              ),
-                        border: Border.all(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          beaconIcon,
+                          size: isSelected ? 24 : 18,
                           color: isSelected
                               ? accent
-                              : accent.withValues(alpha: 0.45),
-                          width: isSelected ? 2.2 : 1.2,
+                              : context.primaryColor.withValues(alpha: 0.55),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(
-                              alpha: isSelected ? 0.45 : 0.12,
-                            ),
-                            blurRadius: isSelected ? 16 : 6,
+                        const SizedBox(height: 2),
+                        Text(
+                          'CH 0${index + 1}',
+                          style: context.bodySmall.copyWith(
+                            fontSize: 10,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? accent
+                                : context.primaryColor.withValues(alpha: 0.6),
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        beaconIcon,
-                        size: 20,
-                        color: isSelected
-                            ? (themeState.isDark
-                                ? const Color(0xFF090D16)
-                                : Colors.white)
-                            : accent,
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -289,236 +253,140 @@ class _ContactDetailsListViewState extends State<ContactDetailsListView>
     );
   }
 
-  Widget _buildTransceiverConsole(
+  Widget _buildOpenAirTransceiver(
     BuildContext context,
     List<ContactDetails> channels,
     ContactDetails activeChannel,
     int activeIdx,
     Color accent,
     Color secondary,
-    ThemeState themeState,
   ) {
-    final radius =
-        themeState.portfolioStyle == PortfolioStyle.cyber ? 8.0 : 999.0;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 9,
-                  height: 9,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'SUBSPACE TRANSCEIVER // SIGNAL LOCKED',
-                  style: context.bodySmall.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: const Color(0xFF10B981),
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                '+25 XP PER TRANSMISSION',
-                style: context.bodySmall.copyWith(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  color: accent,
-                ),
-              ),
-            ),
-          ],
+        Text(
+          'SUBSPACE FREQUENCY ARRAY // +25 XP PER TRANSMISSION',
+          style: context.bodySmall.copyWith(
+            fontSize: 11.5,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.8,
+            color: const Color(0xFF10B981),
+          ),
         ),
         const SizedBox(height: 16),
 
-        // Interactive Frequency Channel Selector Orbs
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(channels.length, (index) {
-              final ch = channels[index];
-              final isSelected = index == activeIdx;
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedChannelIndex = index;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(999),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSelected ? 16 : 13,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? accent
-                          : context.primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: isSelected
-                            ? accent
-                            : accent.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Text(
-                      'CH 0${index + 1} • ${ch.title.trim()}',
+        // Open-Air Frequency Beacons (Zero Box Containers)
+        Wrap(
+          spacing: 24,
+          runSpacing: 10,
+          children: List.generate(channels.length, (index) {
+            final ch = channels[index];
+            final isSelected = index == activeIdx;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                setState(() {
+                  _selectedChannelIndex = index;
+                });
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'FREQ 0${index + 1} // ${ch.title.trim().toUpperCase()}',
                       style: context.bodySmall.copyWith(
                         fontSize: 13,
+                        letterSpacing: 1.4,
                         fontWeight: FontWeight.bold,
                         color: isSelected
-                            ? (themeState.isDark
-                                ? const Color(0xFF090D16)
-                                : Colors.white)
-                            : context.primaryColor.withValues(alpha: 0.85),
+                            ? accent
+                            : context.primaryColor.withValues(alpha: 0.58),
+                        shadows: isSelected
+                            ? [
+                                Shadow(
+                                  color: accent.withValues(alpha: 0.8),
+                                  blurRadius: 12,
+                                ),
+                              ]
+                            : null,
                       ),
                     ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Active Channel Hologram Readout
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: Container(
-            key: ValueKey(activeChannel.type),
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  accent.withValues(alpha: themeState.isDark ? 0.14 : 0.08),
-                  secondary.withValues(alpha: themeState.isDark ? 0.08 : 0.04),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: accent.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: accent.withValues(
-                          alpha: themeState.isDark ? 0.18 : 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: AnimateIcon(
-                        key: ValueKey(
-                          '${activeChannel.iconName}_${accent.toARGB32()}',
-                        ),
-                        onTap: () => _transmitChannel(activeChannel),
-                        iconType: context.isLargeDevice
-                            ? IconType.animatedOnHover
-                            : IconType.continueAnimation,
-                        height: 30,
-                        width: 30,
-                        color: accent,
-                        animateIcon: activeChannel.iconName.iconFromString,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            activeChannel.title.trim(),
-                            style: context.displaySmall.copyWith(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: accent,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            activeChannel.details.trim(),
-                            style: context.bodyMedium.copyWith(
-                              fontSize: 17,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      height: 2,
+                      width: isSelected ? 48 : 0,
+                      color: accent,
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                InkWell(
-                  onTap: () => _transmitChannel(activeChannel),
-                  borderRadius: BorderRadius.circular(radius),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 28),
+
+        // Open-Air Signal Readout (Zero Box Containers)
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          child: Column(
+            key: ValueKey(activeChannel.type),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  AnimateIcon(
+                    key: ValueKey(
+                      '${activeChannel.iconName}_${accent.toARGB32()}',
                     ),
-                    decoration: BoxDecoration(
-                      color: accent,
-                      borderRadius: BorderRadius.circular(radius),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    onTap: () => _transmitChannel(activeChannel),
+                    iconType: context.isLargeDevice
+                        ? IconType.animatedOnHover
+                        : IconType.continueAnimation,
+                    height: 36,
+                    width: 36,
+                    color: accent,
+                    animateIcon: activeChannel.iconName.iconFromString,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Transmit on ${activeChannel.title.trim()} Channel',
+                          activeChannel.title.trim().toUpperCase(),
                           style: context.bodySmall.copyWith(
-                            fontSize: 14.5,
+                            fontSize: 12,
+                            letterSpacing: 2.0,
                             fontWeight: FontWeight.bold,
-                            color: themeState.isDark
-                                ? const Color(0xFF090D16)
-                                : Colors.white,
+                            color: accent,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_outward_rounded,
-                          size: 17,
-                          color: themeState.isDark
-                              ? const Color(0xFF090D16)
-                              : Colors.white,
+                        const SizedBox(height: 4),
+                        Text(
+                          activeChannel.details.trim(),
+                          style: context.displaySmall.copyWith(
+                            fontSize: context.isLargeDevice ? 26 : 20,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              OpenAirActionTrigger(
+                label: 'Transmit on ${activeChannel.title.trim()} (+25 XP)',
+                icon: Icons.arrow_outward_rounded,
+                color: accent,
+                isPrimary: true,
+                onTap: () => _transmitChannel(activeChannel),
+              ),
+            ],
           ),
         ),
       ],
@@ -547,13 +415,12 @@ class _CommsRadarPainter extends CustomPainter {
     final ringPaint = Paint()
       ..color = accent.withValues(alpha: isDark ? 0.22 : 0.16)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1;
+      ..strokeWidth = 1.0;
 
     canvas.drawCircle(center, maxR * 0.92, ringPaint);
     canvas.drawCircle(center, maxR * 0.68, ringPaint);
-    canvas.drawCircle(center, maxR * 0.38, ringPaint);
+    canvas.drawCircle(center, maxR * 0.36, ringPaint);
 
-    // Crosshairs
     final axisPaint = Paint()
       ..color = accent.withValues(alpha: 0.12)
       ..strokeWidth = 1.0;
@@ -568,7 +435,6 @@ class _CommsRadarPainter extends CustomPainter {
       axisPaint,
     );
 
-    // Rotating radar sweep cone
     final sweepRect = Rect.fromCircle(center: center, radius: maxR * 0.92);
     final sweepPaint = Paint()
       ..shader = SweepGradient(
