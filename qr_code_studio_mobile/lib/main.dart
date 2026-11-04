@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:in_app_update/in_app_update.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr/qr.dart';
 import 'package:share_plus/share_plus.dart';
@@ -26,6 +30,78 @@ enum AppVisualStyle {
   final IconData icon;
 }
 
+enum DynamicBackgroundStyle {
+  aurora('Aurora Orbs', Icons.blur_on_rounded),
+  cyberGrid('Cyber Grid', Icons.grid_4x4_rounded),
+  starfield('Cosmic Stars', Icons.auto_awesome_mosaic_rounded),
+  neonWaves('Neon Waves', Icons.waves_rounded),
+  particles('Constellation', Icons.hub_rounded),
+  minimal('Minimal Solid', Icons.check_box_outline_blank_rounded);
+
+  const DynamicBackgroundStyle(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
+enum BackgroundPalette {
+  themeDefault(
+    'Theme Auto',
+    Color(0xFF0B0F19),
+    Color(0xFFF3F6FC),
+    Color(0xFF38BDF8),
+    Color(0xFFA855F7),
+  ),
+  midnightCyan(
+    'Midnight Cyan',
+    Color(0xFF050B16),
+    Color(0xFFEFF6FF),
+    Color(0xFF00F0FF),
+    Color(0xFF3B82F6),
+  ),
+  emeraldMatrix(
+    'Emerald Matrix',
+    Color(0xFF04120D),
+    Color(0xFFECFDF5),
+    Color(0xFF10B981),
+    Color(0xFF06B6D4),
+  ),
+  royalAmethyst(
+    'Royal Amethyst',
+    Color(0xFF11071F),
+    Color(0xFFF5F3FF),
+    Color(0xFFA855F7),
+    Color(0xFFEC4899),
+  ),
+  sunsetEmber(
+    'Sunset Ember',
+    Color(0xFF18080C),
+    Color(0xFFFFF7ED),
+    Color(0xFFF97316),
+    Color(0xFFF43F5E),
+  ),
+  deepOcean(
+    'Deep Ocean',
+    Color(0xFF04101E),
+    Color(0xFFF0F9FF),
+    Color(0xFF0EA5E9),
+    Color(0xFF2DD4BF),
+  );
+
+  const BackgroundPalette(
+    this.label,
+    this.darkBg,
+    this.lightBg,
+    this.primaryGlow,
+    this.secondaryGlow,
+  );
+
+  final String label;
+  final Color darkBg;
+  final Color lightBg;
+  final Color primaryGlow;
+  final Color secondaryGlow;
+}
+
 class QrCodeStudioApp extends StatefulWidget {
   const QrCodeStudioApp({super.key});
 
@@ -36,8 +112,13 @@ class QrCodeStudioApp extends StatefulWidget {
 class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
   bool _isDark = true;
   AppVisualStyle _visualStyle = AppVisualStyle.glass;
+  DynamicBackgroundStyle _bgStyle = DynamicBackgroundStyle.aurora;
+  BackgroundPalette _bgPalette = BackgroundPalette.themeDefault;
 
   Color get _scaffoldBg {
+    if (_bgPalette != BackgroundPalette.themeDefault) {
+      return _isDark ? _bgPalette.darkBg : _bgPalette.lightBg;
+    }
     switch (_visualStyle) {
       case AppVisualStyle.glass:
         return _isDark ? const Color(0xFF0B0F19) : const Color(0xFFF3F6FC);
@@ -60,6 +141,9 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
   }
 
   Color get _accent {
+    if (_bgPalette != BackgroundPalette.themeDefault) {
+      return _bgPalette.primaryGlow;
+    }
     switch (_visualStyle) {
       case AppVisualStyle.glass:
         return _isDark ? const Color(0xFF38BDF8) : const Color(0xFF4F46E5);
@@ -71,6 +155,9 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
   }
 
   Color get _secondaryAccent {
+    if (_bgPalette != BackgroundPalette.themeDefault) {
+      return _bgPalette.secondaryGlow;
+    }
     switch (_visualStyle) {
       case AppVisualStyle.glass:
         return _isDark ? const Color(0xFFA855F7) : const Color(0xFF06B6D4);
@@ -88,11 +175,13 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
             ? Colors.white.withValues(alpha: 0.05)
             : Colors.white.withValues(alpha: 0.78);
       case AppVisualStyle.bento:
-        return _isDark ? const Color(0xFF141418) : const Color(0xFFFFFFFF);
+        return _isDark
+            ? const Color(0xFF141418).withValues(alpha: 0.88)
+            : const Color(0xFFFFFFFF).withValues(alpha: 0.90);
       case AppVisualStyle.cyber:
         return _isDark
-            ? const Color(0xFF0B1324).withValues(alpha: 0.90)
-            : const Color(0xFFFFFFFF).withValues(alpha: 0.94);
+            ? const Color(0xFF0B1324).withValues(alpha: 0.88)
+            : const Color(0xFFFFFFFF).withValues(alpha: 0.92);
     }
   }
 
@@ -101,13 +190,11 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
       case AppVisualStyle.glass:
         return _isDark
             ? Colors.white.withValues(alpha: 0.14)
-            : const Color(0xFF4F46E5).withValues(alpha: 0.18);
+            : _accent.withValues(alpha: 0.22);
       case AppVisualStyle.bento:
         return _isDark ? const Color(0xFF27272A) : const Color(0xFFE4E4E7);
       case AppVisualStyle.cyber:
-        return _isDark
-            ? const Color(0xFF00F0FF).withValues(alpha: 0.45)
-            : const Color(0xFF0077B6).withValues(alpha: 0.45);
+        return _accent.withValues(alpha: 0.45);
     }
   }
 
@@ -139,6 +226,8 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
       home: QrCodeMobileScreen(
         isDark: _isDark,
         visualStyle: _visualStyle,
+        bgStyle: _bgStyle,
+        bgPalette: _bgPalette,
         scaffoldBg: _scaffoldBg,
         primaryText: _primaryText,
         accent: _accent,
@@ -148,6 +237,8 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
         cardRadius: _cardRadius,
         onToggleBrightness: () => setState(() => _isDark = !_isDark),
         onChangeStyle: (style) => setState(() => _visualStyle = style),
+        onChangeBgStyle: (bg) => setState(() => _bgStyle = bg),
+        onChangeBgPalette: (palette) => setState(() => _bgPalette = palette),
       ),
     );
   }
@@ -178,6 +269,8 @@ class QrCodeMobileScreen extends StatefulWidget {
     super.key,
     required this.isDark,
     required this.visualStyle,
+    required this.bgStyle,
+    required this.bgPalette,
     required this.scaffoldBg,
     required this.primaryText,
     required this.accent,
@@ -187,10 +280,14 @@ class QrCodeMobileScreen extends StatefulWidget {
     required this.cardRadius,
     required this.onToggleBrightness,
     required this.onChangeStyle,
+    required this.onChangeBgStyle,
+    required this.onChangeBgPalette,
   });
 
   final bool isDark;
   final AppVisualStyle visualStyle;
+  final DynamicBackgroundStyle bgStyle;
+  final BackgroundPalette bgPalette;
   final Color scaffoldBg;
   final Color primaryText;
   final Color accent;
@@ -200,12 +297,17 @@ class QrCodeMobileScreen extends StatefulWidget {
   final double cardRadius;
   final VoidCallback onToggleBrightness;
   final ValueChanged<AppVisualStyle> onChangeStyle;
+  final ValueChanged<DynamicBackgroundStyle> onChangeBgStyle;
+  final ValueChanged<BackgroundPalette> onChangeBgPalette;
 
   @override
   State<QrCodeMobileScreen> createState() => _QrCodeMobileScreenState();
 }
 
 class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
+  static const String _packageId = 'dev.sivaprasadnk.qr_code_studio_mobile';
+  static const String _playStoreUrl =
+      'https://play.google.com/store/apps/details?id=$_packageId';
   static const List<Color> _fgColorOptions = [
     Color(0xFF000000),
     Color(0xFF0F172A),
@@ -226,14 +328,22 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
     Color(0xFFFDF2F8),
   ];
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _textController = TextEditingController();
+  final FocusNode _inputFocusNode = FocusNode();
   final ImagePicker _imagePicker = ImagePicker();
 
   _QrTab _activeTab = _QrTab.generate;
   String _qrData = '';
+  bool _isInputFocused = false;
   bool _isSaving = false;
   bool _isSharing = false;
   bool _showCustomize = false;
+
+  // Version & In-App Update state
+  String _appVersion = '1.0.0+2';
+  bool _isCheckingUpdate = false;
+  String _updateStatusText = 'Check Google Play for latest version';
 
   // Customization state
   QrModuleStyle _moduleStyle = QrModuleStyle.square;
@@ -253,6 +363,131 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   void initState() {
     super.initState();
     _textController.addListener(_onTextChanged);
+    _inputFocusNode.addListener(_onFocusChanged);
+    _loadPackageVersion();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForPlayStoreUpdate(silentOnUpToDate: true);
+    });
+  }
+
+  void _onFocusChanged() {
+    if (mounted && _isInputFocused != _inputFocusNode.hasFocus) {
+      setState(() {
+        _isInputFocused = _inputFocusNode.hasFocus;
+      });
+    }
+  }
+
+  Future<void> _loadPackageVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _appVersion = info.buildNumber.isNotEmpty
+            ? '${info.version}+${info.buildNumber}'
+            : info.version;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _checkForPlayStoreUpdate({bool silentOnUpToDate = false}) async {
+    if (_isCheckingUpdate) return;
+    if (kIsWeb || !Platform.isAndroid) {
+      if (!silentOnUpToDate) {
+        _showSnack('In-app updates are supported on Android via Google Play.');
+      }
+      return;
+    }
+
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateStatusText = 'Checking Google Play for updates...';
+    });
+
+    try {
+      final updateInfo = await InAppUpdate.checkForUpdate();
+      if (!mounted) return;
+
+      if (updateInfo.installStatus == InstallStatus.downloaded) {
+        setState(() {
+          _updateStatusText = 'Update downloaded! Installing...';
+        });
+        await InAppUpdate.completeFlexibleUpdate();
+        return;
+      }
+
+      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable ||
+          updateInfo.updateAvailability ==
+              UpdateAvailability.developerTriggeredUpdateInProgress) {
+        setState(() {
+          _updateStatusText =
+              'Update available (v${updateInfo.availableVersionCode ?? 'new'})! Downloading...';
+        });
+        if (!silentOnUpToDate) {
+          _showSnack('Update found! Starting download from Google Play...');
+        }
+
+        if (updateInfo.immediateUpdateAllowed) {
+          await InAppUpdate.performImmediateUpdate();
+        } else if (updateInfo.flexibleUpdateAllowed) {
+          final result = await InAppUpdate.startFlexibleUpdate();
+          if (result == AppUpdateResult.success && mounted) {
+            await InAppUpdate.completeFlexibleUpdate();
+          }
+        } else {
+          await _openPlayStoreListing();
+        }
+      } else {
+        setState(() {
+          _updateStatusText = 'Up to date (v$_appVersion)';
+        });
+        if (!silentOnUpToDate) {
+          _showSnack('You are on the latest version (v$_appVersion)');
+        }
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _updateStatusText = 'Up to date (v$_appVersion)';
+      });
+      if (!silentOnUpToDate) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text('Current version: v$_appVersion'),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'Open Play Store',
+                onPressed: _openPlayStoreListing,
+              ),
+            ),
+          );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingUpdate = false);
+      }
+    }
+  }
+
+  Future<void> _openPlayStoreListing() async {
+    final marketUri = Uri.parse('market://details?id=$_packageId');
+    final webUri = Uri.parse(
+      'https://play.google.com/store/apps/details?id=$_packageId',
+    );
+    try {
+      if (await canLaunchUrl(marketUri)) {
+        await launchUrl(marketUri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      if (mounted) {
+        _showSnack('Could not open Google Play Store.');
+      }
+    }
   }
 
   void _onTextChanged() {
@@ -268,6 +503,8 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   void dispose() {
     _stopCameraScanner();
     _scannerController?.dispose();
+    _inputFocusNode.removeListener(_onFocusChanged);
+    _inputFocusNode.dispose();
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
     super.dispose();
@@ -294,35 +531,29 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   }
 
   Future<void> _startCameraScanner() async {
-    setState(() {
-      _cameraError = null;
-      _isCameraRunning = true;
-    });
     _scannerController ??= MobileScannerController(
+      autoStart: true,
       formats: const [BarcodeFormat.qrCode],
       detectionSpeed: DetectionSpeed.normal,
     );
-    try {
-      await _scannerController!.start();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isCameraRunning = false;
-        _cameraError = 'Could not access camera: $e';
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _cameraError = null;
+      _isCameraRunning = true;
+      _torchEnabled = false;
+    });
   }
 
   Future<void> _stopCameraScanner() async {
-    try {
-      await _scannerController?.stop();
-    } catch (_) {}
     if (mounted && _isCameraRunning) {
       setState(() {
         _isCameraRunning = false;
         _torchEnabled = false;
       });
     }
+    try {
+      await _scannerController?.stop();
+    } catch (_) {}
   }
 
   void _onBarcodeDetect(BarcodeCapture capture) {
@@ -352,10 +583,14 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
       if (file == null) return;
 
       _scannerController ??= MobileScannerController(
+        autoStart: true,
+        formats: const [BarcodeFormat.qrCode],
+        detectionSpeed: DetectionSpeed.normal,
+      );
+      final BarcodeCapture? capture = await _scannerController!.analyzeImage(
+        file.path,
         formats: const [BarcodeFormat.qrCode],
       );
-      final BarcodeCapture? capture =
-          await _scannerController!.analyzeImage(file.path);
       if (!mounted) return;
 
       if (capture != null && capture.barcodes.isNotEmpty) {
@@ -428,30 +663,80 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
     }
   }
 
-  Future<void> _shareQrImage() async {
+  Future<void> _shareQrImage([BuildContext? buttonContext]) async {
     if (_qrData.isEmpty || _isSharing) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _isSharing = true);
 
     try {
       final pngBytes = await _renderQrPngBytes(_qrData);
-      if (pngBytes == null) return;
+      if (pngBytes == null) {
+        if (mounted) {
+          setState(() => _isSharing = false);
+          _showSnack('Failed to render QR image.');
+        }
+        return;
+      }
       final dir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final file = File('${dir.path}/qrcode_$timestamp.png');
-      await file.writeAsBytes(pngBytes);
+      await file.writeAsBytes(pngBytes, flush: true);
+
+      Rect? shareOrigin;
+      if (buttonContext != null && buttonContext.mounted) {
+        final box = buttonContext.findRenderObject() as RenderBox?;
+        if (box != null && box.hasSize) {
+          shareOrigin = box.localToGlobal(Offset.zero) & box.size;
+        }
+      }
+
+      if (mounted) {
+        setState(() => _isSharing = false);
+      }
+
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path)],
-          text: _qrData,
+          files: [
+            XFile(
+              file.path,
+              mimeType: 'image/png',
+              name: 'qrcode_$timestamp.png',
+            ),
+          ],
+          text: 'Shared via QR Code Studio - $_playStoreUrl',
+          title: 'QR Code Studio',
+          sharePositionOrigin: shareOrigin,
         ),
       );
     } catch (_) {
       if (mounted) {
+        setState(() => _isSharing = false);
         _showSnack('Could not share QR code.');
       }
-    } finally {
+    }
+  }
+
+  Future<void> _openPortfolioWebsite() async {
+    await _launchExternalUrl('https://sivaprasadnk.dev');
+  }
+
+  Future<void> _openPrivacyPolicy() async {
+    await _launchExternalUrl('https://sivaprasadnk.dev/qrcode/privacy-policy');
+  }
+
+  Future<void> _launchExternalUrl(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
       if (mounted) {
-        setState(() => _isSharing = false);
+        _showSnack('Could not open link');
       }
     }
   }
@@ -481,20 +766,21 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
     final accent = widget.accent;
     final primaryText = widget.primaryText;
 
-    return _AppBackground(
-      visualStyle: widget.visualStyle,
+    return _DynamicAppBackground(
+      bgStyle: widget.bgStyle,
       isDark: widget.isDark,
       scaffoldBg: widget.scaffoldBg,
       accent: accent,
       secondaryAccent: widget.secondaryAccent,
-      primaryText: primaryText,
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: Colors.transparent,
+        drawer: _buildAppDrawer(accent, primaryText),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          automaticallyImplyLeading: false,
+          iconTheme: IconThemeData(color: primaryText),
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -516,6 +802,21 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
           ),
           actions: [
             IconButton(
+              tooltip: 'Dynamic Backgrounds',
+              onPressed: () {
+                final values = DynamicBackgroundStyle.values;
+                final nextIndex =
+                    (values.indexOf(widget.bgStyle) + 1) % values.length;
+                widget.onChangeBgStyle(values[nextIndex]);
+                _showSnack('Background: ${values[nextIndex].label}');
+              },
+              icon: Icon(
+                widget.bgStyle.icon,
+                size: 20,
+                color: accent,
+              ),
+            ),
+            IconButton(
               tooltip: 'Toggle Theme Mode',
               onPressed: widget.onToggleBrightness,
               icon: Icon(
@@ -530,9 +831,9 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
           ],
         ),
         body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: Column(
@@ -563,11 +864,523 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    _buildFooter(accent, primaryText),
                   ],
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppDrawer(Color accent, Color primaryText) {
+    final drawerSurface = widget.isDark
+        ? Color.alphaBlend(
+            Colors.black.withValues(alpha: 0.35),
+            widget.scaffoldBg,
+          )
+        : Colors.white;
+
+    return Drawer(
+      backgroundColor: drawerSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+        side: BorderSide(color: widget.cardBorder),
+      ),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Drawer Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: widget.isDark ? 0.10 : 0.08),
+                border: Border(
+                  bottom: BorderSide(color: widget.cardBorder),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: accent.withValues(alpha: 0.55)),
+                    ),
+                    child: Icon(
+                      Icons.qr_code_2_rounded,
+                      size: 26,
+                      color: accent,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'QR Code Studio',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            color: primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: accent.withValues(alpha: 0.45),
+                                ),
+                              ),
+                              child: Text(
+                                'v$_appVersion',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: accent,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                '• SPNK Studio',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: primaryText.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close Drawer',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: primaryText.withValues(alpha: 0.65),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Scrollable Drawer Content
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                children: [
+                  // 1. Play Store Update Check & Download
+                  _DrawerSectionHeader(
+                    title: 'PLAY STORE UPDATES',
+                    icon: Icons.system_update_rounded,
+                    accent: accent,
+                    primaryText: primaryText,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: accent.withValues(
+                        alpha: widget.isDark ? 0.10 : 0.07,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: accent.withValues(alpha: 0.4)),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      onTap: _isCheckingUpdate
+                          ? null
+                          : () =>
+                              _checkForPlayStoreUpdate(silentOnUpToDate: false),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      leading: _isCheckingUpdate
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: accent,
+                              ),
+                            )
+                          : Icon(
+                              Icons.system_update_alt_rounded,
+                              color: accent,
+                            ),
+                      title: Text(
+                        _isCheckingUpdate
+                            ? 'Checking for Updates...'
+                            : 'Check for Updates',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: primaryText,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _updateStatusText,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: primaryText.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'Open Google Play Store',
+                        onPressed: _openPlayStoreListing,
+                        icon: Icon(
+                          Icons.shop_two_rounded,
+                          size: 19,
+                          color: accent,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // 2. Dynamic Backgrounds Section
+                  _DrawerSectionHeader(
+                    title: 'DYNAMIC BACKGROUND',
+                    icon: Icons.wallpaper_rounded,
+                    accent: accent,
+                    primaryText: primaryText,
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 2.8,
+                    children: DynamicBackgroundStyle.values.map((bg) {
+                      final selected = widget.bgStyle == bg;
+                      return InkWell(
+                        onTap: () => widget.onChangeBgStyle(bg),
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? accent.withValues(
+                                    alpha: widget.isDark ? 0.20 : 0.14,
+                                  )
+                                : primaryText.withValues(
+                                    alpha: widget.isDark ? 0.04 : 0.03,
+                                  ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selected ? accent : widget.cardBorder,
+                              width: selected ? 1.4 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                bg.icon,
+                                size: 17,
+                                color: selected
+                                    ? accent
+                                    : primaryText.withValues(alpha: 0.65),
+                              ),
+                              const SizedBox(width: 7),
+                              Expanded(
+                                child: Text(
+                                  bg.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: selected
+                                        ? FontWeight.bold
+                                        : FontWeight.w600,
+                                    color: selected
+                                        ? (widget.isDark
+                                            ? Colors.white
+                                            : accent)
+                                        : primaryText.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // 3. Background Color Palette / Mood
+                  _DrawerSectionHeader(
+                    title: 'BACKGROUND COLOR MOOD',
+                    icon: Icons.color_lens_outlined,
+                    accent: accent,
+                    primaryText: primaryText,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: BackgroundPalette.values.map((palette) {
+                      final selected = widget.bgPalette == palette;
+                      return InkWell(
+                        onTap: () => widget.onChangeBgPalette(palette),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? palette.primaryGlow.withValues(alpha: 0.18)
+                                : primaryText.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: selected
+                                  ? palette.primaryGlow
+                                  : widget.cardBorder,
+                              width: selected ? 1.4 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      palette.primaryGlow,
+                                      palette.secondaryGlow,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                palette.label,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: selected
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                  color: primaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // 4. Appearance & Theme Mode
+                  _DrawerSectionHeader(
+                    title: 'APPEARANCE & CARD STYLE',
+                    icon: Icons.tune_rounded,
+                    accent: accent,
+                    primaryText: primaryText,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryText.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: widget.cardBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          widget.isDark
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
+                          size: 18,
+                          color: accent,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            widget.isDark ? 'Dark Mode' : 'Light Mode',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: primaryText,
+                            ),
+                          ),
+                        ),
+                        Switch(
+                          value: widget.isDark,
+                          activeThumbColor: accent,
+                          onChanged: (_) => widget.onToggleBrightness(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ListTile(
+                    dense: true,
+                    onTap: _openPrivacyPolicy,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    leading: Icon(
+                      Icons.privacy_tip_outlined,
+                      size: 19,
+                      color: primaryText.withValues(alpha: 0.75),
+                    ),
+                    title: Text(
+                      'Privacy Policy',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.open_in_new_rounded,
+                      size: 15,
+                      color: primaryText.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  ListTile(
+                    dense: true,
+                    onTap: _openPortfolioWebsite,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    leading: Icon(
+                      Icons.language_rounded,
+                      size: 19,
+                      color: primaryText.withValues(alpha: 0.75),
+                    ),
+                    title: Text(
+                      'Developer Portfolio (sivaprasadnk.dev)',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.open_in_new_rounded,
+                      size: 15,
+                      color: primaryText.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Drawer Footer with Version & Portfolio Link
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: widget.cardBorder)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Version $_appVersion',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: primaryText.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: _openPortfolioWebsite,
+                    child: Text(
+                      'sivaprasadnk.dev ↗',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(Color accent, Color primaryText) {
+    return InkWell(
+      onTap: _openPortfolioWebsite,
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Crafted by ',
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+                color: primaryText.withValues(alpha: 0.65),
+              ),
+            ),
+            Text(
+              'sivaprasadnk.dev',
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.bold,
+                color: accent,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.open_in_new_rounded,
+              size: 13.5,
+              color: accent.withValues(alpha: 0.85),
+            ),
+          ],
         ),
       ),
     );
@@ -701,46 +1514,57 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _textController,
-          minLines: 1,
-          maxLines: 3,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: primaryText,
-          ),
-          decoration: InputDecoration(
-            hintText: 'Enter text or paste a URL...',
-            hintStyle: TextStyle(
-              fontSize: 15,
-              color: primaryText.withValues(alpha: 0.4),
-            ),
-            filled: true,
-            hoverColor: Colors.transparent,
-            fillColor:
-                primaryText.withValues(alpha: widget.isDark ? 0.05 : 0.04),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
+        GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => _inputFocusNode.requestFocus(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.only(left: 14, right: 6, top: 4, bottom: 4),
+            decoration: BoxDecoration(
+              color:
+                  primaryText.withValues(alpha: widget.isDark ? 0.05 : 0.04),
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: widget.cardBorder),
+              border: Border.all(
+                color: _isInputFocused ? accent : widget.cardBorder,
+                width: _isInputFocused ? 1.4 : 1.0,
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: widget.cardBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accent, width: 1.4),
-            ),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    focusNode: _inputFocusNode,
+                    minLines: 1,
+                    maxLines: 3,
+                    textAlignVertical: TextAlignVertical.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                      color: primaryText,
+                    ),
+                    decoration: InputDecoration(
+                      isCollapsed: true,
+                      hintText: 'Enter text or paste a URL...',
+                      hintStyle: TextStyle(
+                        fontSize: 15,
+                        height: 1.3,
+                        color: primaryText.withValues(alpha: 0.4),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 IconButton(
                   tooltip: 'Paste',
+                  visualDensity: VisualDensity.compact,
                   icon: Icon(
                     Icons.content_paste_rounded,
                     size: 18,
@@ -756,6 +1580,7 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
                 if (_qrData.isNotEmpty)
                   IconButton(
                     tooltip: 'Clear',
+                    visualDensity: VisualDensity.compact,
                     icon: Icon(
                       Icons.close_rounded,
                       size: 18,
@@ -817,7 +1642,10 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
         const SizedBox(height: 14),
         Center(
           child: TextButton.icon(
-            onPressed: () => setState(() => _showCustomize = !_showCustomize),
+            onPressed: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              setState(() => _showCustomize = !_showCustomize);
+            },
             style: TextButton.styleFrom(
               foregroundColor: accent,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -891,21 +1719,35 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            IconButton.outlined(
-              tooltip: 'Share QR Image',
-              onPressed:
-                  (qrImage != null && !_isSharing) ? _shareQrImage : null,
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(12),
-                side: BorderSide(color: widget.cardBorder),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Builder(
+              builder: (buttonContext) => IconButton.outlined(
+                tooltip: 'Share QR Image',
+                onPressed: qrImage != null
+                    ? () => _shareQrImage(buttonContext)
+                    : null,
+                style: IconButton.styleFrom(
+                  padding: const EdgeInsets.all(12),
+                  side: BorderSide(color: widget.cardBorder),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ),
-              icon: Icon(
-                Icons.share_rounded,
-                size: 19,
-                color: primaryText,
+                icon: _isSharing
+                    ? SizedBox(
+                        width: 19,
+                        height: 19,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: accent,
+                        ),
+                      )
+                    : Icon(
+                        Icons.share_rounded,
+                        size: 19,
+                        color: qrImage != null
+                            ? primaryText
+                            : primaryText.withValues(alpha: 0.35),
+                      ),
               ),
             ),
             const SizedBox(width: 8),
@@ -927,7 +1769,9 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
               icon: Icon(
                 Icons.copy_rounded,
                 size: 19,
-                color: primaryText,
+                color: _qrData.isNotEmpty
+                    ? primaryText
+                    : primaryText.withValues(alpha: 0.35),
               ),
             ),
           ],
@@ -1141,6 +1985,33 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
                   MobileScanner(
                     controller: _scannerController!,
                     onDetect: _onBarcodeDetect,
+                    errorBuilder: (context, error) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.videocam_off_rounded,
+                                size: 44,
+                                color: Colors.white.withValues(alpha: 0.6),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                error.errorDetails?.message ??
+                                    error.errorCode.message,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  color: Color(0xFFF87171),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   )
                 else
                   Center(
@@ -1391,78 +2262,313 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   }
 }
 
-class _AppBackground extends StatelessWidget {
-  const _AppBackground({
-    required this.visualStyle,
+class _DrawerSectionHeader extends StatelessWidget {
+  const _DrawerSectionHeader({
+    required this.title,
+    required this.icon,
+    required this.accent,
+    required this.primaryText,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color accent;
+  final Color primaryText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 15, color: accent),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+              color: primaryText.withValues(alpha: 0.65),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DynamicAppBackground extends StatefulWidget {
+  const _DynamicAppBackground({
+    required this.bgStyle,
     required this.isDark,
     required this.scaffoldBg,
     required this.accent,
     required this.secondaryAccent,
-    required this.primaryText,
     required this.child,
   });
 
-  final AppVisualStyle visualStyle;
+  final DynamicBackgroundStyle bgStyle;
   final bool isDark;
   final Color scaffoldBg;
   final Color accent;
   final Color secondaryAccent;
-  final Color primaryText;
   final Widget child;
+
+  @override
+  State<_DynamicAppBackground> createState() => _DynamicAppBackgroundState();
+}
+
+class _DynamicAppBackgroundState extends State<_DynamicAppBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 18),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Positioned.fill(
-          child: ColoredBox(color: scaffoldBg),
+          child: ColoredBox(color: widget.scaffoldBg),
         ),
-        if (visualStyle == AppVisualStyle.glass) ...[
-          Positioned(
-            top: -100,
-            left: -80,
-            child: _AmbientOrb(
-              color: accent.withValues(alpha: isDark ? 0.22 : 0.14),
-              size: 360,
+        if (widget.bgStyle != DynamicBackgroundStyle.minimal)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) {
+                  return CustomPaint(
+                    painter: _DynamicBackgroundPainter(
+                      style: widget.bgStyle,
+                      progress: _controller.value,
+                      isDark: widget.isDark,
+                      accent: widget.accent,
+                      secondaryAccent: widget.secondaryAccent,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
-          Positioned(
-            bottom: -120,
-            right: -100,
-            child: _AmbientOrb(
-              color: secondaryAccent.withValues(alpha: isDark ? 0.18 : 0.12),
-              size: 400,
-            ),
-          ),
-        ],
-        child,
+        widget.child,
       ],
     );
   }
 }
 
-class _AmbientOrb extends StatelessWidget {
-  const _AmbientOrb({required this.color, required this.size});
-  final Color color;
-  final double size;
+class _DynamicBackgroundPainter extends CustomPainter {
+  _DynamicBackgroundPainter({
+    required this.style,
+    required this.progress,
+    required this.isDark,
+    required this.accent,
+    required this.secondaryAccent,
+  });
+
+  final DynamicBackgroundStyle style;
+  final double progress;
+  final bool isDark;
+  final Color accent;
+  final Color secondaryAccent;
 
   @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color,
-              color.withValues(alpha: 0),
-            ],
-          ),
-        ),
-      ),
+  void paint(Canvas canvas, Size size) {
+    final t = progress * 2 * math.pi;
+
+    switch (style) {
+      case DynamicBackgroundStyle.aurora:
+        _paintAurora(canvas, size, t);
+        break;
+      case DynamicBackgroundStyle.cyberGrid:
+        _paintCyberGrid(canvas, size, t);
+        break;
+      case DynamicBackgroundStyle.starfield:
+        _paintStarfield(canvas, size, t);
+        break;
+      case DynamicBackgroundStyle.neonWaves:
+        _paintNeonWaves(canvas, size, t);
+        break;
+      case DynamicBackgroundStyle.particles:
+        _paintConstellation(canvas, size, t);
+        break;
+      case DynamicBackgroundStyle.minimal:
+        break;
+    }
+  }
+
+  void _paintAurora(Canvas canvas, Size size, double t) {
+    final alpha1 = isDark ? 0.25 : 0.16;
+    final alpha2 = isDark ? 0.20 : 0.14;
+
+    final c1 = Offset(
+      size.width * (0.22 + 0.18 * math.sin(t)),
+      size.height * (0.18 + 0.12 * math.cos(t)),
     );
+    final c2 = Offset(
+      size.width * (0.78 + 0.16 * math.cos(t * 0.8)),
+      size.height * (0.75 + 0.14 * math.sin(t * 1.1)),
+    );
+    final c3 = Offset(
+      size.width * (0.50 + 0.22 * math.sin(t * 1.3 + 1.2)),
+      size.height * (0.48 + 0.16 * math.cos(t * 0.9)),
+    );
+
+    _drawRadialOrb(canvas, c1, size.shortestSide * 0.58, accent, alpha1);
+    _drawRadialOrb(
+      canvas,
+      c2,
+      size.shortestSide * 0.64,
+      secondaryAccent,
+      alpha2,
+    );
+    _drawRadialOrb(
+      canvas,
+      c3,
+      size.shortestSide * 0.45,
+      Color.lerp(accent, secondaryAccent, 0.5) ?? accent,
+      alpha2 * 0.75,
+    );
+  }
+
+  void _drawRadialOrb(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    Color color,
+    double maxAlpha,
+  ) {
+    final paint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          color.withValues(alpha: maxAlpha),
+          color.withValues(alpha: 0),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  void _paintCyberGrid(Canvas canvas, Size size, double t) {
+    const step = 42.0;
+    final shift = (progress * step);
+    final linePaint = Paint()
+      ..color = accent.withValues(alpha: isDark ? 0.11 : 0.08)
+      ..strokeWidth = 1;
+
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (double y = (shift % step) - step; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    // Scanning neon laser bar
+    final scanY = (progress * size.height);
+    final scanRect = Rect.fromLTWH(0, scanY - 50, size.width, 100);
+    final scanPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          accent.withValues(alpha: 0),
+          accent.withValues(alpha: isDark ? 0.16 : 0.10),
+          accent.withValues(alpha: 0),
+        ],
+      ).createShader(scanRect);
+    canvas.drawRect(scanRect, scanPaint);
+  }
+
+  void _paintStarfield(Canvas canvas, Size size, double t) {
+    _paintAurora(canvas, size, t * 0.5);
+    final starPaint = Paint()..style = PaintingStyle.fill;
+    for (var i = 0; i < 48; i++) {
+      final seed = i * 73.19;
+      final baseX = ((math.sin(seed) * 0.5 + 0.5) * size.width);
+      final baseY =
+          (((math.cos(seed * 1.3) * 0.5 + 0.5) + progress * (0.2 + (i % 3) * 0.1)) %
+                  1.0) *
+              size.height;
+      final twinkle = 0.35 + 0.65 * (0.5 + 0.5 * math.sin(t * 2 + i));
+      final r = 1.2 + (i % 3) * 0.9;
+      starPaint.color = (i.isEven ? accent : secondaryAccent)
+          .withValues(alpha: (isDark ? 0.65 : 0.45) * twinkle);
+      canvas.drawCircle(Offset(baseX, baseY), r, starPaint);
+    }
+  }
+
+  void _paintNeonWaves(Canvas canvas, Size size, double t) {
+    for (var w = 0; w < 3; w++) {
+      final path = Path();
+      final baseY = size.height * (0.28 + w * 0.24);
+      final amp = 26.0 + w * 10.0;
+      final phase = t + w * 1.4;
+      path.moveTo(0, baseY);
+      for (double x = 0; x <= size.width; x += 16) {
+        final y = baseY +
+            math.sin((x / size.width) * 2 * math.pi + phase) * amp +
+            math.cos((x / size.width) * 4 * math.pi - phase) * (amp * 0.4);
+        path.lineTo(x, y);
+      }
+      final color = w.isEven ? accent : secondaryAccent;
+      final strokePaint = Paint()
+        ..color = color.withValues(alpha: isDark ? 0.28 : 0.20)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2;
+      canvas.drawPath(path, strokePaint);
+    }
+  }
+
+  void _paintConstellation(Canvas canvas, Size size, double t) {
+    final points = <Offset>[];
+    for (var i = 0; i < 20; i++) {
+      final angle = (i * 1.7) + t * (i.isEven ? 1 : -1) * 0.5;
+      final px = size.width * (0.1 + 0.8 * ((i * 37 % 100) / 100.0)) +
+          math.cos(angle) * 24;
+      final py = size.height * (0.1 + 0.8 * ((i * 61 % 100) / 100.0)) +
+          math.sin(angle) * 24;
+      points.add(Offset(px, py));
+    }
+
+    final linePaint = Paint()..strokeWidth = 1.0;
+    final dotPaint = Paint()..style = PaintingStyle.fill;
+    final maxDist = size.shortestSide * 0.34;
+
+    for (var i = 0; i < points.length; i++) {
+      for (var j = i + 1; j < points.length; j++) {
+        final d = (points[i] - points[j]).distance;
+        if (d < maxDist) {
+          final alpha = (1.0 - (d / maxDist)) * (isDark ? 0.22 : 0.15);
+          linePaint.color = accent.withValues(alpha: alpha);
+          canvas.drawLine(points[i], points[j], linePaint);
+        }
+      }
+      dotPaint.color = (i.isEven ? accent : secondaryAccent)
+          .withValues(alpha: isDark ? 0.55 : 0.40);
+      canvas.drawCircle(points[i], 3.0, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DynamicBackgroundPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.style != style ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.accent != accent ||
+        oldDelegate.secondaryAccent != secondaryAccent;
   }
 }
 

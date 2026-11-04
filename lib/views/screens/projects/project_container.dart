@@ -17,6 +17,17 @@ class ProjectContainer extends StatelessWidget {
 
   final ProjectDetails project;
 
+  Future<void> _launchUrlTarget(String url) async {
+    if (url.isEmpty) return;
+    GamificationController.instance.completeQuest('boss_raider');
+    GamificationController.instance.addXp(
+      20,
+      reason: 'Raided Mission: ${project.projName}!',
+      uniqueKey: 'proj_${project.projName}',
+    );
+    await launchUrl(Uri.parse(url));
+  }
+
   Future<void> _launchProject() async {
     GamificationController.instance.completeQuest('boss_raider');
     GamificationController.instance.addXp(
@@ -45,7 +56,10 @@ class ProjectContainer extends StatelessWidget {
       builder: (context, themeState) {
         final accent = themeState.accentColor;
         final secondary = themeState.secondaryAccent;
-        final isPlayStore = project.playStoreUrl.isNotEmpty;
+        final hasPlayStore = project.playStoreUrl.isNotEmpty;
+        final hasWeb = project.webUrl.isNotEmpty;
+        final hasBoth = hasPlayStore && hasWeb;
+        final isPlayStore = hasPlayStore;
 
         return PortfolioStyledCard(
           width: context.isLargeDevice ? 370 : double.infinity,
@@ -71,8 +85,8 @@ class ProjectContainer extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              accent.withOpacity(0.22),
-                              secondary.withOpacity(0.14),
+                              accent.withValues(alpha: 0.22),
+                              secondary.withValues(alpha: 0.14),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(12),
@@ -92,7 +106,8 @@ class ProjectContainer extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withOpacity(0.18),
+                          color:
+                              const Color(0xFFF59E0B).withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -116,12 +131,12 @@ class ProjectContainer extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: accent.withOpacity(
-                            themeState.isDark ? 0.16 : 0.10,
+                          color: accent.withValues(
+                            alpha: themeState.isDark ? 0.16 : 0.10,
                           ),
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
-                            color: accent.withOpacity(0.4),
+                            color: accent.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Text(
@@ -167,7 +182,8 @@ class ProjectContainer extends StatelessWidget {
                           style: context.bodyMedium.copyWith(
                             fontSize: 16,
                             height: 1.35,
-                            color: context.primaryColor.withOpacity(0.85),
+                            color:
+                                context.primaryColor.withValues(alpha: 0.85),
                           ),
                         ),
                       ),
@@ -181,55 +197,171 @@ class ProjectContainer extends StatelessWidget {
                 height: 1,
               ),
               const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isPlayStore ? 'Android Boss Arena' : 'Web Portal Mission',
-                    style: context.bodySmall.copyWith(
-                      fontSize: 14,
-                      color: context.primaryColor.withOpacity(0.65),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accent,
-                      borderRadius: BorderRadius.circular(
-                        themeState.portfolioStyle == PortfolioStyle.cyber
-                            ? 4
-                            : 999,
+              if (hasBoth)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Android & Web',
+                      style: context.bodySmall.copyWith(
+                        fontSize: 13.5,
+                        color: context.primaryColor.withValues(alpha: 0.65),
                       ),
                     ),
-                    child: Row(
+                    Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Launch Mission',
-                          style: context.bodySmall.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                        InkWell(
+                          onTap: () => _launchUrlTarget(project.playStoreUrl),
+                          borderRadius: BorderRadius.circular(
+                            themeState.portfolioStyle == PortfolioStyle.cyber
+                                ? 4
+                                : 999,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(
+                                alpha: themeState.isDark ? 0.16 : 0.10,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                themeState.portfolioStyle ==
+                                        PortfolioStyle.cyber
+                                    ? 4
+                                    : 999,
+                              ),
+                              border: Border.all(
+                                color: accent.withValues(alpha: 0.55),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.android_rounded,
+                                  size: 15,
+                                  color: accent,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Play Store',
+                                  style: context.bodySmall.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _launchUrlTarget(project.webUrl),
+                          borderRadius: BorderRadius.circular(
+                            themeState.portfolioStyle == PortfolioStyle.cyber
+                                ? 4
+                                : 999,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent,
+                              borderRadius: BorderRadius.circular(
+                                themeState.portfolioStyle ==
+                                        PortfolioStyle.cyber
+                                    ? 4
+                                    : 999,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Web App',
+                                  style: context.bodySmall.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: themeState.isDark
+                                        ? const Color(0xFF090D16)
+                                        : Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Icon(
+                                  Icons.rocket_launch_rounded,
+                                  size: 14,
+                                  color: themeState.isDark
+                                      ? const Color(0xFF090D16)
+                                      : Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isPlayStore ? 'Android Boss Arena' : 'Web Portal Mission',
+                      style: context.bodySmall.copyWith(
+                        fontSize: 14,
+                        color: context.primaryColor.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accent,
+                        borderRadius: BorderRadius.circular(
+                          themeState.portfolioStyle == PortfolioStyle.cyber
+                              ? 4
+                              : 999,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Launch Mission',
+                            style: context.bodySmall.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: themeState.isDark
+                                  ? const Color(0xFF090D16)
+                                  : Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.rocket_launch_rounded,
+                            size: 15,
                             color: themeState.isDark
                                 ? const Color(0xFF090D16)
                                 : Colors.white,
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.rocket_launch_rounded,
-                          size: 15,
-                          color: themeState.isDark
-                              ? const Color(0xFF090D16)
-                              : Colors.white,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         );

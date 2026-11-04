@@ -1,7 +1,7 @@
 name: qr_code_studio_mobile
 description: "QR Code Studio - Minimal QR Code Generator & Scanner Mobile App"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.11.5
@@ -17,6 +17,8 @@ dependencies:
   path_provider: ^2.1.6
   url_launcher: ^6.3.3
   gal: ^2.3.3
+  in_app_update: ^4.2.5
+  package_info_plus: ^10.2.2
 
 dev_dependencies:
   flutter_test:

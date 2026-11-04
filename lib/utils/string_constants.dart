@@ -22,6 +22,8 @@ const String spQuotesLink =
 
 const String websiteLink = 'https://sivaprasadnk.github.io/#/';
 const String qrCodeToolLink = 'https://sivaprasadnk.dev/qrcode';
+const String qrCodePlayStoreLink =
+    'https://play.google.com/store/apps/details?id=dev.sivaprasadnk.qr_code_studio_mobile';
 const String arcadeHubLink = 'https://sivaprasadnk.dev/arcade';
 
 const String spQuizLink =
@@ -57,13 +59,19 @@ String websiteStr3 = 'Light / Dark theme';
 String websiteStr4 = 'Bloc State Management';
 String websiteStr5 = 'Clean Architecture';
 
-String qrCodeStr1 = 'Minimal web utility for generating & scanning QR codes';
-String qrCodeStr2 = 'Custom pattern styles, corner eye shapes & color themes';
-String qrCodeStr3 = 'Real-time camera & image file QR scanner with PNG export';
+String qrCodeStr1 =
+    'Cross-platform QR Code Generator & Scanner for Android & Web';
+String qrCodeStr2 =
+    'Custom pattern styles, corner eye shapes, dynamic backgrounds & themes';
+String qrCodeStr3 =
+    'Real-time camera & image QR scanner with PNG export & instant sharing';
 
-String arcadeStr1 = 'Multi-game web arcade featuring Neon Snake, 2048 & Cyber Breaker';
-String arcadeStr2 = '60fps CustomPainter canvas physics & Memory Matrix challenge';
-String arcadeStr3 = 'Full keyboard (WASD/Arrows), mouse, swipe & touch D-pad support';
+String arcadeStr1 =
+    'Multi-game web arcade featuring Neon Snake, 2048 & Cyber Breaker';
+String arcadeStr2 =
+    '60fps CustomPainter canvas physics & Memory Matrix challenge';
+String arcadeStr3 =
+    'Full keyboard (WASD/Arrows), mouse, swipe & touch D-pad support';
 
 String quizStr1 =
     'Quiz App with light / dark mode \nwith various  color themes.';

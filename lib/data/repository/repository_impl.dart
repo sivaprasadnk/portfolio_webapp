@@ -35,10 +35,24 @@ class RepositoryImpl implements Repository {
     final result = await locator<RemoteDataSourceImpl>().getProjectDetails();
     return result.fold(
       (remoteProjects) {
-        final existingNames = remoteProjects
-            .map((p) => p.projName.trim().toLowerCase())
-            .toSet();
-        final merged = List<ProjectDetails>.from(remoteProjects);
+        final localByName = {
+          for (final local in localProjects)
+            local.projName.trim().toLowerCase(): local,
+        };
+        final existingNames = <String>{};
+        final merged = <ProjectDetails>[];
+        for (final remote in remoteProjects) {
+          final key = remote.projName.trim().toLowerCase();
+          existingNames.add(key);
+          final localMatch = localByName[key];
+          if (localMatch != null &&
+              localMatch.playStoreUrl.isNotEmpty &&
+              localMatch.webUrl.isNotEmpty) {
+            merged.add(localMatch);
+          } else {
+            merged.add(remote);
+          }
+        }
         for (final local in localProjects) {
           if (!existingNames.contains(local.projName.trim().toLowerCase())) {
             merged.add(local);

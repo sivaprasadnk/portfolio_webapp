@@ -61,6 +61,7 @@ List<ProjectDetailsModel> projectList = [
     projName: 'QR Code Studio',
     techStackList: [
       'Flutter',
+      'Android',
       'Web',
     ],
     descList: [
@@ -69,7 +70,7 @@ List<ProjectDetailsModel> projectList = [
       qrCodeStr3,
     ],
     webUrl: qrCodeToolLink,
-    playStoreUrl: '',
+    playStoreUrl: qrCodePlayStoreLink,
   ),
   ProjectDetailsModel(
     isActive: true,

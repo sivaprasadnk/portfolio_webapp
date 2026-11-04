@@ -463,8 +463,10 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
           controller: _textController,
           minLines: 1,
           maxLines: 3,
+          textAlignVertical: TextAlignVertical.center,
           style: context.bodyMedium.copyWith(fontSize: 16),
           decoration: InputDecoration(
+            isDense: true,
             hintText: 'Enter text or paste a URL...',
             hintStyle: context.bodySmall.copyWith(
               fontSize: 15,
