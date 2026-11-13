@@ -30,158 +30,341 @@ import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Compact heads-up telemetry card projected on the upper-left windshield
-/// while driving through each portfolio sector on the 3D circuit.
+/// while driving through each portfolio sector across all 3 racing modes.
+/// Displays Sivaprasad NK's driver photo, live clickable links, and sector HUD.
 class SectorWindshieldHud extends StatelessWidget {
   const SectorWindshieldHud({
     super.key,
     required this.sector,
+    required this.palette,
     required this.onOpenPitStop,
+    required this.onOpenDriverProfile,
     required this.onWarpNextSector,
     required this.compact,
+    this.activePortalLink,
   });
 
   final RaceSectorMeta sector;
+  final RacingThemePalette palette;
   final VoidCallback onOpenPitStop;
+  final VoidCallback onOpenDriverProfile;
   final VoidCallback onWarpNextSector;
   final bool compact;
+  final DriverQuickLink? activePortalLink;
+
+  Future<void> _launchDriverLink(DriverQuickLink link) async {
+    GamificationController.instance.completeQuest('loot_collector');
+    GamificationController.instance.addXp(
+      15,
+      reason: 'Opened Driver Link: ${link.label}',
+      uniqueKey: 'hud_link_${link.id}',
+    );
+    final uri = Uri.parse(link.url);
+    try {
+      await launchUrl(uri);
+    } catch (e) {
+      debugPrint('## Error launching ${link.url}: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, themeState) {
-        final accent = themeState.accentColor;
-        final secondary = themeState.secondaryAccent;
+    final accent = palette.accent;
+    final secondary = palette.secondary;
 
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 260),
-              child: Container(
-                key: ValueKey(sector.code),
-                constraints: BoxConstraints(
-                  maxWidth: compact ? 290 : 380,
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 12 : 16,
-                  vertical: compact ? 10 : 13,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF070C1A).withValues(alpha: 0.78),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: accent.withValues(alpha: 0.50),
-                    width: 1.2,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(sector.icon, size: 15, color: accent),
-                        const SizedBox(width: 7),
-                        Expanded(
-                          child: Text(
-                            '${sector.code} // ${sector.shortLabel} ZONE',
-                            overflow: TextOverflow.ellipsis,
-                            style: context.bodySmall.copyWith(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                              color: accent,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: compact ? 304 : 396,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 11 : 15,
+            vertical: compact ? 9 : 12,
+          ),
+          decoration: BoxDecoration(
+            color: palette.hudSurface.withValues(alpha: 0.84),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.55),
+              width: 1.2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. DRIVER PHOTO + IDENTITY + DIRECT QUICK LINKS
+              Row(
+                children: [
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: onOpenDriverProfile,
+                      child: Tooltip(
+                        message: 'Driver #01 Profile — Sivaprasad NK',
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: compact ? 42 : 52,
+                              height: compact ? 42 : 52,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    accent.withValues(alpha: 0.38),
+                                    secondary.withValues(alpha: 0.28),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                border: Border.all(color: accent, width: 1.8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: accent.withValues(alpha: 0.30),
+                                    blurRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Image.asset(
+                                'assets/images/propic3.png',
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
+                              ),
                             ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: onWarpNextSector,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'NEXT',
+                            Positioned(
+                              right: -3,
+                              bottom: -2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: palette.hudSurface,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: secondary,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '#01',
                                   style: context.bodySmall.copyWith(
-                                    fontSize: 10.5,
+                                    fontSize: 8.5,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.1,
                                     color: secondary,
                                   ),
                                 ),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  size: 15,
-                                  color: secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'SIVAPRASAD NK',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.displaySmall.copyWith(
+                            fontSize: compact ? 14.5 : 16.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                            color: Colors.white,
+                            height: 1.05,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'SENIOR FLUTTER ARCHITECT',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.bodySmall.copyWith(
+                            fontSize: compact ? 9.5 : 10.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.3,
+                            color: secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // LIVE CLICKABLE LINKS STRIP (GitHub, LinkedIn, pub.dev, VS Code, WhatsApp, IG, CV)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: DriverQuickLink.all.map((link) {
+                    final isPortalMatch = activePortalLink?.id == link.id;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Tooltip(
+                        message: link.label,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => _launchDriverLink(link),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 7 : 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isPortalMatch
+                                    ? link.color.withValues(alpha: 0.30)
+                                    : link.color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: link.color.withValues(
+                                    alpha: isPortalMatch ? 1.0 : 0.65,
+                                  ),
+                                  width: isPortalMatch ? 1.4 : 1.0,
                                 ),
-                              ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    link.icon,
+                                    size: 11.5,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    link.shortCode,
+                                    style: context.bodySmall.copyWith(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.8,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      sector.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.displaySmall.copyWith(
-                        fontSize: compact ? 15.5 : 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
-                    ),
-                    if (!compact) ...[
-                      const SizedBox(height: 3),
-                      _buildLiveSectorLine(context, sector.screen),
-                    ],
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        _MiniHudActionChip(
-                          label: compact ? 'PIT-STOP' : 'ENTER PIT-STOP [E]',
-                          icon: Icons.garage_rounded,
-                          color: accent,
-                          filled: true,
-                          onTap: onOpenPitStop,
-                        ),
-                        if (sector.screen == Screen.home ||
-                            sector.screen == Screen.contactMe)
-                          _MiniHudActionChip(
-                            label: 'CV PDF',
-                            icon: Icons.emoji_events_rounded,
-                            color: const Color(0xFFF59E0B),
-                            onTap: () async {
-                              GamificationController.instance
-                                  .completeQuest('loot_collector');
-                              await launchUrl(Uri.parse(resumeLink));
-                            },
-                          ),
-                        if (sector.screen == Screen.projects)
-                          _MiniHudActionChip(
-                            label: 'ARCADE',
-                            icon: Icons.sports_esports_rounded,
-                            color: secondary,
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                ArcadeScreen.routeName,
-                              );
-                            },
-                          ),
-                      ],
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               ),
-            ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(height: 1, color: Color(0x26FFFFFF)),
+              ),
+
+              // 2. ACTIVE SECTOR TELEMETRY
+              Row(
+                children: [
+                  Icon(sector.icon, size: 14, color: accent),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${sector.code} // ${sector.shortLabel} ZONE',
+                      overflow: TextOverflow.ellipsis,
+                      style: context.bodySmall.copyWith(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.4,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: onWarpNextSector,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'NEXT',
+                            style: context.bodySmall.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                              color: secondary,
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 14,
+                            color: secondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                sector.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.displaySmall.copyWith(
+                  fontSize: compact ? 14.5 : 16.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              if (!compact) ...[
+                const SizedBox(height: 2),
+                _buildLiveSectorLine(context, sector.screen),
+              ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  _MiniHudActionChip(
+                    label: compact ? 'PIT-STOP' : 'ENTER PIT-STOP [E]',
+                    icon: Icons.garage_rounded,
+                    color: accent,
+                    filled: true,
+                    onTap: onOpenPitStop,
+                  ),
+                  if (activePortalLink != null)
+                    _MiniHudActionChip(
+                      label: 'OPEN ${activePortalLink!.label.toUpperCase()}',
+                      icon: activePortalLink!.icon,
+                      color: activePortalLink!.color,
+                      filled: true,
+                      onTap: () => _launchDriverLink(activePortalLink!),
+                    ),
+                  if (sector.screen == Screen.projects)
+                    _MiniHudActionChip(
+                      label: 'ARCADE',
+                      icon: Icons.sports_esports_rounded,
+                      color: secondary,
+                      onTap: () {
+                        Navigator.pushNamed(context, ArcadeScreen.routeName);
+                      },
+                    ),
+                ],
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
@@ -25,8 +26,8 @@ class RacingTrackPainter extends CustomPainter {
   final double skyParallax;
   final double timeSeconds;
   final ThemeState themeState;
-  final Color scaffoldColor;
-  final Color primaryColor;
+  final RacingThemePalette palette;
+  final ui.Image? driverPhoto;
 
   RacingTrackPainter({
     required this.segments,
@@ -40,8 +41,8 @@ class RacingTrackPainter extends CustomPainter {
     required this.skyParallax,
     required this.timeSeconds,
     required this.themeState,
-    required this.scaffoldColor,
-    required this.primaryColor,
+    required this.palette,
+    this.driverPhoto,
   });
 
   static const int _drawDistance = 96;
@@ -54,10 +55,10 @@ class RacingTrackPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (segments.isEmpty || size.width <= 0 || size.height <= 0) return;
 
-    final isDark = themeState.isDark;
-    final accent = themeState.accentColor;
-    final secondary = themeState.secondaryAccent;
-    final style = themeState.portfolioStyle;
+    final isDark = palette.isDark;
+    final accent = palette.accent;
+    final secondary = palette.secondary;
+    final visualTheme = palette.visualTheme;
 
     final totalSegs = segments.length;
     final segLen = CircuitBuilder.segmentLength;
@@ -77,7 +78,7 @@ class RacingTrackPainter extends CustomPainter {
     final horizonY =
         (size.height * 0.41) + (slopeDelta * 0.012).clamp(-26.0, 26.0);
 
-    // 1. SKY, SUN/REACTOR & PARALLAX CYBER SKYLINE
+    // 1. SKY, SUN/STADIUM & PARALLAX HORIZON
     _paintSkyAndHorizon(
       canvas,
       size,
@@ -85,39 +86,35 @@ class RacingTrackPainter extends CustomPainter {
       accent,
       secondary,
       isDark,
-      style,
+      visualTheme,
     );
 
     // 2. BASE GROUND PLANE
     final groundTop = horizonY - 1;
     final groundRect = Rect.fromLTRB(0, groundTop, size.width, size.height);
-    final groundColor1 = isDark
-        ? Color.lerp(const Color(0xFF050814), accent, 0.05)!
-        : Color.lerp(const Color(0xFFDCE4F0), accent, 0.06)!;
-    final groundColor2 =
-        isDark ? const Color(0xFF03050C) : const Color(0xFFCBD5E1);
     canvas.drawRect(
       groundRect,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [groundColor1, groundColor2],
+          colors: [palette.groundFar, palette.groundNear],
         ).createShader(groundRect),
     );
 
-    // Subtle perspective ground grid lines in Cyber / Glass styles
+    // Perspective ground grid (prominent neon pink/cyan in Synthwave!)
     _paintGroundPerspectiveGrid(
       canvas,
       size,
       horizonY,
-      accent,
-      isDark,
+      visualTheme,
     );
 
     // 3. PROJECT 3D ROAD NODES FRONT-TO-BACK (WITH HILL CREST OCCLUSION)
     final slices = List<_ProjectedSlice>.generate(
-        _drawDistance + 1, (_) => _ProjectedSlice());
+      _drawDistance + 1,
+      (_) => _ProjectedSlice(),
+    );
     double worldCurveX = 0.0;
     double dx = -(baseSeg.curve * _curveWorldMultiplier * basePercent);
     final camWorldX = playerX * roadWidth;
@@ -155,7 +152,6 @@ class RacingTrackPainter extends CustomPainter {
       }
     }
 
-    // Group dynamic traffic cars & orbs by segment offset `n` for proper Z-ordering
     final carsByOffset = <int, List<TrafficCar>>{};
     for (final car in trafficCars) {
       double dz = car.z - normalizedZ;
@@ -204,8 +200,6 @@ class RacingTrackPainter extends CustomPainter {
         }
       }
 
-      // Roadside Objects, Tunnel Ribs, Billboards, Gantries, Orbs & Cars
-      // Clipped against hill occlusion `near.clipY`
       if (far.y < near.clipY) {
         canvas.save();
         canvas.clipRect(Rect.fromLTRB(0, 0, size.width, near.clipY));
@@ -221,15 +215,26 @@ class RacingTrackPainter extends CustomPainter {
             n,
           );
         } else if (seg.hasLightPylon && n < 72) {
-          _paintRoadsideLightPylons(
-            canvas,
-            far.x,
-            far.y,
-            far.w,
-            accent,
-            secondary,
-            seg.index.isEven,
-          );
+          if (visualTheme == RacingVisualTheme.retroSynthwave) {
+            _paintSynthwavePalms(
+              canvas,
+              far.x,
+              far.y,
+              far.w,
+              accent,
+              secondary,
+            );
+          } else {
+            _paintRoadsideLightPylons(
+              canvas,
+              far.x,
+              far.y,
+              far.w,
+              accent,
+              secondary,
+              seg.index.isEven,
+            );
+          }
         }
 
         if (seg.leftBillboard != null && n < 64 && n >= 1) {
@@ -274,11 +279,10 @@ class RacingTrackPainter extends CustomPainter {
             distanceSteps: n,
             accent: accent,
             secondary: secondary,
-            isDark: isDark,
+            visualTheme: visualTheme,
           );
         }
 
-        // Data Crystal Orbs in this slice
         final sliceOrbs = orbsByOffset[n];
         if (sliceOrbs != null) {
           for (final orb in sliceOrbs) {
@@ -300,7 +304,6 @@ class RacingTrackPainter extends CustomPainter {
           }
         }
 
-        // Rival / Traffic Cars in this slice
         final sliceCars = carsByOffset[n];
         if (sliceCars != null) {
           for (final car in sliceCars) {
@@ -317,8 +320,6 @@ class RacingTrackPainter extends CustomPainter {
               screenY: cy,
               roadHalfW: cw,
               distanceSteps: n,
-              accent: accent,
-              secondary: secondary,
             );
           }
         }
@@ -329,13 +330,7 @@ class RacingTrackPainter extends CustomPainter {
 
     // 5. HIGH-SPEED WIND / NITRO WARP LINES
     if (speedKmh > 210 || nitroActive) {
-      _paintSpeedWarpLines(
-        canvas,
-        size,
-        horizonY,
-        accent,
-        secondary,
-      );
+      _paintSpeedWarpLines(canvas, size, horizonY, accent);
     }
   }
 
@@ -346,31 +341,20 @@ class RacingTrackPainter extends CustomPainter {
     Color accent,
     Color secondary,
     bool isDark,
-    PortfolioStyle style,
+    RacingVisualTheme visualTheme,
   ) {
     final skyRect = Rect.fromLTRB(0, 0, size.width, horizonY + 2);
-    final topSky = isDark
-        ? const Color(0xFF040611)
-        : Color.lerp(const Color(0xFFE0EAFC), accent, 0.08)!;
-    final midSky = isDark
-        ? Color.lerp(const Color(0xFF0A1026), secondary, 0.16)!
-        : Color.lerp(const Color(0xFFCFDEF3), secondary, 0.10)!;
-    final lowSky = isDark
-        ? Color.lerp(const Color(0xFF111936), accent, 0.28)!
-        : Color.lerp(const Color(0xFFF8FAFC), accent, 0.18)!;
-
     canvas.drawRect(
       skyRect,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: const [0.0, 0.62, 1.0],
-          colors: [topSky, midSky, lowSky],
+          stops: const [0.0, 0.58, 1.0],
+          colors: [palette.skyTop, palette.skyMid, palette.skyBottom],
         ).createShader(skyRect),
     );
 
-    // Twinkling stars in dark mode
     if (isDark) {
       final starPaint = Paint()..style = PaintingStyle.fill;
       for (int i = 0; i < 42; i++) {
@@ -378,83 +362,124 @@ class RacingTrackPainter extends CustomPainter {
             size.width;
         final sy = (i * 47.3) % (horizonY * 0.78);
         final pulse = 0.3 + 0.6 * (0.5 + 0.5 * math.sin(timeSeconds * 2.2 + i));
-        starPaint.color = (i % 4 == 0 ? accent : Colors.white)
+        starPaint.color = (i % 4 == 0 ? secondary : Colors.white)
             .withValues(alpha: pulse * 0.55);
         canvas.drawCircle(Offset(sx, sy), i % 5 == 0 ? 1.8 : 1.1, starPaint);
       }
     }
 
-    // Synthwave / Telemetry Horizon Reactor Sun
     final sunX = size.width * 0.5 - (skyParallax * 90).clamp(-180.0, 180.0);
-    final sunY = horizonY - 18;
-    final sunRadius = math.min(size.width, size.height) * 0.13;
+    final sunY = horizonY -
+        (visualTheme == RacingVisualTheme.retroSynthwave ? 8.0 : 18.0);
+    final sunRadius = math.min(size.width, size.height) *
+        (visualTheme == RacingVisualTheme.retroSynthwave ? 0.17 : 0.125);
 
-    canvas.drawCircle(
-      Offset(sunX, sunY),
-      sunRadius * 1.9,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            accent.withValues(alpha: isDark ? 0.30 : 0.20),
-            secondary.withValues(alpha: isDark ? 0.12 : 0.06),
-            Colors.transparent,
-          ],
-        ).createShader(
-          Rect.fromCircle(center: Offset(sunX, sunY), radius: sunRadius * 1.9),
-        ),
-    );
+    if (visualTheme != RacingVisualTheme.f1PitWall) {
+      // Reactor / OutRun Sunset Sun
+      final sunColors = visualTheme == RacingVisualTheme.retroSynthwave
+          ? const [Color(0xFFFDE047), Color(0xFFFB7185), Color(0xFFEC4899)]
+          : [
+              accent.withValues(alpha: isDark ? 0.85 : 0.65),
+              secondary.withValues(alpha: isDark ? 0.85 : 0.65),
+            ];
+
+      canvas.drawCircle(
+        Offset(sunX, sunY),
+        sunRadius * 1.9,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              sunColors.first.withValues(alpha: 0.32),
+              accent.withValues(alpha: 0.14),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(
+              center: Offset(sunX, sunY),
+              radius: sunRadius * 1.9,
+            ),
+          ),
+      );
+
+      canvas.save();
+      canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY));
+      final sunRect =
+          Rect.fromCircle(center: Offset(sunX, sunY), radius: sunRadius);
+      canvas.drawCircle(
+        Offset(sunX, sunY),
+        sunRadius,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: sunColors,
+          ).createShader(sunRect),
+      );
+
+      final cutColor = palette.skyMid;
+      final stripes = visualTheme == RacingVisualTheme.retroSynthwave ? 7 : 5;
+      for (int s = 0; s < stripes; s++) {
+        final bandY = sunY + (s * sunRadius * 0.14);
+        canvas.drawRect(
+          Rect.fromLTWH(
+            sunX - sunRadius - 2,
+            bandY,
+            sunRadius * 2 + 4,
+            2.2 + s * 1.25,
+          ),
+          Paint()..color = cutColor.withValues(alpha: 0.88),
+        );
+      }
+      canvas.restore();
+    } else {
+      // Formula 1 Stadium Floodlights & Grandstand Horizon
+      canvas.save();
+      canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY));
+      for (int f = 0; f < 6; f++) {
+        final fx = (((f * (size.width / 5)) - skyParallax * 180) % size.width +
+                size.width) %
+            size.width;
+        final towerTop = horizonY - 68;
+        canvas.drawLine(
+          Offset(fx, horizonY),
+          Offset(fx, towerTop),
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.25)
+            ..strokeWidth = 2.5,
+        );
+        canvas.drawRect(
+          Rect.fromCenter(
+            center: Offset(fx, towerTop),
+            width: 24,
+            height: 8,
+          ),
+          Paint()..color = Colors.white.withValues(alpha: 0.90),
+        );
+        canvas.drawCircle(
+          Offset(fx, towerTop),
+          34,
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.16)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+        );
+      }
+      canvas.restore();
+    }
 
     canvas.save();
     canvas.clipRect(Rect.fromLTRB(0, 0, size.width, horizonY));
-    final sunRect =
-        Rect.fromCircle(center: Offset(sunX, sunY), radius: sunRadius);
-    canvas.drawCircle(
-      Offset(sunX, sunY),
-      sunRadius,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            accent.withValues(alpha: isDark ? 0.85 : 0.65),
-            secondary.withValues(alpha: isDark ? 0.85 : 0.65),
-          ],
-        ).createShader(sunRect),
-    );
-
-    // Horizontal synth scan-stripes cut across lower half of horizon orb
-    final cutColor = isDark ? const Color(0xFF0A1026) : lowSky;
-    for (int s = 0; s < 5; s++) {
-      final bandY = sunY + (s * sunRadius * 0.16);
-      canvas.drawRect(
-        Rect.fromLTWH(
-          sunX - sunRadius - 2,
-          bandY,
-          sunRadius * 2 + 4,
-          2.2 + s * 1.1,
-        ),
-        Paint()..color = cutColor.withValues(alpha: 0.85),
-      );
-    }
-
-    // Parallax Mountain Range & Cyber City Silhouette
-    _paintParallaxMountains(
-      canvas,
-      size,
-      horizonY,
-      accent,
-      secondary,
-      isDark,
-    );
+    _paintParallaxMountains(canvas, size, horizonY, accent, isDark);
     canvas.restore();
 
-    // Glowing Horizon Laser Line
     canvas.drawLine(
       Offset(0, horizonY),
       Offset(size.width, horizonY),
       Paint()
-        ..color = accent.withValues(alpha: isDark ? 0.75 : 0.55)
-        ..strokeWidth = 2.0,
+        ..color = (visualTheme == RacingVisualTheme.retroSynthwave
+                ? secondary
+                : accent)
+            .withValues(alpha: 0.80)
+        ..strokeWidth = 2.2,
     );
   }
 
@@ -463,17 +488,16 @@ class RacingTrackPainter extends CustomPainter {
     Size size,
     double horizonY,
     Color accent,
-    Color secondary,
     bool isDark,
   ) {
     final mountainPath = Path()..moveTo(0, horizonY);
     const peaks = 18;
     final span = size.width / peaks;
-    final shift = (skyParallax * 260) % (size.width);
+    final shift = (skyParallax * 260) % size.width;
 
     for (int i = -2; i <= peaks + 2; i++) {
       final px = i * span - (shift % span);
-      final seed = (i + (shift ~/ span));
+      final seed = i + (shift ~/ span);
       final h1 = 22 + ((seed * 37).abs() % 46);
       mountainPath.lineTo(px, horizonY - h1);
       mountainPath.lineTo(px + span * 0.5, horizonY - (h1 * 0.45));
@@ -492,9 +516,9 @@ class RacingTrackPainter extends CustomPainter {
     canvas.drawPath(
       mountainPath,
       Paint()
-        ..color = accent.withValues(alpha: isDark ? 0.35 : 0.25)
+        ..color = accent.withValues(alpha: isDark ? 0.45 : 0.25)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
+        ..strokeWidth = 1.3,
     );
   }
 
@@ -502,21 +526,35 @@ class RacingTrackPainter extends CustomPainter {
     Canvas canvas,
     Size size,
     double horizonY,
-    Color accent,
-    bool isDark,
+    RacingVisualTheme visualTheme,
   ) {
     final gridPaint = Paint()
-      ..color = accent.withValues(alpha: isDark ? 0.09 : 0.08)
-      ..strokeWidth = 1.0;
+      ..color = palette.gridLine
+      ..strokeWidth =
+          visualTheme == RacingVisualTheme.retroSynthwave ? 1.3 : 1.0;
 
     final vanishX = size.width * 0.5;
-    for (int i = -8; i <= 8; i++) {
+    for (int i = -10; i <= 10; i++) {
       if (i == 0) continue;
       canvas.drawLine(
-        Offset(vanishX + i * 24.0, horizonY),
-        Offset(vanishX + i * 220.0, size.height),
+        Offset(vanishX + i * 22.0, horizonY),
+        Offset(vanishX + i * 230.0, size.height),
         gridPaint,
       );
+    }
+
+    if (visualTheme == RacingVisualTheme.retroSynthwave) {
+      // Classic OutRun scrolling horizontal wireframe grid lines
+      final scroll = (playerZ * 0.0025) % 1.0;
+      for (int r = 1; r <= 8; r++) {
+        final t = ((r + scroll) / 9.0).clamp(0.0, 1.0);
+        final y = horizonY + math.pow(t, 2.2) * (size.height - horizonY);
+        canvas.drawLine(
+          Offset(0, y),
+          Offset(size.width, y),
+          gridPaint,
+        );
+      }
     }
   }
 
@@ -534,21 +572,7 @@ class RacingTrackPainter extends CustomPainter {
     required bool isDark,
   }) {
     final altBand = (seg.index ~/ 3).isEven;
-
-    // Outer grass/shoulder rumble glow
-    if ((seg.index ~/ 3) % 2 == 0) {
-      final shoulderPaint = Paint()
-        ..color = accent.withValues(alpha: isDark ? 0.035 : 0.04);
-      canvas.drawRect(
-        Rect.fromLTRB(0, y2, x2 - w2, y1),
-        shoulderPaint,
-      );
-    }
-
-    // 1. Asphalt Road Surface
-    final roadColor = isDark
-        ? (altBand ? const Color(0xFF0F1629) : const Color(0xFF131C33))
-        : (altBand ? const Color(0xFF334155) : const Color(0xFF3E4C63));
+    final roadColor = altBand ? palette.asphaltA : palette.asphaltB;
 
     final roadPath = Path()
       ..moveTo(x1 - w1, y1)
@@ -558,12 +582,11 @@ class RacingTrackPainter extends CustomPainter {
       ..close();
     canvas.drawPath(roadPath, Paint()..color = roadColor);
 
-    // 2. Motorsport Rumble Kerbs (Left & Right)
-    final kerbW1 = w1 * 0.11;
-    final kerbW2 = w2 * 0.11;
+    // Motorsport Rumble Kerbs (FIA Red/White in F1, Pink/Cyan in Synthwave!)
+    final kerbW1 = w1 * 0.115;
+    final kerbW2 = w2 * 0.115;
     final kerbAlt = (seg.index ~/ 2).isEven;
-    final kerbColor =
-        kerbAlt ? accent : (isDark ? const Color(0xFFF8FAFC) : Colors.white);
+    final kerbColor = kerbAlt ? palette.kerbA : palette.kerbB;
 
     final leftKerb = Path()
       ..moveTo(x1 - w1 - kerbW1, y1)
@@ -578,11 +601,10 @@ class RacingTrackPainter extends CustomPainter {
       ..lineTo(x1 + w1 + kerbW1, y1)
       ..close();
 
-    final kerbPaint = Paint()..color = kerbColor.withValues(alpha: 0.9);
+    final kerbPaint = Paint()..color = kerbColor.withValues(alpha: 0.94);
     canvas.drawPath(leftKerb, kerbPaint);
     canvas.drawPath(rightKerb, kerbPaint);
 
-    // 3. Checkered Start / Finish Line Pattern
     if (seg.isCheckered) {
       const cols = 8;
       for (int c = 0; c < cols; c++) {
@@ -599,17 +621,19 @@ class RacingTrackPainter extends CustomPainter {
           tilePath,
           Paint()
             ..color = isWhite
-                ? Colors.white.withValues(alpha: 0.92)
+                ? Colors.white.withValues(alpha: 0.94)
                 : const Color(0xFF090D16),
         );
       }
       return;
     }
 
-    // 4. 3-Lane Dashed Neon Dividers
+    // 3-Lane Dashed Dividers
     if ((seg.index ~/ 2).isEven) {
-      final lanePaint = Paint()
-        ..color = Colors.white.withValues(alpha: isDark ? 0.42 : 0.65);
+      final divColor = palette.visualTheme == RacingVisualTheme.retroSynthwave
+          ? secondary.withValues(alpha: 0.72)
+          : Colors.white.withValues(alpha: isDark ? 0.42 : 0.65);
+      final lanePaint = Paint()..color = divColor;
       for (final lanePos in const [-0.33, 0.33]) {
         final lw1 = math.max(1.2, w1 * 0.018);
         final lw2 = math.max(0.6, w2 * 0.018);
@@ -625,7 +649,6 @@ class RacingTrackPainter extends CustomPainter {
       }
     }
 
-    // 5. Track Surface Nitro / Skill Boost Pad (`>>>`)
     if (seg.boostLane != null) {
       final bl = seg.boostLane!;
       final padHalf1 = w1 * 0.18;
@@ -640,7 +663,7 @@ class RacingTrackPainter extends CustomPainter {
         ..close();
       canvas.drawPath(
         padPath,
-        Paint()..color = const Color(0xFF00F0FF).withValues(alpha: 0.78),
+        Paint()..color = const Color(0xFF00F0FF).withValues(alpha: 0.80),
       );
     }
   }
@@ -659,7 +682,7 @@ class RacingTrackPainter extends CustomPainter {
     if (w < 6) return;
     final color = (n ~/ 4).isEven ? accent : secondary;
     final archPaint = Paint()
-      ..color = color.withValues(alpha: 0.55)
+      ..color = color.withValues(alpha: 0.58)
       ..style = PaintingStyle.stroke
       ..strokeWidth = (roadHalfW * 0.025).clamp(1.0, 5.0);
 
@@ -669,6 +692,40 @@ class RacingTrackPainter extends CustomPainter {
       ..lineTo(cx + w * 0.88, cy - h)
       ..lineTo(cx + w, cy);
     canvas.drawPath(path, archPaint);
+  }
+
+  void _paintSynthwavePalms(
+    Canvas canvas,
+    double cx,
+    double cy,
+    double roadHalfW,
+    Color accent,
+    Color secondary,
+  ) {
+    if (roadHalfW < 10) return;
+    final h = roadHalfW * 0.88;
+    final offset = roadHalfW * 1.28;
+    final trunkPaint = Paint()
+      ..color = const Color(0xFF1E0B36)
+      ..strokeWidth = (roadHalfW * 0.032).clamp(1.5, 7.0)
+      ..strokeCap = StrokeCap.round;
+    final frondPaint = Paint()
+      ..color = secondary.withValues(alpha: 0.82)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (roadHalfW * 0.018).clamp(1.0, 3.5);
+
+    for (final dir in const [-1.0, 1.0]) {
+      final baseX = cx + dir * offset;
+      final topX = baseX + dir * (roadHalfW * 0.10);
+      final topY = cy - h;
+      canvas.drawLine(Offset(baseX, cy), Offset(topX, topY), trunkPaint);
+      for (final fAngle in const [-2.3, -1.7, -1.1, -0.5]) {
+        final len = roadHalfW * 0.28;
+        final endX = topX + math.cos(fAngle) * len * -dir;
+        final endY = topY + math.sin(fAngle).abs() * len * 0.55;
+        canvas.drawLine(Offset(topX, topY), Offset(endX, endY), frondPaint);
+      }
+    }
   }
 
   void _paintRoadsideLightPylons(
@@ -690,7 +747,6 @@ class RacingTrackPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: 0.28)
       ..strokeWidth = strokeW;
 
-    // Left & Right Pylons
     for (final dir in const [-1.0, 1.0]) {
       final baseX = cx + dir * offset;
       final topX = cx + dir * (offset * 0.88);
@@ -719,8 +775,10 @@ class RacingTrackPainter extends CustomPainter {
     if (roadHalfW < 10) return;
 
     final boardColor = spec.useSecondaryAccent ? secondary : accent;
-    final boardW = (roadHalfW * 0.92).clamp(16.0, 340.0);
-    final boardH = boardW * 0.48;
+    final isPhotoBoard = spec.showDriverPhoto;
+    final boardW =
+        (roadHalfW * (isPhotoBoard ? 1.06 : 0.92)).clamp(16.0, 390.0);
+    final boardH = boardW * (isPhotoBoard ? 0.54 : 0.48);
     final strutH = roadHalfW * 0.24;
 
     final anchorX = isLeft
@@ -729,7 +787,6 @@ class RacingTrackPainter extends CustomPainter {
     final boardTop = groundY - strutH - boardH;
     final rect = Rect.fromLTWH(anchorX, boardTop, boardW, boardH);
 
-    // Support struts
     final strutPaint = Paint()
       ..color = boardColor.withValues(alpha: 0.65)
       ..strokeWidth = (boardW * 0.025).clamp(1.0, 4.5);
@@ -744,17 +801,13 @@ class RacingTrackPainter extends CustomPainter {
       strutPaint,
     );
 
-    // Holographic Dark Glass Board Surface + Neon Frame
     final rrect = RRect.fromRectAndRadius(
       rect,
       Radius.circular((boardW * 0.04).clamp(2.0, 10.0)),
     );
     canvas.drawRRect(
       rrect,
-      Paint()
-        ..color = isDark
-            ? const Color(0xFF070C1A).withValues(alpha: 0.92)
-            : const Color(0xFF0F172A).withValues(alpha: 0.90),
+      Paint()..color = palette.hudSurface.withValues(alpha: 0.94),
     );
     canvas.drawRRect(
       rrect,
@@ -764,46 +817,88 @@ class RacingTrackPainter extends CustomPainter {
         ..strokeWidth = (boardW * 0.016).clamp(1.0, 3.0),
     );
 
-    // Top accent header bar
-    final headerH = boardH * 0.26;
+    final headerH = boardH * 0.25;
     canvas.drawRRect(
       RRect.fromRectAndCorners(
         Rect.fromLTWH(rect.left, rect.top, rect.width, headerH),
         topLeft: Radius.circular((boardW * 0.04).clamp(2.0, 10.0)),
         topRight: Radius.circular((boardW * 0.04).clamp(2.0, 10.0)),
       ),
-      Paint()..color = boardColor.withValues(alpha: 0.24),
+      Paint()..color = boardColor.withValues(alpha: 0.26),
     );
 
-    // Render crisp text only when billboard is large enough to read
     if (boardW >= 58 && distanceSteps < 46) {
-      final pad = boardW * 0.055;
+      final pad = boardW * 0.05;
+      double textLeft = rect.left + pad;
+      double textMaxW = boardW - pad * 2;
+
+      // Draw Sivaprasad NK's portrait inside Hero Jumbotron Billboards!
+      if (isPhotoBoard && driverPhoto != null && boardH >= 34) {
+        final avatarSize = (boardH * 0.60).clamp(18.0, 110.0);
+        final avatarRect = Rect.fromLTWH(
+          rect.left + pad,
+          rect.top + headerH + (boardH - headerH - avatarSize) * 0.5,
+          avatarSize,
+          avatarSize,
+        );
+        canvas.drawCircle(
+          avatarRect.center,
+          avatarSize * 0.52,
+          Paint()..color = boardColor.withValues(alpha: 0.25),
+        );
+        canvas.save();
+        canvas.clipPath(Path()..addOval(avatarRect));
+        canvas.drawImageRect(
+          driverPhoto!,
+          Rect.fromLTWH(
+            0,
+            0,
+            driverPhoto!.width.toDouble(),
+            driverPhoto!.height.toDouble(),
+          ),
+          avatarRect,
+          Paint()..filterQuality = FilterQuality.medium,
+        );
+        canvas.restore();
+        canvas.drawCircle(
+          avatarRect.center,
+          avatarSize * 0.5,
+          Paint()
+            ..color = boardColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = (boardW * 0.012).clamp(1.0, 2.5),
+        );
+
+        textLeft = avatarRect.right + pad * 0.85;
+        textMaxW = rect.right - pad - textLeft;
+      }
+
       _drawFittedText(
         canvas: canvas,
         text: spec.tag,
         offset: Offset(rect.left + pad, rect.top + headerH * 0.16),
         maxWidth: boardW - pad * 2,
-        fontSize: (boardH * 0.15).clamp(7.0, 14.0),
+        fontSize: (boardH * 0.145).clamp(7.0, 13.5),
         color: boardColor,
         weight: FontWeight.w700,
       );
       _drawFittedText(
         canvas: canvas,
         text: spec.title,
-        offset: Offset(rect.left + pad, rect.top + boardH * 0.34),
-        maxWidth: boardW - pad * 2,
-        fontSize: (boardH * 0.23).clamp(9.0, 24.0),
+        offset: Offset(textLeft, rect.top + boardH * 0.36),
+        maxWidth: textMaxW,
+        fontSize: (boardH * 0.22).clamp(9.0, 23.0),
         color: Colors.white,
         weight: FontWeight.w800,
       );
       _drawFittedText(
         canvas: canvas,
         text: spec.subtitle,
-        offset: Offset(rect.left + pad, rect.top + boardH * 0.68),
-        maxWidth: boardW - pad * 2,
-        fontSize: (boardH * 0.145).clamp(7.0, 14.5),
-        color: Colors.white.withValues(alpha: 0.80),
-        weight: FontWeight.w600,
+        offset: Offset(textLeft, rect.top + boardH * 0.69),
+        maxWidth: textMaxW,
+        fontSize: (boardH * 0.14).clamp(7.0, 14.0),
+        color: secondary.withValues(alpha: 0.92),
+        weight: FontWeight.w700,
       );
     }
   }
@@ -819,7 +914,7 @@ class RacingTrackPainter extends CustomPainter {
     required int distanceSteps,
     required Color accent,
     required Color secondary,
-    required bool isDark,
+    required RacingVisualTheme visualTheme,
   }) {
     if (roadHalfW < 12) return;
 
@@ -828,9 +923,8 @@ class RacingTrackPainter extends CustomPainter {
     final bannerH = (roadHalfW * 0.30).clamp(10.0, 96.0);
     final pillarW = (roadHalfW * 0.055).clamp(2.0, 18.0);
 
-    // Left & Right Gantry Towers
     final pillarPaint = Paint()
-      ..color = const Color(0xFF0B1325).withValues(alpha: 0.94);
+      ..color = palette.hudSurface.withValues(alpha: 0.95);
     final pillarStroke = Paint()
       ..color = accent
       ..style = PaintingStyle.stroke
@@ -853,7 +947,6 @@ class RacingTrackPainter extends CustomPainter {
     canvas.drawRect(rightTower, pillarPaint);
     canvas.drawRect(rightTower, pillarStroke);
 
-    // Overhead Span Banner
     final bannerRect = Rect.fromLTWH(
       roadCenterX - spanHalfW - pillarW,
       groundY - legH - bannerH * 0.2,
@@ -867,10 +960,10 @@ class RacingTrackPainter extends CustomPainter {
       Paint()
         ..shader = LinearGradient(
           colors: [
-            const Color(0xFF070C1B).withValues(alpha: 0.95),
-            Color.lerp(const Color(0xFF0A1229), accent, 0.22)!
-                .withValues(alpha: 0.95),
-            const Color(0xFF070C1B).withValues(alpha: 0.95),
+            palette.hudSurface.withValues(alpha: 0.96),
+            Color.lerp(palette.hudSurface, accent, 0.25)!
+                .withValues(alpha: 0.96),
+            palette.hudSurface.withValues(alpha: 0.96),
           ],
         ).createShader(bannerRect),
     );
@@ -883,9 +976,11 @@ class RacingTrackPainter extends CustomPainter {
     );
 
     if (bannerRect.width >= 95 && distanceSteps < 56) {
+      final prefix =
+          visualTheme == RacingVisualTheme.f1PitWall ? 'FIA $code' : code;
       _drawCenteredText(
         canvas: canvas,
-        text: '$code  •  $title',
+        text: '$prefix  •  $title',
         center: Offset(
           bannerRect.center.dx,
           bannerRect.top + bannerH * 0.34,
@@ -905,7 +1000,7 @@ class RacingTrackPainter extends CustomPainter {
           ),
           maxWidth: bannerRect.width * 0.90,
           fontSize: (bannerH * 0.21).clamp(7.5, 14.5),
-          color: accent,
+          color: secondary,
           weight: FontWeight.w700,
         );
       }
@@ -925,18 +1020,14 @@ class RacingTrackPainter extends CustomPainter {
     if (r < 3.0) return;
     final bob = math.sin(timeSeconds * 5.0 + x * 0.02) * (r * 0.25);
     final cy = groundY - r * 1.4 + bob;
-    final color = label.contains('NITRO')
-        ? const Color(0xFF00F0FF)
-        : const Color(0xFFF59E0B);
+    final color = label.contains('NITRO') ? secondary : const Color(0xFFF59E0B);
 
-    // Outer glow
     canvas.drawCircle(
       Offset(x, cy),
       r * 1.6,
       Paint()..color = color.withValues(alpha: 0.26),
     );
 
-    // Diamond crystal shape
     final diamond = Path()
       ..moveTo(x, cy - r)
       ..lineTo(x + r * 0.82, cy)
@@ -960,20 +1051,18 @@ class RacingTrackPainter extends CustomPainter {
     required double screenY,
     required double roadHalfW,
     required int distanceSteps,
-    required Color accent,
-    required Color secondary,
   }) {
     final carW = (roadHalfW * 0.34).clamp(6.0, 145.0);
     if (carW < 7.0) return;
     final carH = carW * 0.56;
 
-    const palette = [
+    const rivalPalette = [
       Color(0xFF38BDF8),
       Color(0xFFF43F5E),
       Color(0xFFA855F7),
       Color(0xFF10B981),
     ];
-    final trimColor = palette[car.colorVariant % palette.length];
+    final trimColor = rivalPalette[car.colorVariant % rivalPalette.length];
 
     final rect = Rect.fromLTWH(
       screenX - carW * 0.5,
@@ -982,7 +1071,6 @@ class RacingTrackPainter extends CustomPainter {
       carH,
     );
 
-    // Underglow shadow
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(screenX, screenY - carH * 0.06),
@@ -992,7 +1080,6 @@ class RacingTrackPainter extends CustomPainter {
       Paint()..color = trimColor.withValues(alpha: 0.28),
     );
 
-    // Rear tires
     final wheelW = carW * 0.18;
     final wheelH = carH * 0.38;
     final tirePaint = Paint()..color = const Color(0xFF090D16);
@@ -1011,17 +1098,13 @@ class RacingTrackPainter extends CustomPainter {
       tirePaint,
     );
 
-    // Lower widebody
     final bodyPath = Path()
       ..moveTo(rect.left + carW * 0.05, screenY - wheelH * 0.35)
       ..lineTo(rect.left + carW * 0.12, rect.top + carH * 0.36)
       ..lineTo(rect.right - carW * 0.12, rect.top + carH * 0.36)
       ..lineTo(rect.right - carW * 0.05, screenY - wheelH * 0.35)
       ..close();
-    canvas.drawPath(
-      bodyPath,
-      Paint()..color = const Color(0xFF161F33),
-    );
+    canvas.drawPath(bodyPath, Paint()..color = const Color(0xFF161F33));
     canvas.drawPath(
       bodyPath,
       Paint()
@@ -1030,19 +1113,14 @@ class RacingTrackPainter extends CustomPainter {
         ..strokeWidth = (carW * 0.02).clamp(1.0, 2.5),
     );
 
-    // Cabin canopy
     final cabinPath = Path()
       ..moveTo(rect.left + carW * 0.20, rect.top + carH * 0.38)
       ..lineTo(rect.left + carW * 0.28, rect.top + carH * 0.06)
       ..lineTo(rect.right - carW * 0.28, rect.top + carH * 0.06)
       ..lineTo(rect.right - carW * 0.20, rect.top + carH * 0.38)
       ..close();
-    canvas.drawPath(
-      cabinPath,
-      Paint()..color = const Color(0xFF0B1120),
-    );
+    canvas.drawPath(cabinPath, Paint()..color = const Color(0xFF0B1120));
 
-    // Glowing LED tail-light bar
     final tailY = rect.top + carH * 0.50;
     canvas.drawLine(
       Offset(rect.left + carW * 0.14, tailY),
@@ -1070,7 +1148,6 @@ class RacingTrackPainter extends CustomPainter {
     Size size,
     double horizonY,
     Color accent,
-    Color secondary,
   ) {
     final ratio = ((speedKmh - 200) / (maxSpeedKmh - 200)).clamp(0.15, 1.0);
     final cx = size.width * 0.5;
@@ -1079,7 +1156,6 @@ class RacingTrackPainter extends CustomPainter {
 
     for (int i = 0; i < streakCount; i++) {
       final angle = (i / streakCount) * math.pi * 2;
-      // Focus streaks along peripheral edges so center road stays crystal clear
       if ((angle > 0.35 && angle < math.pi - 0.35) &&
           (math.sin(angle).abs() > 0.85)) {
         continue;
@@ -1090,9 +1166,13 @@ class RacingTrackPainter extends CustomPainter {
       final rEnd = rStart + (nitroActive ? 110.0 : 55.0) * ratio;
 
       final p1 = Offset(
-          cx + math.cos(angle) * rStart, cy + math.sin(angle) * rStart * 0.65);
+        cx + math.cos(angle) * rStart,
+        cy + math.sin(angle) * rStart * 0.65,
+      );
       final p2 = Offset(
-          cx + math.cos(angle) * rEnd, cy + math.sin(angle) * rEnd * 0.65);
+        cx + math.cos(angle) * rEnd,
+        cy + math.sin(angle) * rEnd * 0.65,
+      );
 
       canvas.drawLine(
         p1,
@@ -1160,7 +1240,9 @@ class RacingTrackPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: maxWidth);
     tp.paint(
-        canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
+      canvas,
+      Offset(center.dx - tp.width / 2, center.dy - tp.height / 2),
+    );
   }
 
   @override

@@ -1,11 +1,303 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:spnk/domain/entity/contact_details.dart';
 import 'package:spnk/domain/entity/experience_details.dart';
 import 'package:spnk/domain/entity/project_details.dart';
 import 'package:spnk/domain/entity/skill_details.dart';
 import 'package:spnk/utils/screen_type.dart';
+import 'package:spnk/utils/string_constants.dart';
+import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+
+/// The 3 switchable racing camera & gameplay modes.
+enum RacingGameMode {
+  horizon3d(
+    shortLabel: '3D HORIZON',
+    title: 'Pseudo-3D Horizon Racer',
+    subtitle: 'OutRun Chase-Cam Highway',
+    icon: Icons.landscape_rounded,
+  ),
+  openPaddock(
+    shortLabel: 'OPEN WORLD',
+    title: 'Open-World Top-Down Paddock',
+    subtitle: 'Free-Roam & Drift Zones',
+    icon: Icons.explore_rounded,
+  ),
+  verticalHighway(
+    shortLabel: 'HIGHWAY',
+    title: 'Vertical Highway Lane Racer',
+    subtitle: 'Top-Down Traffic & Pit-Bays',
+    icon: Icons.add_road_rounded,
+  );
+
+  const RacingGameMode({
+    required this.shortLabel,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final String shortLabel;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+}
+
+/// The 3 switchable racing visual themes.
+enum RacingVisualTheme {
+  neonCyber(
+    shortLabel: 'NEON CYBER',
+    title: 'Neon Cyber Telemetry',
+    icon: Icons.bolt_rounded,
+  ),
+  f1PitWall(
+    shortLabel: 'F1 PIT-WALL',
+    title: 'Formula 1 Pro Pit-Wall',
+    icon: Icons.sports_score_rounded,
+  ),
+  retroSynthwave(
+    shortLabel: 'SYNTHWAVE',
+    title: 'Retro Synthwave Arcade',
+    icon: Icons.wb_twilight_rounded,
+  );
+
+  const RacingVisualTheme({
+    required this.shortLabel,
+    required this.title,
+    required this.icon,
+  });
+
+  final String shortLabel;
+  final String title;
+  final IconData icon;
+}
+
+/// Unified color & surface palette resolved from [ThemeState] + [RacingVisualTheme].
+class RacingThemePalette {
+  final RacingVisualTheme visualTheme;
+  final bool isDark;
+  final Color accent;
+  final Color secondary;
+  final Color tertiary;
+  final Color skyTop;
+  final Color skyMid;
+  final Color skyBottom;
+  final Color groundNear;
+  final Color groundFar;
+  final Color gridLine;
+  final Color asphaltA;
+  final Color asphaltB;
+  final Color kerbA;
+  final Color kerbB;
+  final Color carBody;
+  final Color carStripe;
+  final Color hudSurface;
+
+  const RacingThemePalette({
+    required this.visualTheme,
+    required this.isDark,
+    required this.accent,
+    required this.secondary,
+    required this.tertiary,
+    required this.skyTop,
+    required this.skyMid,
+    required this.skyBottom,
+    required this.groundNear,
+    required this.groundFar,
+    required this.gridLine,
+    required this.asphaltA,
+    required this.asphaltB,
+    required this.kerbA,
+    required this.kerbB,
+    required this.carBody,
+    required this.carStripe,
+    required this.hudSurface,
+  });
+
+  factory RacingThemePalette.resolve(
+    ThemeState themeState,
+    RacingVisualTheme visualTheme,
+  ) {
+    final isDark = themeState.isDark;
+
+    switch (visualTheme) {
+      case RacingVisualTheme.neonCyber:
+        final accent = themeState.accentColor;
+        final secondary = themeState.secondaryAccent;
+        return RacingThemePalette(
+          visualTheme: visualTheme,
+          isDark: isDark,
+          accent: accent,
+          secondary: secondary,
+          tertiary: const Color(0xFF00F0FF),
+          skyTop: isDark
+              ? const Color(0xFF040611)
+              : Color.lerp(const Color(0xFFE0EAFC), accent, 0.08)!,
+          skyMid: isDark
+              ? Color.lerp(const Color(0xFF0A1026), secondary, 0.16)!
+              : Color.lerp(const Color(0xFFCFDEF3), secondary, 0.10)!,
+          skyBottom: isDark
+              ? Color.lerp(const Color(0xFF111936), accent, 0.28)!
+              : Color.lerp(const Color(0xFFF8FAFC), accent, 0.18)!,
+          groundFar: isDark
+              ? Color.lerp(const Color(0xFF050814), accent, 0.05)!
+              : Color.lerp(const Color(0xFFDCE4F0), accent, 0.06)!,
+          groundNear:
+              isDark ? const Color(0xFF03050C) : const Color(0xFFCBD5E1),
+          gridLine: accent.withValues(alpha: isDark ? 0.12 : 0.10),
+          asphaltA: isDark ? const Color(0xFF0F1629) : const Color(0xFF334155),
+          asphaltB: isDark ? const Color(0xFF131C33) : const Color(0xFF3E4C63),
+          kerbA: accent,
+          kerbB: isDark ? const Color(0xFFF8FAFC) : Colors.white,
+          carBody: switch (themeState.portfolioStyle) {
+            PortfolioStyle.glass => const Color(0xFF141E36),
+            PortfolioStyle.bento => const Color(0xFF16181D),
+            PortfolioStyle.cyber => const Color(0xFF0A1228),
+          },
+          carStripe: accent,
+          hudSurface: const Color(0xFF060A18),
+        );
+
+      case RacingVisualTheme.f1PitWall:
+        // Authentic Formula 1 Pit-Wall & FIA Circuit Livery
+        const fiaRed = Color(0xFFE10600);
+        const drsTeal = Color(0xFF00D2BE);
+        const sectorPurple = Color(0xFFA855F7);
+        return RacingThemePalette(
+          visualTheme: visualTheme,
+          isDark: isDark,
+          accent: fiaRed,
+          secondary: drsTeal,
+          tertiary: sectorPurple,
+          skyTop: isDark ? const Color(0xFF090D16) : const Color(0xFFBAE6FD),
+          skyMid: isDark ? const Color(0xFF141C2B) : const Color(0xFFE0F2FE),
+          skyBottom: isDark ? const Color(0xFF243044) : const Color(0xFFF8FAFC),
+          groundFar: isDark ? const Color(0xFF0D2118) : const Color(0xFF15803D),
+          groundNear:
+              isDark ? const Color(0xFF091711) : const Color(0xFF166534),
+          gridLine: Colors.white.withValues(alpha: isDark ? 0.06 : 0.10),
+          asphaltA: isDark ? const Color(0xFF181C24) : const Color(0xFF272C36),
+          asphaltB: isDark ? const Color(0xFF1E232D) : const Color(0xFF303744),
+          kerbA: fiaRed,
+          kerbB: const Color(0xFFF8FAFC),
+          carBody: const Color(0xFF161920),
+          carStripe: fiaRed,
+          hudSurface: const Color(0xFF0B0E14),
+        );
+
+      case RacingVisualTheme.retroSynthwave:
+        // Classic 1980s OutRun / Synthwave Sunset Arcade
+        const neonPink = Color(0xFFFF2A85);
+        const synthCyan = Color(0xFF00F5D4);
+        const sunsetGold = Color(0xFFFDE047);
+        return RacingThemePalette(
+          visualTheme: visualTheme,
+          isDark: isDark,
+          accent: neonPink,
+          secondary: synthCyan,
+          tertiary: sunsetGold,
+          skyTop: isDark ? const Color(0xFF0D0221) : const Color(0xFF2E1065),
+          skyMid: isDark ? const Color(0xFF3B0764) : const Color(0xFF701A75),
+          skyBottom: isDark ? const Color(0xFFBE185D) : const Color(0xFFF43F5E),
+          groundFar: isDark ? const Color(0xFF17052E) : const Color(0xFF2A0A4A),
+          groundNear:
+              isDark ? const Color(0xFF090117) : const Color(0xFF18042E),
+          gridLine: neonPink.withValues(alpha: 0.34),
+          asphaltA: const Color(0xFF160B2E),
+          asphaltB: const Color(0xFF1F103D),
+          kerbA: neonPink,
+          kerbB: synthCyan,
+          carBody: const Color(0xFF1D1138),
+          carStripe: synthCyan,
+          hudSurface: const Color(0xFF120524),
+        );
+    }
+  }
+}
+
+/// Canonical quick-links for Sivaprasad NK displayed on the HUD & in-world pads.
+class DriverQuickLink {
+  final String id;
+  final String label;
+  final String shortCode;
+  final IconData icon;
+  final Color color;
+  final String Function() urlBuilder;
+  final bool isResume;
+
+  const DriverQuickLink({
+    required this.id,
+    required this.label,
+    required this.shortCode,
+    required this.icon,
+    required this.color,
+    required this.urlBuilder,
+    this.isResume = false,
+  });
+
+  String get url => urlBuilder();
+
+  static final List<DriverQuickLink> all = [
+    DriverQuickLink(
+      id: 'github',
+      label: 'GitHub',
+      shortCode: 'GH',
+      icon: FontAwesomeIcons.github,
+      color: const Color(0xFF38BDF8),
+      urlBuilder: () => githubLink,
+    ),
+    DriverQuickLink(
+      id: 'linkedin',
+      label: 'LinkedIn',
+      shortCode: 'IN',
+      icon: FontAwesomeIcons.linkedinIn,
+      color: const Color(0xFF0A66C2),
+      urlBuilder: () => linkedInLink,
+    ),
+    DriverQuickLink(
+      id: 'pubdev',
+      label: 'pub.dev',
+      shortCode: 'PUB',
+      icon: FontAwesomeIcons.dartLang,
+      color: const Color(0xFF00B4AB),
+      urlBuilder: () => pubDevLink,
+    ),
+    DriverQuickLink(
+      id: 'vscode',
+      label: 'VS Code',
+      shortCode: 'VSC',
+      icon: FontAwesomeIcons.store,
+      color: const Color(0xFFA855F7),
+      urlBuilder: () => vsCodeThemesLink,
+    ),
+    DriverQuickLink(
+      id: 'whatsapp',
+      label: 'WhatsApp',
+      shortCode: 'WA',
+      icon: FontAwesomeIcons.whatsapp,
+      color: const Color(0xFF22C55E),
+      urlBuilder: () => whatsappWebLink,
+    ),
+    DriverQuickLink(
+      id: 'instagram',
+      label: 'Instagram',
+      shortCode: 'IG',
+      icon: FontAwesomeIcons.instagram,
+      color: const Color(0xFFEC4899),
+      urlBuilder: () => instaLink,
+    ),
+    DriverQuickLink(
+      id: 'resume',
+      label: 'CV PDF',
+      shortCode: 'CV',
+      icon: Icons.description_rounded,
+      color: const Color(0xFFF59E0B),
+      urlBuilder: () => resumeLink,
+      isResume: true,
+    ),
+  ];
+}
 
 class RaceSectorMeta {
   final int index;
@@ -19,6 +311,7 @@ class RaceSectorMeta {
   final int checkpointSegment;
   final IconData icon;
   final String questId;
+  final Offset paddockCenter;
 
   const RaceSectorMeta({
     required this.index,
@@ -32,6 +325,7 @@ class RaceSectorMeta {
     required this.checkpointSegment,
     required this.icon,
     required this.questId,
+    required this.paddockCenter,
   });
 
   static const List<RaceSectorMeta> sectors = [
@@ -47,6 +341,7 @@ class RaceSectorMeta {
       checkpointSegment: 8,
       icon: Icons.sports_motorsports_rounded,
       questId: 'first_scroll',
+      paddockCenter: Offset(-740, -470),
     ),
     RaceSectorMeta(
       index: 1,
@@ -60,6 +355,7 @@ class RaceSectorMeta {
       checkpointSegment: 125,
       icon: Icons.badge_rounded,
       questId: 'lore_reader',
+      paddockCenter: Offset(740, -470),
     ),
     RaceSectorMeta(
       index: 2,
@@ -73,6 +369,7 @@ class RaceSectorMeta {
       checkpointSegment: 245,
       icon: Icons.speed_rounded,
       questId: 'skill_inspector',
+      paddockCenter: Offset(1020, 60),
     ),
     RaceSectorMeta(
       index: 3,
@@ -86,6 +383,7 @@ class RaceSectorMeta {
       checkpointSegment: 365,
       icon: Icons.flag_rounded,
       questId: 'career_chronicler',
+      paddockCenter: Offset(720, 560),
     ),
     RaceSectorMeta(
       index: 4,
@@ -99,6 +397,7 @@ class RaceSectorMeta {
       checkpointSegment: 485,
       icon: Icons.rocket_launch_rounded,
       questId: 'boss_raider',
+      paddockCenter: Offset(-720, 560),
     ),
     RaceSectorMeta(
       index: 5,
@@ -112,6 +411,7 @@ class RaceSectorMeta {
       checkpointSegment: 605,
       icon: Icons.cell_tower_rounded,
       questId: 'loot_collector',
+      paddockCenter: Offset(-1020, 60),
     ),
   ];
 
@@ -138,12 +438,14 @@ class BillboardSpec {
   final String title;
   final String subtitle;
   final bool useSecondaryAccent;
+  final bool showDriverPhoto;
 
   const BillboardSpec({
     required this.tag,
     required this.title,
     required this.subtitle,
     this.useSecondaryAccent = false,
+    this.showDriverPhoto = false,
   });
 }
 
@@ -213,6 +515,116 @@ class DataCrystalOrb {
   });
 }
 
+/// Open-World Top-Down Paddock interactive models.
+class PaddockLinkPortal {
+  final DriverQuickLink link;
+  final Offset center;
+  final double radius;
+
+  const PaddockLinkPortal({
+    required this.link,
+    required this.center,
+    this.radius = 52.0,
+  });
+}
+
+class PaddockSkidMark {
+  final Offset a;
+  final Offset b;
+  double life; // 0.0 .. 1.0
+
+  PaddockSkidMark({
+    required this.a,
+    required this.b,
+    this.life = 1.0,
+  });
+}
+
+class PaddockBoostStrip {
+  final Offset center;
+  final double angle;
+  final String label;
+  final String? skillName;
+
+  const PaddockBoostStrip({
+    required this.center,
+    required this.angle,
+    required this.label,
+    this.skillName,
+  });
+}
+
+class PaddockOrb {
+  final Offset pos;
+  final String label;
+  bool collected;
+
+  PaddockOrb({
+    required this.pos,
+    required this.label,
+    this.collected = false,
+  });
+}
+
+class PaddockWorldBuilder {
+  static const double halfWidth = 1650.0;
+  static const double halfHeight = 1150.0;
+  static const double zoneWidth = 370.0;
+  static const double zoneHeight = 230.0;
+
+  static List<PaddockLinkPortal> buildLinkPortals() {
+    final links = DriverQuickLink.all;
+    const ringRadius = 295.0;
+    return List<PaddockLinkPortal>.generate(links.length, (i) {
+      final angle = (-math.pi / 2) + (i * 2 * math.pi / links.length);
+      return PaddockLinkPortal(
+        link: links[i],
+        center: Offset(
+          math.cos(angle) * ringRadius,
+          math.sin(angle) * ringRadius,
+        ),
+      );
+    });
+  }
+
+  static List<PaddockBoostStrip> buildBoostStrips(List<SkillDetails> skills) {
+    final names = skills.isNotEmpty
+        ? skills.map((s) => s.title.trim()).toList()
+        : const ['Dart', 'Flutter', 'Firebase', 'HTML5', 'CSS3'];
+
+    const spots = [
+      (Offset(0, -520), 0.0),
+      (Offset(960, -210), math.pi / 2),
+      (Offset(960, 330), math.pi / 2),
+      (Offset(0, 620), math.pi),
+      (Offset(-960, 330), -math.pi / 2),
+    ];
+
+    return List<PaddockBoostStrip>.generate(spots.length, (i) {
+      final skill = names[i % names.length];
+      return PaddockBoostStrip(
+        center: spots[i].$1,
+        angle: spots[i].$2,
+        label: '${skill.toUpperCase()} BOOST',
+        skillName: skill,
+      );
+    });
+  }
+
+  static List<PaddockOrb> buildOrbs() {
+    const count = 18;
+    return List<PaddockOrb>.generate(count, (i) {
+      final angle = (i / count) * 2 * math.pi;
+      final rx = i.isEven ? 880.0 : 500.0;
+      final ry = i.isEven ? 540.0 : 360.0;
+      return PaddockOrb(
+        pos: Offset(math.cos(angle) * rx, math.sin(angle) * ry),
+        label: i.isEven ? '+NITRO' : '+XP',
+      );
+    });
+  }
+}
+
 class CircuitBuilder {
   static const int totalSegments = 720;
   static const double segmentLength = 200.0;
@@ -233,7 +645,6 @@ class CircuitBuilder {
       if (len <= 0) return;
       for (int i = start; i <= end && i < totalSegments; i++) {
         final t = (i - start) / len;
-        // Smooth ease-in-out bell curve for road curvature
         final bell = math.sin(t * math.pi);
         curves[i] = intensity * bell;
       }
@@ -244,7 +655,6 @@ class CircuitBuilder {
       if (len <= 0) return;
       for (int i = start; i <= end && i < totalSegments; i++) {
         final t = (i - start) / len;
-        // Smooth cosine hill returning cleanly to 0
         elevations[i] = peakHeight * (1 - math.cos(t * 2 * math.pi)) * 0.5;
       }
     }
@@ -276,39 +686,39 @@ class CircuitBuilder {
     addCurve(618, 688, -2.2);
     addHill(615, 695, 850);
 
-    // Prepare billboards by segment index
     final leftBoards = <int, BillboardSpec>{};
     final rightBoards = <int, BillboardSpec>{};
     final boostLanes = <int, double>{};
     final boostSkills = <int, String>{};
 
-    // --- SECTOR 01: STARTING GRID BILLBOARDS ---
-    leftBoards[22] = const BillboardSpec(
-      tag: 'DRIVER_01 // POLE',
+    // --- SECTOR 01: STARTING GRID BILLBOARDS (WITH DRIVER PHOTO & LINKS) ---
+    leftBoards[18] = const BillboardSpec(
+      tag: 'DRIVER #01 // POLE POSITION',
       title: 'SIVAPRASAD NK',
-      subtitle: 'SENIOR FLUTTER ARCHITECT',
+      subtitle: 'GITHUB • LINKEDIN • PUB.DEV • CV',
+      showDriverPhoto: true,
     );
-    rightBoards[38] = const BillboardSpec(
-      tag: 'ENGINE // 98%',
-      title: 'FLUTTER & DART',
-      subtitle: 'ANDROID • IOS • WEB • WASM',
+    rightBoards[34] = const BillboardSpec(
+      tag: 'CODE & PACKAGES // LIVE',
+      title: 'GITHUB & PUB.DEV',
+      subtitle: 'GITHUB.COM/SIVAPRASADNK',
       useSecondaryAccent: true,
     );
-    leftBoards[56] = const BillboardSpec(
-      tag: 'ARCHITECTURE // 95%',
-      title: 'CLEAN ARCH & BLOC',
-      subtitle: 'DOMAIN-DRIVEN TELEMETRY',
+    leftBoards[52] = const BillboardSpec(
+      tag: 'NETWORK & TOOLS // LIVE',
+      title: 'LINKEDIN & VSCODE',
+      subtitle: 'IN/SIVAPRASADNKOFFICIAL',
     );
-    rightBoards[76] = const BillboardSpec(
+    rightBoards[72] = const BillboardSpec(
       tag: 'CO-PILOT // DASH',
       title: 'CLAIM CV TROPHY',
-      subtitle: 'PRESS [E] FOR PIT-STOP',
+      subtitle: 'SIVAPRASADNK.DEV/RESUME.PDF',
       useSecondaryAccent: true,
     );
-    leftBoards[96] = const BillboardSpec(
+    leftBoards[94] = const BillboardSpec(
       tag: 'SPAWN // KERALA',
       title: 'TRIPUNITHURA',
-      subtitle: 'ERNAKULAM, INDIA',
+      subtitle: 'SENIOR FLUTTER ARCHITECT',
     );
     boostLanes[30] = 0.0;
     boostLanes[82] = 0.62;
@@ -319,6 +729,7 @@ class CircuitBuilder {
         tag: 'PERK 01 // LVL 37',
         title: '3.7+ YRS FLUTTER',
         subtitle: 'HIGH-FPS CROSS-PLATFORM UI',
+        showDriverPhoto: true,
       ),
       BillboardSpec(
         tag: 'PERK 02 // S-TIER',
@@ -448,11 +859,18 @@ class CircuitBuilder {
     boostLanes[556] = 0.62;
 
     // --- SECTOR 06: CONTACT / VICTORY PADDOCK ---
+    leftBoards[612] = const BillboardSpec(
+      tag: 'PADDOCK CLUB // CONNECT',
+      title: 'SIVAPRASAD NK',
+      subtitle: 'WHATSAPP • INSTAGRAM • LINKEDIN',
+      useSecondaryAccent: true,
+      showDriverPhoto: true,
+    );
     if (contacts.isNotEmpty) {
       for (int i = 0; i < contacts.length; i++) {
         final c = contacts[i];
-        final seg = 622 + i * 24;
-        if (seg < 705) {
+        final seg = 630 + i * 22;
+        if (seg < 702) {
           final cleanDetail =
               c.details.replaceAll('\n', ' ').trim().toUpperCase();
           final clipped = cleanDetail.length > 26
@@ -465,14 +883,14 @@ class CircuitBuilder {
             useSecondaryAccent: i.isOdd,
           );
           if (i.isEven) {
-            leftBoards[seg] = spec;
-          } else {
             rightBoards[seg] = spec;
+          } else {
+            leftBoards[seg] = spec;
           }
         }
       }
     }
-    rightBoards[690] = const BillboardSpec(
+    rightBoards[694] = const BillboardSpec(
       tag: 'FINISH LINE AHEAD',
       title: 'COMPLETE GRAND PRIX LAP',
       subtitle: 'GITHUB • LINKEDIN • PUB.DEV',
@@ -480,7 +898,6 @@ class CircuitBuilder {
     );
     boostLanes[676] = 0.0;
 
-    // Map checkpoint gantries from RaceSectorMeta
     final gantries = <int, RaceSectorMeta>{
       for (final s in RaceSectorMeta.sectors) s.checkpointSegment: s,
     };

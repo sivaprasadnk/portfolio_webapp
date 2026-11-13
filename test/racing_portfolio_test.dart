@@ -11,7 +11,7 @@ void main() {
   });
 
   testWidgets(
-    'Racing portfolio renders cleanly on desktop and opens Pit-Wall Dossier',
+    'Displays driver photo & live links on HUD and navigates Pit-Wall Dossier',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -21,6 +21,20 @@ void main() {
       await tester.pumpWidget(MyApp());
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 250));
+
+      // Verify driver identity, photo & live clickable quick-links on windshield HUD
+      expect(find.text('SIVAPRASAD NK'), findsOneWidget);
+      expect(find.text('GH'), findsOneWidget);
+      expect(find.text('IN'), findsOneWidget);
+      expect(find.text('PUB'), findsOneWidget);
+      expect(find.text('VSC'), findsOneWidget);
+      expect(find.text('WA'), findsOneWidget);
+      expect(find.text('IG'), findsOneWidget);
+      expect(find.text('CV'), findsOneWidget);
+      expect(
+        find.image(const AssetImage('assets/images/propic3.png')),
+        findsOneWidget,
+      );
 
       // Verify core racing HUD elements render without layout overflow
       expect(find.text('PIT WALL'), findsOneWidget);
@@ -68,7 +82,7 @@ void main() {
   );
 
   testWidgets(
-    'Racing portfolio renders touch pedals cleanly on mobile viewport',
+    'Racing portfolio renders touch pedals, photo & links cleanly on mobile viewport',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
@@ -85,14 +99,14 @@ void main() {
       expect(find.text('NITRO'), findsOneWidget);
       expect(find.text('BRAKE'), findsOneWidget);
       expect(find.text('DOSSIER'), findsOneWidget);
+      expect(find.text('SIVAPRASAD NK'), findsOneWidget);
 
-      // Flush any initial timers cleanly
       await tester.pump(const Duration(seconds: 3));
     },
   );
 
   testWidgets(
-    'Hyper-warp navigation, cruise toggle, and brightness switch work smoothly',
+    'Switches smoothly across all 3 gameplay modes and all 3 visual themes',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1520, 920);
       tester.view.devicePixelRatio = 1.0;
@@ -102,27 +116,50 @@ void main() {
       await tester.pumpWidget(MyApp());
       await tester.pump(const Duration(milliseconds: 150));
 
-      // Trigger Hyper-Warp to Career sector
-      await tester.tap(find.text('CAREER'));
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump(const Duration(milliseconds: 500));
+      // 1. Switch across all 3 Gameplay Modes: 3D HORIZON -> OPEN WORLD -> HIGHWAY
+      expect(find.text('3D HORIZON'), findsOneWidget);
+      expect(find.text('OPEN WORLD'), findsOneWidget);
+      expect(find.text('HIGHWAY'), findsOneWidget);
 
-      // Toggle Cruise Auto-Pilot button
+      await tester.tap(find.text('OPEN WORLD'));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Trigger GPS navigation to Career sector in Open-World Paddock
+      await tester.tap(find.text('CAREER'));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Switch to Vertical Highway Lane Racer mode
+      await tester.tap(find.text('HIGHWAY'));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Switch back to 3D Horizon Racer mode
+      await tester.tap(find.text('3D HORIZON'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 2. Switch across all 3 Visual Themes: NEON CYBER -> F1 PIT-WALL -> SYNTHWAVE
+      await tester.ensureVisible(find.text('F1 PIT-WALL'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('F1 PIT-WALL'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.ensureVisible(find.text('SYNTHWAVE'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('SYNTHWAVE'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.ensureVisible(find.text('NEON CYBER'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('NEON CYBER'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Toggle Cruise Auto-Pilot & Light/Dark brightness
       await tester.tap(find.text('CRUISE: ON'));
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('CRUISE: OFF'), findsOneWidget);
 
-      // Toggle Light / Dark mode while 3D track painter is active
-      // (BrightnessSwitch uses onDoubleTap so wait >300ms kDoubleTapTimeout)
       await tester.tap(find.byIcon(Icons.light_mode));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byIcon(Icons.dark_mode), findsOneWidget);
-
-      // Switch car & track livery style (Spatial / Cyber)
-      await tester.ensureVisible(find.text('CYBER'));
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.tap(find.text('CYBER'));
-      await tester.pump(const Duration(milliseconds: 200));
 
       await tester.pump(const Duration(seconds: 3));
     },
