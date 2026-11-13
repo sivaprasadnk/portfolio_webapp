@@ -43,59 +43,59 @@ class GamificationController extends ChangeNotifier {
   static const List<QuestItem> allQuests = [
     QuestItem(
       id: 'first_scroll',
-      title: 'Astral Navigator',
-      description: 'Navigate or warp across the open-air star map',
+      title: 'Lights Out!',
+      description: 'Accelerate off the Starting Grid or warp to a track sector',
       xpReward: 30,
-      icon: Icons.explore_rounded,
+      icon: Icons.sports_motorsports_rounded,
     ),
     QuestItem(
       id: 'style_shifter',
-      title: 'Dimension Shifter',
-      description: 'Switch between Glass, Spatial, or Cyber dimensions',
+      title: 'Custom Livery',
+      description: 'Switch your car & track livery (Glass, Spatial, or Cyber)',
       xpReward: 40,
-      icon: Icons.auto_awesome_rounded,
+      icon: Icons.palette_rounded,
     ),
     QuestItem(
       id: 'lore_reader',
-      title: 'Lore Seeker',
-      description: 'Align the Orbital Perk Compass in Origin Lore',
+      title: 'Origin Chicane',
+      description: 'Pass or inspect the Origin Bio Chicane & Driver Perks',
       xpReward: 40,
-      icon: Icons.menu_book_rounded,
+      icon: Icons.badge_rounded,
     ),
     QuestItem(
       id: 'skill_inspector',
-      title: 'Star Overclocker',
-      description: 'Overclock any Skill Star in the Astral Constellation',
+      title: 'ECU Dyno Tuner',
+      description: 'Tune any Skill Engine on the Dyno Straight or Pit Bay',
       xpReward: 50,
-      icon: Icons.bolt_rounded,
+      icon: Icons.speed_rounded,
     ),
     QuestItem(
       id: 'career_chronicler',
-      title: 'Chrono Voyager',
-      description: 'Activate a Warp Gate along the Career Odyssey Wave',
+      title: 'Hairpin Apex',
+      description: 'Carve through Career Hairpins or inspect a Season Stage',
       xpReward: 50,
-      icon: Icons.timeline_rounded,
+      icon: Icons.flag_rounded,
     ),
     QuestItem(
       id: 'boss_raider',
-      title: 'Mission Commander',
-      description: 'Launch a Holographic Project Mission portal',
+      title: 'Showroom Test Driver',
+      description: 'Launch any Championship Project from the Showroom',
       xpReward: 60,
       icon: Icons.rocket_launch_rounded,
     ),
     QuestItem(
       id: 'loot_collector',
-      title: 'Relic Hunter',
-      description: 'Claim the CV Scroll or tap an Orbiting Social Planet',
+      title: 'Podium Trophy',
+      description: 'Claim the CV Trophy or connect in the Social Paddock',
       xpReward: 75,
-      icon: Icons.workspace_premium_rounded,
+      icon: Icons.emoji_events_rounded,
     ),
     QuestItem(
       id: 'bug_hunter',
-      title: 'Apex Bug Interceptor',
-      description: 'Intercept 5+ anomalies in the Open-Air Radar Simulator',
+      title: 'Grand Prix Champion',
+      description: 'Hit 360+ KM/H with Nitro Overdrive or complete a full lap',
       xpReward: 100,
-      icon: Icons.radar_rounded,
+      icon: Icons.local_fire_department_rounded,
     ),
   ];
 
@@ -114,11 +114,11 @@ class GamificationController extends ChangeNotifier {
 
   String get rankTitle {
     final lvl = level;
-    if (lvl <= 1) return 'Astral Initiate';
-    if (lvl == 2) return 'Star Voyager';
-    if (lvl == 3) return 'Flutter Vanguard';
-    if (lvl == 4) return 'Nexus Architect';
-    return 'Galactic Grandmaster';
+    if (lvl <= 1) return 'Rookie Qualifier';
+    if (lvl == 2) return 'Apex Contender';
+    if (lvl == 3) return 'Flutter GT Pro';
+    if (lvl == 4) return 'Telemetry Architect';
+    return 'Grand Prix Legend';
   }
 
   int getSkillBoost(String skillTitle) => _skillBoosts[skillTitle] ?? 0;
@@ -127,7 +127,7 @@ class GamificationController extends ChangeNotifier {
     final current = _skillBoosts[skillTitle] ?? 0;
     if (current < 5) {
       _skillBoosts[skillTitle] = current + 1;
-      addXp(15, reason: '$skillTitle Star Overclocked (Lv.${current + 1})');
+      addXp(15, reason: '$skillTitle ECU Tuned (Stage ${current + 1})');
     }
     completeQuest('skill_inspector');
     notifyListeners();
@@ -141,7 +141,7 @@ class GamificationController extends ChangeNotifier {
     _unlockedQuests.add(questId);
     _xp += quest.xpReward;
     _showToast(
-      title: '✦ CONSTELLATION UNLOCKED: ${quest.title.toUpperCase()}',
+      title: '🏁 TROPHY UNLOCKED: ${quest.title.toUpperCase()}',
       subtitle: quest.description,
       xp: quest.xpReward,
     );
@@ -155,7 +155,7 @@ class GamificationController extends ChangeNotifier {
     }
     _xp += amount;
     _showToast(
-      title: '+$amount ASTRAL XP',
+      title: '+$amount TELEMETRY XP',
       subtitle: reason,
       xp: amount,
     );
@@ -281,13 +281,13 @@ class GamificationHudPill extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
-                              Icons.auto_awesome_rounded,
+                              Icons.emoji_events_rounded,
                               size: 12,
                               color: Color(0xFFF59E0B),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${game.unlockedQuests.length}/${GamificationController.allQuests.length} STARS',
+                              '${game.unlockedQuests.length}/${GamificationController.allQuests.length} TROPHIES',
                               style: context.bodySmall.copyWith(
                                 fontSize: 10,
                                 letterSpacing: 1.2,
@@ -378,9 +378,9 @@ class AchievementToastBanner extends StatelessWidget {
             if (title == null) return const SizedBox.shrink();
 
             return Positioned(
-              bottom: 28,
-              right: 24,
-              left: context.isMobileDevice ? 24 : null,
+              top: context.isMobileDevice ? 112 : 76,
+              right: 20,
+              left: context.isMobileDevice ? 20 : null,
               child: IgnorePointer(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
@@ -511,7 +511,8 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                     child: PortfolioStyledCard(
-                      cyberHeader: 'ASTRAL QUEST CONSTELLATION LOG',
+                      cyberHeader:
+                          'SPNK GRAND PRIX // SUPER LICENSE & TROPHIES',
                       padding: EdgeInsets.all(context.isMobileDevice ? 16 : 24),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -525,7 +526,7 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'ASTRAL STAR-LOG // LEVEL ${game.level}',
+                                      'DRIVER SUPER-LICENSE // LVL ${game.level}',
                                       style: context.displaySmall.copyWith(
                                         fontSize:
                                             context.isMobileDevice ? 20 : 24,
@@ -535,7 +536,7 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'RANK: ${game.rankTitle.toUpperCase()} • ${game.xp} TOTAL XP • ${game.unlockedQuests.length}/${GamificationController.allQuests.length} STARS IGNITED',
+                                      'CLASS: ${game.rankTitle.toUpperCase()} • ${game.xp} TELEMETRY XP • ${game.unlockedQuests.length}/${GamificationController.allQuests.length} TROPHIES WON',
                                       style: context.bodySmall.copyWith(
                                         fontSize: 12,
                                         letterSpacing: 1.3,
@@ -589,8 +590,8 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                                             children: [
                                               Text(
                                                 q.title.toUpperCase(),
-                                                style: context.bodyMedium
-                                                    .copyWith(
+                                                style:
+                                                    context.bodyMedium.copyWith(
                                                   fontSize: 15,
                                                   letterSpacing: 1.2,
                                                   fontWeight: FontWeight.bold,
@@ -615,7 +616,7 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                                         const SizedBox(width: 10),
                                         Text(
                                           unlocked
-                                              ? '✦ IGNITED'
+                                              ? '🏁 WON'
                                               : '+${q.xpReward} XP',
                                           style: context.bodySmall.copyWith(
                                             fontSize: 11.5,
@@ -637,8 +638,8 @@ void showQuestLogModal(BuildContext context, {VoidCallback? onJumpToArcade}) {
                             const SizedBox(height: 14),
                             Center(
                               child: OpenAirActionTrigger(
-                                label: 'Engage Bug Interceptor Radar',
-                                icon: Icons.radar_rounded,
+                                label: 'Hit Nitro Overdrive on Track',
+                                icon: Icons.local_fire_department_rounded,
                                 color: accent,
                                 isPrimary: true,
                                 onTap: () {
