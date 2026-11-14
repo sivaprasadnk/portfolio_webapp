@@ -12,6 +12,18 @@ class _StubYtPlatformHelper implements YtPlatformHelper {
   void configurePageMeta() {}
 
   @override
+  Future<Uint8List?> fetchBytesWithProgress({
+    required String url,
+    int? expectedBytes,
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
+    return null;
+  }
+
+  @override
+  void cancelActiveFetch() {}
+
+  @override
   Future<bool> saveBytesAsFile({
     required Uint8List bytes,
     required String fileName,

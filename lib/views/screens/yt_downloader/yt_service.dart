@@ -93,7 +93,7 @@ class YtService {
   }) async {
     final request = http.Request('GET', Uri.parse(url));
     final streamed = await _client.send(request).timeout(
-          const Duration(seconds: 25),
+          const Duration(seconds: 90),
         );
 
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
@@ -428,9 +428,14 @@ class YtService {
       }
     }
 
-    // Use Invidious /latest_version proxy endpoint which serves CORS headers reliably
-    final proxyDownloadUrl =
-        '$baseUrl/latest_version?id=$videoId&itag=$itag&local=true';
+    // Route directly to the CORS-enabled Invidious Companion / ytproxy-go host
+    // when available so browsers avoid un-CORSed 302 hops and support Range streaming.
+    final proxyDownloadUrl = _resolveDirectStreamUrl(
+      raw,
+      baseUrl: baseUrl,
+      videoId: videoId,
+      itag: itag,
+    );
 
     return YtStreamOption(
       itag: itag,
@@ -446,6 +451,31 @@ class YtService {
       bitrate: bitrate,
       contentLengthBytes: clen,
     );
+  }
+
+  String _resolveDirectStreamUrl(
+    Map<String, dynamic> raw, {
+    required String baseUrl,
+    required String videoId,
+    required String itag,
+  }) {
+    final rawUrl = (raw['url'] as String?)?.trim() ?? '';
+    final rawUri = Uri.tryParse(rawUrl);
+    final issuer = rawUri?.queryParameters['issuer']?.trim() ?? '';
+
+    if (rawUri != null && rawUri.path.contains('/videoplayback')) {
+      if (issuer.isNotEmpty) {
+        return rawUri.replace(scheme: 'https', host: issuer).toString();
+      }
+      if (rawUrl.startsWith(baseUrl)) {
+        return rawUrl;
+      }
+    }
+
+    if (issuer.isNotEmpty) {
+      return 'https://$issuer/companion/latest_version?id=$videoId&itag=$itag&local=true';
+    }
+    return '$baseUrl/latest_version?id=$videoId&itag=$itag&local=true';
   }
 
   bool _preferVideoCodec(YtStreamOption candidate, YtStreamOption current) {

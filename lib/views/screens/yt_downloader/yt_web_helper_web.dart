@@ -3,8 +3,19 @@ import 'dart:typed_data';
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/material.dart';
+import 'package:spnk/views/screens/yt_downloader/yt_service.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_web_helper.dart';
 import 'package:web/web.dart' as web;
+
+@JS('spnkYtFetchStream')
+external JSPromise<JSUint8Array> _spnkYtFetchStream(
+  JSString url,
+  JSNumber expectedBytes,
+  JSFunction onProgress,
+);
+
+@JS('spnkYtAbortFetch')
+external void _spnkYtAbortFetch();
 
 @JS('spnkYtDownloadBlob')
 external bool _spnkYtDownloadBlob(
@@ -63,6 +74,146 @@ class _WebYtPlatformHelper implements YtPlatformHelper {
     final script = doc.createElement('script') as web.HTMLScriptElement
       ..id = 'spnk-yt-bridge-script'
       ..text = r'''
+window._spnkActiveAbortCtrl = null;
+
+window.spnkYtAbortFetch = function() {
+  if (window._spnkActiveAbortCtrl) {
+    try { window._spnkActiveAbortCtrl.abort(); } catch (_) {}
+    window._spnkActiveAbortCtrl = null;
+  }
+};
+
+window.spnkYtFetchStream = async function(url, expectedBytes, onProgress) {
+  var ctrl = new AbortController();
+  window._spnkActiveAbortCtrl = ctrl;
+  var CHUNK_SIZE = 4 * 1024 * 1024; // 4 MB Range chunks prevent CDN throttling
+  var lastNotify = 0;
+
+  function report(received, total, force) {
+    if (!onProgress) return;
+    var now = Date.now();
+    if (force || now - lastNotify >= 55) {
+      lastNotify = now;
+      try { onProgress(received, total || 0); } catch (_) {}
+    }
+  }
+
+  async function readFullStream(resp, knownTotal) {
+    if (!resp.body || !resp.body.getReader) {
+      var buf = await resp.arrayBuffer();
+      var arr = new Uint8Array(buf);
+      report(arr.byteLength, arr.byteLength, true);
+      return arr;
+    }
+    var reader = resp.body.getReader();
+    var parts = [];
+    var received = 0;
+    while (true) {
+      var step = await reader.read();
+      if (step.done) break;
+      var val = step.value;
+      if (val && val.byteLength > 0) {
+        parts.push(val);
+        received += val.byteLength;
+        report(received, knownTotal || 0, false);
+      }
+    }
+    var merged = new Uint8Array(received);
+    var pos = 0;
+    for (var i = 0; i < parts.length; i++) {
+      merged.set(parts[i], pos);
+      pos += parts[i].byteLength;
+    }
+    report(received, received, true);
+    return merged;
+  }
+
+  try {
+    if (!expectedBytes || expectedBytes <= 0) {
+      var singleResp = await fetch(url, { signal: ctrl.signal });
+      if (!singleResp.ok) {
+        throw new Error('HTTP ' + singleResp.status);
+      }
+      var clHeader = parseInt(singleResp.headers.get('content-length') || '0', 10);
+      return await readFullStream(singleResp, clHeader > 0 ? clHeader : 0);
+    }
+
+    var total = expectedBytes;
+    var output = null;
+    var offset = 0;
+
+    while (offset < total) {
+      if (ctrl.signal.aborted) {
+        throw new Error('ABORTED');
+      }
+      var end = Math.min(offset + CHUNK_SIZE - 1, total - 1);
+      var resp = await fetch(url, {
+        headers: { 'Range': 'bytes=' + offset + '-' + end },
+        signal: ctrl.signal
+      });
+      if (!resp.ok) {
+        throw new Error('HTTP ' + resp.status);
+      }
+
+      if (offset === 0) {
+        if (resp.status === 200) {
+          // Server ignored Range header; stream entire body in single pass
+          return await readFullStream(resp, total);
+        }
+        var cr = resp.headers.get('content-range') || '';
+        var crMatch = cr.match(/\/(\d+)$/);
+        if (crMatch && crMatch[1]) {
+          var parsedTotal = parseInt(crMatch[1], 10);
+          if (parsedTotal > 0) total = parsedTotal;
+        }
+        output = new Uint8Array(total);
+      }
+
+      if (!resp.body || !resp.body.getReader) {
+        var chunkBuf = new Uint8Array(await resp.arrayBuffer());
+        if (chunkBuf.byteLength === 0) {
+          throw new Error('Unexpected empty chunk');
+        }
+        output.set(chunkBuf.subarray(0, Math.min(chunkBuf.byteLength, total - offset)), offset);
+        offset += chunkBuf.byteLength;
+        report(Math.min(offset, total), total, true);
+      } else {
+        var reader = resp.body.getReader();
+        var chunkRead = 0;
+        while (true) {
+          var step = await reader.read();
+          if (step.done) break;
+          var val = step.value;
+          if (val && val.byteLength > 0) {
+            var writable = Math.min(val.byteLength, total - offset);
+            if (writable > 0) {
+              output.set(val.subarray(0, writable), offset);
+            }
+            offset += val.byteLength;
+            chunkRead += val.byteLength;
+            report(Math.min(offset, total), total, false);
+          }
+        }
+        if (chunkRead === 0) {
+          throw new Error('Unexpected EOF while streaming');
+        }
+        report(Math.min(offset, total), total, true);
+      }
+    }
+
+    return output;
+  } catch (err) {
+    if (ctrl.signal.aborted || (err && err.name === 'AbortError')) {
+      throw new Error('ABORTED');
+    }
+    throw err;
+  } finally {
+    if (window._spnkActiveAbortCtrl === ctrl) {
+      window._spnkActiveAbortCtrl = null;
+    }
+  }
+};
+
 window._spnkToBlobUrl = async function(url, mimeType) {
   var resp = await fetch(url);
   if (!resp.ok) throw new Error('Failed to load ' + url);
@@ -124,7 +275,7 @@ window.spnkYtDownloadBlob = function(bytes, fileName, mimeType) {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 20000);
+    setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 30000);
     return true;
   } catch (e) {
     return false;
@@ -133,15 +284,19 @@ window.spnkYtDownloadBlob = function(bytes, fileName, mimeType) {
 
 window.spnkYtTriggerDirectLink = function(url, fileName) {
   try {
-    var a = document.createElement('a');
-    a.href = url;
-    if (fileName) a.download = fileName;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    var dlUrl = url;
+    if (fileName && dlUrl.indexOf('title=') === -1) {
+      dlUrl += (dlUrl.indexOf('?') === -1 ? '?' : '&') + 'title=' + encodeURIComponent(fileName);
+    }
+    // Hidden iframe triggers Content-Disposition: attachment download in-place without opening a new tab
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.src = dlUrl;
+    document.body.appendChild(iframe);
+    setTimeout(function() {
+      try { iframe.remove(); } catch (_) {}
+    }, 90000);
     return true;
   } catch (e) {
     return false;
@@ -238,6 +393,42 @@ window.spnkYtDecodeToWav = async function(audioBytes) {
   }
 
   @override
+  Future<Uint8List?> fetchBytesWithProgress({
+    required String url,
+    int? expectedBytes,
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
+    _ensureBridgeInjected();
+    final progressCallback = ((JSNumber received, JSNumber total) {
+      final r = received.toDartInt;
+      final t = total.toDartInt;
+      onProgress?.call(r, t > 0 ? t : expectedBytes);
+    }).toJS;
+
+    try {
+      final jsBytes = await _spnkYtFetchStream(
+        url.toJS,
+        (expectedBytes ?? 0).toJS,
+        progressCallback,
+      ).toDart;
+      return jsBytes.toDart;
+    } catch (e) {
+      if (e.toString().contains('ABORTED')) {
+        throw const YtDownloadCancelledException();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  void cancelActiveFetch() {
+    _ensureBridgeInjected();
+    try {
+      _spnkYtAbortFetch();
+    } catch (_) {}
+  }
+
+  @override
   Future<bool> saveBytesAsFile({
     required Uint8List bytes,
     required String fileName,
@@ -329,4 +520,3 @@ window.spnkYtDecodeToWav = async function(audioBytes) {
     return HtmlElementView(viewType: viewType);
   }
 }
-

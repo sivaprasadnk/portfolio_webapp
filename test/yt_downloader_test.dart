@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:spnk/main.dart';
 import 'package:spnk/utils/locator.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
@@ -91,6 +94,19 @@ class _FakeYtPlatformHelper implements YtPlatformHelper {
   void configurePageMeta() {}
 
   @override
+  Future<Uint8List?> fetchBytesWithProgress({
+    required String url,
+    int? expectedBytes,
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
+    onProgress?.call(expectedBytes ?? 512, expectedBytes ?? 512);
+    return Uint8List.fromList([0, 1, 2, 3, 4, 5]);
+  }
+
+  @override
+  void cancelActiveFetch() {}
+
+  @override
   Future<bool> saveBytesAsFile({
     required Uint8List bytes,
     required String fileName,
@@ -170,6 +186,56 @@ void main() {
       expect(rawId?.kind, YtUrlKind.rawId);
 
       expect(ParsedYoutubeTarget.tryParse('https://example.com/foo'), isNull);
+    });
+
+    test('YtService rewrites Invidious companion issuer URLs for direct 1-click CORS download', () async {
+      final mockClient = MockClient((request) async {
+        final url = request.url.toString();
+        if (url.contains('api.invidious.io')) {
+          return http.Response(
+            jsonEncode([
+              [
+                'yt.chocolatemoo53.com',
+                {
+                  'type': 'https',
+                  'api': true,
+                  'uri': 'https://yt.chocolatemoo53.com',
+                },
+              ],
+            ]),
+            200,
+          );
+        }
+        if (url.contains('/api/v1/videos/jNQXAC9IVRw')) {
+          return http.Response(
+            jsonEncode({
+              'title': 'Me at the zoo',
+              'author': 'jawed',
+              'lengthSeconds': 19,
+              'adaptiveFormats': [
+                {
+                  'itag': '140',
+                  'type': 'audio/mp4; codecs="mp4a.40.2"',
+                  'bitrate': '129000',
+                  'clen': '309288',
+                  'url':
+                      'https://yt.chocolatemoo53.com/videoplayback?itag=140&clen=309288&issuer=yt-comp6.chocolatemoo53.com',
+                },
+              ],
+            }),
+            200,
+          );
+        }
+        return http.Response('{}', 200);
+      });
+
+      final service = YtService(client: mockClient);
+      final info = await service.fetchVideoInfo('jNQXAC9IVRw');
+      expect(info.audioStreams, hasLength(1));
+      expect(
+        info.audioStreams.first.downloadUrl,
+        'https://yt-comp6.chocolatemoo53.com/videoplayback?itag=140&clen=309288&issuer=yt-comp6.chocolatemoo53.com',
+      );
     });
   });
 

@@ -9,6 +9,14 @@ abstract class YtPlatformHelper {
 
   void configurePageMeta();
 
+  Future<Uint8List?> fetchBytesWithProgress({
+    required String url,
+    int? expectedBytes,
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  });
+
+  void cancelActiveFetch();
+
   Future<bool> saveBytesAsFile({
     required Uint8List bytes,
     required String fileName,

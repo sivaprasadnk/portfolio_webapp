@@ -182,6 +182,27 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
     });
   }
 
+  Future<Uint8List> _fetchBytes(
+    String url, {
+    int? expectedBytes,
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
+    final webBytes = await _platformHelper.fetchBytesWithProgress(
+      url: url,
+      expectedBytes: expectedBytes,
+      onProgress: onProgress,
+    );
+    if (webBytes != null) {
+      return webBytes;
+    }
+    return _service.downloadBytesWithProgress(
+      url,
+      expectedBytes: expectedBytes,
+      isCancelled: () => _cancelRequested,
+      onProgress: onProgress,
+    );
+  }
+
   Future<void> _downloadStream(
     YtVideoInfo info,
     YtStreamOption stream, {
@@ -217,10 +238,9 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
     });
 
     try {
-      final primaryBytes = await _service.downloadBytesWithProgress(
+      final primaryBytes = await _fetchBytes(
         stream.downloadUrl,
         expectedBytes: stream.contentLengthBytes,
-        isCancelled: () => _cancelRequested,
         onProgress: (received, total) {
           if (!mounted) return;
           setState(() {
@@ -264,10 +284,9 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
           _downloadProgress = 0.68;
           _downloadStageLabel = 'Step 2/3 • Downloading AAC audio track...';
         });
-        final audioBytes = await _service.downloadBytesWithProgress(
+        final audioBytes = await _fetchBytes(
           audioTrack.downloadUrl,
           expectedBytes: audioTrack.contentLengthBytes,
-          isCancelled: () => _cancelRequested,
           onProgress: (received, total) {
             if (!mounted) return;
             if (total != null && total > 0) {
@@ -320,7 +339,7 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
           fileName: fileName,
           mimeType: stream.mimeType,
         );
-        if (!saved) {
+        if (!saved && !_platformHelper.isWeb) {
           await launchUrl(
             Uri.parse(stream.downloadUrl),
             mode: LaunchMode.externalApplication,
@@ -340,13 +359,13 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
         _showSnack('Download cancelled.');
       }
     } catch (_) {
-      // Fallback to direct browser / OS stream link if CORS byte-fetch was blocked
+      // Fallback to in-place attachment download (hidden iframe on web — never opens a new tab)
       if (mounted && !convertToWav) {
         final opened = await _platformHelper.triggerDirectDownload(
           url: stream.downloadUrl,
           fileName: fileName,
         );
-        if (!opened) {
+        if (!opened && !_platformHelper.isWeb) {
           await launchUrl(
             Uri.parse(stream.downloadUrl),
             mode: LaunchMode.externalApplication,
@@ -357,7 +376,7 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
           badge: badgeLabel,
           fileName: fileName,
         );
-        _showSnack('Opened direct stream download for $fileName');
+        _showSnack('Downloading $fileName...');
       } else if (mounted) {
         _showSnack('Could not complete audio conversion.');
       }
@@ -391,16 +410,32 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
     });
 
     try {
-      final bytes = await _service.downloadBytesWithProgress(
+      final candidateUrls = <String>[
         thumb.url,
-        isCancelled: () => _cancelRequested,
-      );
+        for (final t in info.thumbnails)
+          if (t.url != thumb.url) t.url,
+      ];
+
+      Uint8List? bytes;
+      for (final candidate in candidateUrls) {
+        try {
+          bytes = await _fetchBytes(candidate);
+          if (bytes.isNotEmpty) break;
+        } catch (_) {
+          // Try next highest available resolution if maxresdefault/sddefault is 404
+        }
+      }
+
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('Thumbnail unavailable');
+      }
+
       final saved = await _platformHelper.saveBytesAsFile(
         bytes: bytes,
         fileName: fileName,
         mimeType: 'image/jpeg',
       );
-      if (!saved) {
+      if (!saved && !_platformHelper.isWeb) {
         await launchUrl(
           Uri.parse(thumb.url),
           mode: LaunchMode.externalApplication,
@@ -415,10 +450,14 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
       _showSnack('Thumbnail saved as $fileName');
     } catch (_) {
       if (mounted) {
-        await launchUrl(
-          Uri.parse(thumb.url),
-          mode: LaunchMode.externalApplication,
-        );
+        if (_platformHelper.isWeb) {
+          _showSnack('Thumbnail could not be downloaded.');
+        } else {
+          await launchUrl(
+            Uri.parse(thumb.url),
+            mode: LaunchMode.externalApplication,
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -447,15 +486,13 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
     });
 
     try {
-      final bytes = await _service.downloadBytesWithProgress(
-        caption.downloadUrl,
-      );
+      final bytes = await _fetchBytes(caption.downloadUrl);
       final saved = await _platformHelper.saveBytesAsFile(
         bytes: bytes,
         fileName: fileName,
         mimeType: 'text/vtt',
       );
-      if (!saved) {
+      if (!saved && !_platformHelper.isWeb) {
         await launchUrl(Uri.parse(caption.downloadUrl));
       }
       if (!mounted) return;
@@ -467,7 +504,14 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
       _showSnack('Downloaded subtitles: $fileName');
     } catch (_) {
       if (mounted) {
-        await launchUrl(Uri.parse(caption.downloadUrl));
+        if (_platformHelper.isWeb) {
+          await _platformHelper.triggerDirectDownload(
+            url: caption.downloadUrl,
+            fileName: fileName,
+          );
+        } else {
+          await launchUrl(Uri.parse(caption.downloadUrl));
+        }
       }
     } finally {
       if (mounted) {
@@ -1153,6 +1197,7 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
                   setState(() {
                     _cancelRequested = true;
                   });
+                  _platformHelper.cancelActiveFetch();
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFFEF4444),
