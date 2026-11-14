@@ -25,6 +25,7 @@ const String qrCodeToolLink = 'https://sivaprasadnk.dev/qrcode';
 const String qrCodePlayStoreLink =
     'https://play.google.com/store/apps/details?id=dev.sivaprasadnk.qr_code_studio_mobile';
 const String arcadeHubLink = 'https://sivaprasadnk.dev/arcade';
+const String ytDownloaderLink = 'https://sivaprasadnk.dev/yt-downloader';
 
 const String spQuizLink =
     'https://play.google.com/store/apps/details?id=com.sptpra.spquiz';
@@ -72,6 +73,13 @@ String arcadeStr2 =
     '60fps CustomPainter canvas physics & Memory Matrix challenge';
 String arcadeStr3 =
     'Full keyboard (WASD/Arrows), mouse, swipe & touch D-pad support';
+
+String ytDownloaderStr1 =
+    '4K & 1080p60 YouTube Video Downloader with client-side MP4 + AAC muxing';
+String ytDownloaderStr2 =
+    'Direct M4A, Opus & in-browser lossless 16-bit PCM WAV audio extraction';
+String ytDownloaderStr3 =
+    'MaxRes HD thumbnail saver, WebVTT subtitles & JSON manifest exporter';
 
 String quizStr1 =
     'Quiz App with light / dark mode \nwith various  color themes.';

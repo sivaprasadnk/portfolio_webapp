@@ -391,7 +391,8 @@ class RaceSectorMeta {
       code: 'SEC-05',
       shortLabel: 'PROJECTS',
       title: 'NEON SHOWROOM // CHAMPIONSHIP APPS',
-      subtitle: 'Quiz, Quotes, Portfolio, QR Studio & SPNK Arcade Hub',
+      subtitle:
+          'Quiz, Quotes, Portfolio, QR Studio, Arcade & YT Downloader',
       startSegment: 480,
       endSegment: 599,
       checkpointSegment: 485,
@@ -839,7 +840,7 @@ class CircuitBuilder {
     if (projects.isNotEmpty) {
       for (int i = 0; i < projects.length; i++) {
         final proj = projects[i];
-        final seg = 498 + i * 19;
+        final seg = 498 + i * 16;
         if (seg < 596) {
           final spec = BillboardSpec(
             tag: 'SHOWROOM 0${i + 1} // S-RANK',

@@ -5,6 +5,9 @@ import 'package:spnk/domain/entity/project_details.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/screens/arcade/arcade_screen.dart';
+import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
+import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,7 +20,26 @@ class ProjectContainer extends StatelessWidget {
 
   final ProjectDetails project;
 
-  Future<void> _launchUrlTarget(String url) async {
+  Future<void> _openTargetOrInternalRoute(
+    BuildContext context,
+    String url,
+  ) async {
+    if (url.endsWith('/qrcode')) {
+      await Navigator.pushNamed(context, QrCodeScreen.routeName);
+      return;
+    }
+    if (url.endsWith('/arcade')) {
+      await Navigator.pushNamed(context, ArcadeScreen.routeName);
+      return;
+    }
+    if (url.endsWith('/yt-downloader') || url.endsWith('/youtube-downloader')) {
+      await Navigator.pushNamed(context, YtDownloaderScreen.routeName);
+      return;
+    }
+    await launchUrl(Uri.parse(url));
+  }
+
+  Future<void> _launchUrlTarget(BuildContext context, String url) async {
     if (url.isEmpty) return;
     GamificationController.instance.completeQuest('boss_raider');
     GamificationController.instance.addXp(
@@ -25,10 +47,10 @@ class ProjectContainer extends StatelessWidget {
       reason: 'Raided Mission: ${project.projName}!',
       uniqueKey: 'proj_${project.projName}',
     );
-    await launchUrl(Uri.parse(url));
+    await _openTargetOrInternalRoute(context, url);
   }
 
-  Future<void> _launchProject() async {
+  Future<void> _launchProject(BuildContext context) async {
     GamificationController.instance.completeQuest('boss_raider');
     GamificationController.instance.addXp(
       20,
@@ -39,14 +61,14 @@ class ProjectContainer extends StatelessWidget {
     final containsWebUrl = project.webUrl.isNotEmpty;
     if (containsPlayStoreUrl && containsWebUrl) {
       if (defaultTargetPlatform == TargetPlatform.android) {
-        await launchUrl(Uri.parse(project.playStoreUrl));
+        await _openTargetOrInternalRoute(context, project.playStoreUrl);
       } else {
-        await launchUrl(Uri.parse(project.webUrl));
+        await _openTargetOrInternalRoute(context, project.webUrl);
       }
     } else if (containsPlayStoreUrl) {
-      await launchUrl(Uri.parse(project.playStoreUrl));
+      await _openTargetOrInternalRoute(context, project.playStoreUrl);
     } else if (containsWebUrl) {
-      await launchUrl(Uri.parse(project.webUrl));
+      await _openTargetOrInternalRoute(context, project.webUrl);
     }
   }
 
@@ -65,7 +87,7 @@ class ProjectContainer extends StatelessWidget {
           width: context.isLargeDevice ? 370 : double.infinity,
           cyberHeader:
               '~/missions/${project.projName.toLowerCase().replaceAll(' ', '_')}.quest',
-          onTap: _launchProject,
+          onTap: () => _launchProject(context),
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +237,8 @@ class ProjectContainer extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         InkWell(
-                          onTap: () => _launchUrlTarget(project.playStoreUrl),
+                          onTap: () =>
+                              _launchUrlTarget(context, project.playStoreUrl),
                           borderRadius: BorderRadius.circular(
                             themeState.portfolioStyle == PortfolioStyle.cyber
                                 ? 4
@@ -263,7 +286,8 @@ class ProjectContainer extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         InkWell(
-                          onTap: () => _launchUrlTarget(project.webUrl),
+                          onTap: () =>
+                              _launchUrlTarget(context, project.webUrl),
                           borderRadius: BorderRadius.circular(
                             themeState.portfolioStyle == PortfolioStyle.cyber
                                 ? 4

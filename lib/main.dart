@@ -20,6 +20,7 @@ import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/qrcode_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
+import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 
 void main() {
   setup();
@@ -94,6 +95,10 @@ class MyApp extends StatelessWidget {
               '${QrCodeScreen.routeName}/': (context) => const QrCodeScreen(),
               ArcadeScreen.routeName: (context) => const ArcadeScreen(),
               '${ArcadeScreen.routeName}/': (context) => const ArcadeScreen(),
+              YtDownloaderScreen.routeName: (context) =>
+                  const YtDownloaderScreen(),
+              '${YtDownloaderScreen.routeName}/': (context) =>
+                  const YtDownloaderScreen(),
             },
             onGenerateRoute: (settings) {
               final name = settings.name ?? '';
@@ -119,6 +124,13 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   settings: settings,
                   builder: (_) => const ArcadeScreen(),
+                );
+              }
+              if (name.startsWith('/yt-downloader') ||
+                  name.startsWith('/youtube-downloader')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const YtDownloaderScreen(),
                 );
               }
               return MaterialPageRoute(
@@ -153,6 +165,12 @@ class SplashScreen extends StatelessWidget {
     }
     if (path.startsWith('/arcade') || fragment.startsWith('/arcade')) {
       return const ArcadeScreen();
+    }
+    if (path.startsWith('/yt-downloader') ||
+        fragment.startsWith('/yt-downloader') ||
+        path.startsWith('/youtube-downloader') ||
+        fragment.startsWith('/youtube-downloader')) {
+      return const YtDownloaderScreen();
     }
     return HomeScreen();
   }

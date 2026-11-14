@@ -88,6 +88,22 @@ List<ProjectDetailsModel> projectList = [
     webUrl: arcadeHubLink,
     playStoreUrl: '',
   ),
+  ProjectDetailsModel(
+    isActive: true,
+    projName: 'YouTube Downloader',
+    techStackList: [
+      'Flutter',
+      'WebAssembly',
+      'REST API',
+    ],
+    descList: [
+      ytDownloaderStr1,
+      ytDownloaderStr2,
+      ytDownloaderStr3,
+    ],
+    webUrl: ytDownloaderLink,
+    playStoreUrl: '',
+  ),
 ];
 
 List<ContactDetailsModel> contactDetailsList = [

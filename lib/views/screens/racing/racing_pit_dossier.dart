@@ -25,6 +25,7 @@ import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/arcade/arcade_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 import 'package:spnk/views/screens/racing/racing_models.dart';
+import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -350,7 +351,7 @@ class SectorWindshieldHud extends StatelessWidget {
                       filled: true,
                       onTap: () => _launchDriverLink(activePortalLink!),
                     ),
-                  if (sector.screen == Screen.projects)
+                  if (sector.screen == Screen.projects) ...[
                     _MiniHudActionChip(
                       label: 'ARCADE',
                       icon: Icons.sports_esports_rounded,
@@ -359,6 +360,18 @@ class SectorWindshieldHud extends StatelessWidget {
                         Navigator.pushNamed(context, ArcadeScreen.routeName);
                       },
                     ),
+                    _MiniHudActionChip(
+                      label: 'YT STUDIO',
+                      icon: Icons.play_circle_fill_rounded,
+                      color: const Color(0xFFEF4444),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          YtDownloaderScreen.routeName,
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -1664,6 +1677,11 @@ class _PitStopDossierDialogState extends State<_PitStopDossierDialog> {
     if (url.endsWith('/arcade')) {
       Navigator.of(context).pop();
       Navigator.pushNamed(context, ArcadeScreen.routeName);
+      return;
+    }
+    if (url.endsWith('/yt-downloader') || url.endsWith('/youtube-downloader')) {
+      Navigator.of(context).pop();
+      Navigator.pushNamed(context, YtDownloaderScreen.routeName);
       return;
     }
     await launchUrl(Uri.parse(url));

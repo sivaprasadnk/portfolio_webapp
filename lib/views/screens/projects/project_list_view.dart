@@ -7,7 +7,10 @@ import 'package:spnk/views/bloc/project/project_bloc.dart';
 import 'package:spnk/views/bloc/project/project_state.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/screens/arcade/arcade_screen.dart';
 import 'package:spnk/views/screens/projects/loading_project_container.dart';
+import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
+import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -22,6 +25,22 @@ class ProjectListView extends StatefulWidget {
 class _ProjectListViewState extends State<ProjectListView> {
   int _selectedMissionIndex = 0;
 
+  Future<void> _openTargetOrInternalRoute(String url) async {
+    if (url.endsWith('/qrcode')) {
+      await Navigator.pushNamed(context, QrCodeScreen.routeName);
+      return;
+    }
+    if (url.endsWith('/arcade')) {
+      await Navigator.pushNamed(context, ArcadeScreen.routeName);
+      return;
+    }
+    if (url.endsWith('/yt-downloader') || url.endsWith('/youtube-downloader')) {
+      await Navigator.pushNamed(context, YtDownloaderScreen.routeName);
+      return;
+    }
+    await launchUrl(Uri.parse(url));
+  }
+
   Future<void> _launchUrlTarget(ProjectDetails project, String url) async {
     if (url.isEmpty) return;
     GamificationController.instance.completeQuest('boss_raider');
@@ -30,7 +49,7 @@ class _ProjectListViewState extends State<ProjectListView> {
       reason: 'Launched Mission Portal: ${project.projName}!',
       uniqueKey: 'proj_${project.projName}',
     );
-    await launchUrl(Uri.parse(url));
+    await _openTargetOrInternalRoute(url);
   }
 
   Future<void> _launchPrimaryMission(ProjectDetails project) async {
@@ -44,14 +63,14 @@ class _ProjectListViewState extends State<ProjectListView> {
     final containsWebUrl = project.webUrl.isNotEmpty;
     if (containsPlayStoreUrl && containsWebUrl) {
       if (defaultTargetPlatform == TargetPlatform.android) {
-        await launchUrl(Uri.parse(project.playStoreUrl));
+        await _openTargetOrInternalRoute(project.playStoreUrl);
       } else {
-        await launchUrl(Uri.parse(project.webUrl));
+        await _openTargetOrInternalRoute(project.webUrl);
       }
     } else if (containsPlayStoreUrl) {
-      await launchUrl(Uri.parse(project.playStoreUrl));
+      await _openTargetOrInternalRoute(project.playStoreUrl);
     } else if (containsWebUrl) {
-      await launchUrl(Uri.parse(project.webUrl));
+      await _openTargetOrInternalRoute(project.webUrl);
     }
   }
 
