@@ -868,10 +868,6 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
                           secondary: secondary,
                           isMobile: isMobile,
                         ),
-                        if (_isDownloading) ...[
-                          const SizedBox(height: 16),
-                          _buildActiveDownloadBanner(themeState, accent),
-                        ],
                         if (_fetchError != null) ...[
                           const SizedBox(height: 16),
                           _buildErrorCard(themeState),
@@ -1160,70 +1156,11 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
     );
   }
 
-  Widget _buildActiveDownloadBanner(ThemeState themeState, Color accent) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: themeState.isDark ? 0.13 : 0.09),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.55)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2,
-                  color: accent,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _downloadStageLabel,
-                  style: context.bodySmall.copyWith(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.bold,
-                    color: context.primaryColor,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _cancelRequested = true;
-                  });
-                  _platformHelper.cancelActiveFetch();
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFEF4444),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                ),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: _downloadProgress,
-              minHeight: 6,
-              backgroundColor: context.primaryColor.withValues(alpha: 0.12),
-              valueColor: AlwaysStoppedAnimation<Color>(accent),
-            ),
-          ),
-        ],
-      ),
-    );
+  void _cancelActiveDownload() {
+    setState(() {
+      _cancelRequested = true;
+    });
+    _platformHelper.cancelActiveFetch();
   }
 
   Widget _buildErrorCard(ThemeState themeState) {
@@ -1826,8 +1763,12 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
             subtitle:
                 '${stream.codecShortLabel} • ${stream.fps}fps • ${hasSound ? "Video + Audio" : "Video Only"}',
             trailingMeta: stream.formattedSize,
-            buttonLabel: isActiveTask ? 'Downloading' : 'Download',
+            buttonLabel: 'Download',
             isBusy: _isDownloading,
+            isActiveTask: isActiveTask,
+            progress: isActiveTask ? _downloadProgress : null,
+            stageLabel: isActiveTask ? _downloadStageLabel : '',
+            onCancel: _cancelActiveDownload,
             themeState: themeState,
             accent: accent,
             onDownload: () => _downloadStream(info, stream),
@@ -1848,6 +1789,7 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
     }
 
     final bestSourceForWav = info.bestM4aAudio ?? info.audioStreams.first;
+    final isWavActive = _activeDownloadId == 'wav_${bestSourceForWav.itag}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1859,10 +1801,12 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
             title: 'Studio WAV • 16-bit PCM',
             subtitle: 'Decoded in-browser from HQ audio stream (Web Audio API)',
             trailingMeta: 'WAV',
-            buttonLabel: _activeDownloadId == 'wav_${bestSourceForWav.itag}'
-                ? 'Converting'
-                : 'Convert & Save',
+            buttonLabel: 'Convert & Save',
             isBusy: _isDownloading,
+            isActiveTask: isWavActive,
+            progress: isWavActive ? _downloadProgress : null,
+            stageLabel: isWavActive ? _downloadStageLabel : '',
+            onCancel: _cancelActiveDownload,
             themeState: themeState,
             accent: accent,
             onDownload: () => _downloadStream(
@@ -1881,8 +1825,12 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
             subtitle:
                 '${stream.codecShortLabel} Audio Track (${stream.mimeType})',
             trailingMeta: stream.formattedSize,
-            buttonLabel: isActiveTask ? 'Downloading' : 'Download',
+            buttonLabel: 'Download',
             isBusy: _isDownloading,
+            isActiveTask: isActiveTask,
+            progress: isActiveTask ? _downloadProgress : null,
+            stageLabel: isActiveTask ? _downloadStageLabel : '',
+            onCancel: _cancelActiveDownload,
             themeState: themeState,
             accent: accent,
             onDownload: () => _downloadStream(info, stream),
@@ -1901,83 +1849,130 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: info.thumbnails.map((thumb) {
         final isActiveTask = _activeDownloadId == 'thumb_${thumb.id}';
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: context.primaryColor
-                .withValues(alpha: themeState.isDark ? 0.04 : 0.03),
+            color: isActiveTask
+                ? accent.withValues(alpha: themeState.isDark ? 0.11 : 0.07)
+                : context.primaryColor
+                    .withValues(alpha: themeState.isDark ? 0.04 : 0.03),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: themeState.cardBorderColor),
+            border: Border.all(
+              color: isActiveTask
+                  ? accent.withValues(alpha: 0.65)
+                  : themeState.cardBorderColor,
+            ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  width: 96,
-                  height: 54,
-                  child: Image.network(
-                    thumb.url,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => ColoredBox(
-                      color: const Color(0xFF1E293B),
-                      child: Icon(Icons.image_outlined, color: accent),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      thumb.label,
-                      style: context.bodyMedium.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 96,
+                      height: 54,
+                      child: Image.network(
+                        thumb.url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: const Color(0xFF1E293B),
+                          child: Icon(Icons.image_outlined, color: accent),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${thumb.resolution} • Direct JPEG',
-                      style: context.bodySmall.copyWith(
-                        fontSize: 13,
-                        color: context.primaryColor.withValues(alpha: 0.65),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          thumb.label,
+                          style: context.bodyMedium.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${thumb.resolution} • Direct JPEG',
+                          style: context.bodySmall.copyWith(
+                            fontSize: 13,
+                            color: context.primaryColor.withValues(alpha: 0.65),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  if (isActiveTask)
+                    OutlinedButton.icon(
+                      onPressed: _cancelActiveDownload,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: BorderSide(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.55),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 9,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      label: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  else
+                    ElevatedButton.icon(
+                      onPressed: _isDownloading
+                          ? null
+                          : () => _downloadThumbnail(info, thumb),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: themeState.isDark
+                            ? const Color(0xFF090D16)
+                            : Colors.white,
+                        disabledBackgroundColor: accent.withValues(alpha: 0.25),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.download_rounded, size: 17),
+                      label: const Text(
+                        'Save JPG',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: _isDownloading
-                    ? null
-                    : () => _downloadThumbnail(info, thumb),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: themeState.isDark
-                      ? const Color(0xFF090D16)
-                      : Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+              if (isActiveTask) ...[
+                const SizedBox(height: 10),
+                _InlineTileProgressSection(
+                  progress: _downloadProgress,
+                  stageLabel: _downloadStageLabel,
+                  accent: accent,
                 ),
-                icon: const Icon(Icons.download_rounded, size: 17),
-                label: Text(
-                  isActiveTask ? 'Saving...' : 'Save JPG',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
         );
@@ -2038,6 +2033,7 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
           ),
           const SizedBox(height: 10),
           ...info.captions.map((cap) {
+            final isActiveTask = _activeDownloadId == 'cap_${cap.languageCode}';
             return _FormatDownloadTile(
               badge: cap.languageCode.toUpperCase(),
               badgeColor: const Color(0xFF10B981),
@@ -2046,6 +2042,10 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
               trailingMeta: 'VTT',
               buttonLabel: 'Download',
               isBusy: _isDownloading,
+              isActiveTask: isActiveTask,
+              progress: isActiveTask ? _downloadProgress : null,
+              stageLabel: isActiveTask ? _downloadStageLabel : '',
+              onCancel: _cancelActiveDownload,
               themeState: themeState,
               accent: accent,
               onDownload: () => _downloadCaption(info, cap),
@@ -2288,6 +2288,10 @@ class _FormatDownloadTile extends StatelessWidget {
     required this.themeState,
     required this.accent,
     required this.onDownload,
+    this.isActiveTask = false,
+    this.progress,
+    this.stageLabel = '',
+    this.onCancel,
   });
 
   final String badge;
@@ -2300,106 +2304,227 @@ class _FormatDownloadTile extends StatelessWidget {
   final ThemeState themeState;
   final Color accent;
   final VoidCallback onDownload;
+  final bool isActiveTask;
+  final double? progress;
+  final String stageLabel;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
     final isMobile = context.isMobileDevice;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
       margin: const EdgeInsets.only(bottom: 10),
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 12 : 16,
         vertical: 12,
       ),
       decoration: BoxDecoration(
-        color: context.primaryColor
-            .withValues(alpha: themeState.isDark ? 0.04 : 0.03),
+        color: isActiveTask
+            ? accent.withValues(alpha: themeState.isDark ? 0.11 : 0.07)
+            : context.primaryColor
+                .withValues(alpha: themeState.isDark ? 0.04 : 0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: themeState.cardBorderColor),
+        border: Border.all(
+          color: isActiveTask
+              ? accent.withValues(alpha: 0.65)
+              : themeState.cardBorderColor,
+        ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            constraints: const BoxConstraints(minWidth: 68),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: badgeColor.withValues(alpha: 0.48)),
-            ),
-            child: Text(
-              badge,
-              textAlign: TextAlign.center,
-              style: context.bodySmall.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.8,
-                color: badgeColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.bodyMedium.copyWith(
-                    fontSize: 15.5,
+          Row(
+            children: [
+              Container(
+                constraints: const BoxConstraints(minWidth: 68),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: badgeColor.withValues(alpha: 0.48)),
+                ),
+                child: Text(
+                  badge,
+                  textAlign: TextAlign.center,
+                  style: context.bodySmall.copyWith(
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: badgeColor,
                   ),
                 ),
-                const SizedBox(height: 2),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: context.bodyMedium.copyWith(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: context.bodySmall.copyWith(
+                        fontSize: 12.5,
+                        color: context.primaryColor.withValues(alpha: 0.66),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!isMobile) ...[
+                const SizedBox(width: 10),
                 Text(
-                  subtitle,
+                  trailingMeta,
                   style: context.bodySmall.copyWith(
-                    fontSize: 12.5,
-                    color: context.primaryColor.withValues(alpha: 0.66),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: context.primaryColor.withValues(alpha: 0.72),
                   ),
                 ),
               ],
-            ),
+              const SizedBox(width: 12),
+              if (isActiveTask)
+                OutlinedButton.icon(
+                  onPressed: onCancel,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: BorderSide(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.55),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 10 : 12,
+                      vertical: 9,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.close_rounded, size: 16),
+                  label: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                ElevatedButton.icon(
+                  onPressed: isBusy ? null : onDownload,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: themeState.isDark
+                        ? const Color(0xFF090D16)
+                        : Colors.white,
+                    disabledBackgroundColor: accent.withValues(alpha: 0.25),
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 11 : 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.download_rounded, size: 17),
+                  label: Text(
+                    buttonLabel,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          if (!isMobile) ...[
-            const SizedBox(width: 10),
-            Text(
-              trailingMeta,
-              style: context.bodySmall.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: context.primaryColor.withValues(alpha: 0.72),
-              ),
+          if (isActiveTask) ...[
+            const SizedBox(height: 10),
+            _InlineTileProgressSection(
+              progress: progress,
+              stageLabel: stageLabel,
+              accent: accent,
             ),
           ],
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: isBusy ? null : onDownload,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor:
-                  themeState.isDark ? const Color(0xFF090D16) : Colors.white,
-              disabledBackgroundColor: accent.withValues(alpha: 0.25),
-              elevation: 0,
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 11 : 14,
-                vertical: 10,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            icon: const Icon(Icons.download_rounded, size: 17),
-            label: Text(
-              buttonLabel,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
       ),
+    );
+  }
+}
+
+class _InlineTileProgressSection extends StatelessWidget {
+  const _InlineTileProgressSection({
+    required this.progress,
+    required this.stageLabel,
+    required this.accent,
+  });
+
+  final double? progress;
+  final String stageLabel;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final pctText =
+        progress != null ? '${(progress!.clamp(0.0, 1.0) * 100).round()}%' : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 13,
+              height: 13,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: accent,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                stageLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.bodySmall.copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: context.primaryColor.withValues(alpha: 0.9),
+                ),
+              ),
+            ),
+            if (pctText != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                pctText,
+                style: context.bodySmall.copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: accent,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 5.5,
+            backgroundColor: context.primaryColor.withValues(alpha: 0.12),
+            valueColor: AlwaysStoppedAnimation<Color>(accent),
+          ),
+        ),
+      ],
     );
   }
 }
