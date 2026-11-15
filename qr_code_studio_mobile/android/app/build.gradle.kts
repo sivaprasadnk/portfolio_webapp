@@ -34,6 +34,10 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resourceConfigurations += listOf("en")
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
     }
 
     signingConfigs {
@@ -52,8 +56,15 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
 }

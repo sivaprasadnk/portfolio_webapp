@@ -110,7 +110,7 @@ class QrCodeStudioApp extends StatefulWidget {
 }
 
 class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
-  bool _isDark = true;
+  final bool _isDark = true;
   AppVisualStyle _visualStyle = AppVisualStyle.glass;
   DynamicBackgroundStyle _bgStyle = DynamicBackgroundStyle.aurora;
   BackgroundPalette _bgPalette = BackgroundPalette.themeDefault;
@@ -235,7 +235,6 @@ class _QrCodeStudioAppState extends State<QrCodeStudioApp> {
         cardSurface: _cardSurface,
         cardBorder: _cardBorder,
         cardRadius: _cardRadius,
-        onToggleBrightness: () => setState(() => _isDark = !_isDark),
         onChangeStyle: (style) => setState(() => _visualStyle = style),
         onChangeBgStyle: (bg) => setState(() => _bgStyle = bg),
         onChangeBgPalette: (palette) => setState(() => _bgPalette = palette),
@@ -278,7 +277,6 @@ class QrCodeMobileScreen extends StatefulWidget {
     required this.cardSurface,
     required this.cardBorder,
     required this.cardRadius,
-    required this.onToggleBrightness,
     required this.onChangeStyle,
     required this.onChangeBgStyle,
     required this.onChangeBgPalette,
@@ -295,7 +293,6 @@ class QrCodeMobileScreen extends StatefulWidget {
   final Color cardSurface;
   final Color cardBorder;
   final double cardRadius;
-  final VoidCallback onToggleBrightness;
   final ValueChanged<AppVisualStyle> onChangeStyle;
   final ValueChanged<DynamicBackgroundStyle> onChangeBgStyle;
   final ValueChanged<BackgroundPalette> onChangeBgPalette;
@@ -341,7 +338,7 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   bool _showCustomize = false;
 
   // Version & In-App Update state
-  String _appVersion = '1.0.0+2';
+  String _appVersion = '1.0.1+7';
   bool _isCheckingUpdate = false;
   String _updateStatusText = 'Check Google Play for latest version';
 
@@ -410,28 +407,55 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
 
       if (updateInfo.installStatus == InstallStatus.downloaded) {
         setState(() {
-          _updateStatusText = 'Update downloaded! Installing...';
+          _updateStatusText = 'Update downloaded! Installing now...';
         });
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          Navigator.of(context).pop();
+        }
+        _showSnack('Installing downloaded update...');
         await InAppUpdate.completeFlexibleUpdate();
         return;
       }
 
-      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable ||
+      final isUpdateAvailable = updateInfo.updateAvailability ==
+              UpdateAvailability.updateAvailable ||
           updateInfo.updateAvailability ==
-              UpdateAvailability.developerTriggeredUpdateInProgress) {
+              UpdateAvailability.developerTriggeredUpdateInProgress;
+
+      if (isUpdateAvailable) {
+        final newVer = updateInfo.availableVersionCode != null
+            ? ' (build ${updateInfo.availableVersionCode})'
+            : '';
         setState(() {
           _updateStatusText =
-              'Update available (v${updateInfo.availableVersionCode ?? 'new'})! Downloading...';
+              'Update available$newVer! Downloading & installing...';
         });
-        if (!silentOnUpToDate) {
-          _showSnack('Update found! Starting download from Google Play...');
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          Navigator.of(context).pop();
         }
+        _showSnack('Update found$newVer! Downloading & installing...');
 
-        if (updateInfo.immediateUpdateAllowed) {
-          await InAppUpdate.performImmediateUpdate();
+        if (updateInfo.immediateUpdateAllowed ||
+            updateInfo.updateAvailability ==
+                UpdateAvailability.developerTriggeredUpdateInProgress) {
+          final immediateResult = await InAppUpdate.performImmediateUpdate();
+          if (immediateResult != AppUpdateResult.success &&
+              updateInfo.flexibleUpdateAllowed &&
+              mounted) {
+            final flexResult = await InAppUpdate.startFlexibleUpdate();
+            if (flexResult == AppUpdateResult.success && mounted) {
+              setState(() {
+                _updateStatusText = 'Update downloaded! Installing...';
+              });
+              await InAppUpdate.completeFlexibleUpdate();
+            }
+          }
         } else if (updateInfo.flexibleUpdateAllowed) {
-          final result = await InAppUpdate.startFlexibleUpdate();
-          if (result == AppUpdateResult.success && mounted) {
+          final flexResult = await InAppUpdate.startFlexibleUpdate();
+          if (flexResult == AppUpdateResult.success && mounted) {
+            setState(() {
+              _updateStatusText = 'Update downloaded! Installing...';
+            });
             await InAppUpdate.completeFlexibleUpdate();
           }
         } else {
@@ -448,18 +472,23 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _updateStatusText = 'Up to date (v$_appVersion)';
+        _updateStatusText = 'Tap to check on Google Play (v$_appVersion)';
       });
       if (!silentOnUpToDate) {
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          Navigator.of(context).pop();
+        }
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text('Current version: v$_appVersion'),
+              content: Text(
+                'Current version: v$_appVersion. Check Google Play for updates.',
+              ),
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 4),
               action: SnackBarAction(
-                label: 'Open Play Store',
+                label: 'Update on Play Store',
                 onPressed: _openPlayStoreListing,
               ),
             ),
@@ -725,7 +754,14 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   }
 
   Future<void> _launchExternalUrl(String url) async {
-    final uri = Uri.parse(url);
+    final trimmed = url.trim();
+    final uri = Uri.tryParse(trimmed) ?? Uri.tryParse(Uri.encodeFull(trimmed));
+    if (uri == null) {
+      if (mounted) {
+        _showSnack('Invalid link format');
+      }
+      return;
+    }
     try {
       final launched = await launchUrl(
         uri,
@@ -736,7 +772,7 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
       }
     } catch (_) {
       if (mounted) {
-        _showSnack('Could not open link');
+        _showSnack('No app found to open this link');
       }
     }
   }
@@ -755,10 +791,64 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
   }
 
   bool _isValidHttpUrl(String text) {
-    final uri = Uri.tryParse(text.trim());
+    final trimmed = text.trim();
+    final uri = Uri.tryParse(trimmed) ?? Uri.tryParse(Uri.encodeFull(trimmed));
     return uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;
+  }
+
+  bool _isUpiUri(String text) {
+    final trimmed = text.trim().toLowerCase();
+    return trimmed.startsWith('upi://');
+  }
+
+  bool _isActionableUriScheme(String text) {
+    final trimmed = text.trim();
+    final schemeMatch =
+        RegExp(r'^([a-zA-Z][a-zA-Z0-9+.-]*):').firstMatch(trimmed);
+    if (schemeMatch == null) return false;
+    final scheme = schemeMatch.group(1)!.toLowerCase();
+    const supportedSchemes = {
+      'upi',
+      'http',
+      'https',
+      'tel',
+      'mailto',
+      'sms',
+      'smsto',
+      'geo',
+      'whatsapp',
+      'market',
+      'intent',
+      'paytmmp',
+      'phonepe',
+      'tez',
+      'gpay',
+      'bhim',
+    };
+    return supportedSchemes.contains(scheme);
+  }
+
+  Future<void> _browseScannedText(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    if (_isUpiUri(trimmed) ||
+        _isValidHttpUrl(trimmed) ||
+        _isActionableUriScheme(trimmed)) {
+      await _launchExternalUrl(trimmed);
+      return;
+    }
+    final domainPattern = RegExp(
+      r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?:/[^\s]*)?$',
+    );
+    if (!trimmed.contains(' ') && domainPattern.hasMatch(trimmed)) {
+      await _launchExternalUrl('https://$trimmed');
+      return;
+    }
+    final searchUrl =
+        'https://www.google.com/search?q=${Uri.encodeComponent(trimmed)}';
+    await _launchExternalUrl(searchUrl);
   }
 
   @override
@@ -814,17 +904,6 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
                 widget.bgStyle.icon,
                 size: 20,
                 color: accent,
-              ),
-            ),
-            IconButton(
-              tooltip: 'Toggle Theme Mode',
-              onPressed: widget.onToggleBrightness,
-              icon: Icon(
-                widget.isDark
-                    ? Icons.light_mode_rounded
-                    : Icons.dark_mode_rounded,
-                size: 20,
-                color: primaryText,
               ),
             ),
             const SizedBox(width: 4),
@@ -991,76 +1070,7 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
-                  // 1. Play Store Update Check & Download
-                  _DrawerSectionHeader(
-                    title: 'PLAY STORE UPDATES',
-                    icon: Icons.system_update_rounded,
-                    accent: accent,
-                    primaryText: primaryText,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: accent.withValues(
-                        alpha: widget.isDark ? 0.10 : 0.07,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: accent.withValues(alpha: 0.4)),
-                    ),
-                    child: ListTile(
-                      dense: true,
-                      onTap: _isCheckingUpdate
-                          ? null
-                          : () =>
-                              _checkForPlayStoreUpdate(silentOnUpToDate: false),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      leading: _isCheckingUpdate
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: accent,
-                              ),
-                            )
-                          : Icon(
-                              Icons.system_update_alt_rounded,
-                              color: accent,
-                            ),
-                      title: Text(
-                        _isCheckingUpdate
-                            ? 'Checking for Updates...'
-                            : 'Check for Updates',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: primaryText,
-                        ),
-                      ),
-                      subtitle: Text(
-                        _updateStatusText,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: primaryText.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      trailing: IconButton(
-                        tooltip: 'Open Google Play Store',
-                        onPressed: _openPlayStoreListing,
-                        icon: Icon(
-                          Icons.shop_two_rounded,
-                          size: 19,
-                          color: accent,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // 2. Dynamic Backgrounds Section
+                  // 1. Dynamic Backgrounds Section
                   _DrawerSectionHeader(
                     title: 'DYNAMIC BACKGROUND',
                     icon: Icons.wallpaper_rounded,
@@ -1137,7 +1147,7 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // 3. Background Color Palette / Mood
+                  // 2. Background Color Palette / Mood
                   _DrawerSectionHeader(
                     title: 'BACKGROUND COLOR MOOD',
                     icon: Icons.color_lens_outlined,
@@ -1206,51 +1216,12 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
 
                   const SizedBox(height: 14),
 
-                  // 4. Appearance & Theme Mode
+                  // 3. About & Links
                   _DrawerSectionHeader(
-                    title: 'APPEARANCE & CARD STYLE',
-                    icon: Icons.tune_rounded,
+                    title: 'ABOUT & LINKS',
+                    icon: Icons.info_outline_rounded,
                     accent: accent,
                     primaryText: primaryText,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryText.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: widget.cardBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          widget.isDark
-                              ? Icons.dark_mode_rounded
-                              : Icons.light_mode_rounded,
-                          size: 18,
-                          color: accent,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            widget.isDark ? 'Dark Mode' : 'Light Mode',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w600,
-                              color: primaryText,
-                            ),
-                          ),
-                        ),
-                        Switch(
-                          value: widget.isDark,
-                          activeThumbColor: accent,
-                          onChanged: (_) => widget.onToggleBrightness(),
-                        ),
-                      ],
-                    ),
                   ),
                   const SizedBox(height: 6),
                   ListTile(
@@ -1307,38 +1278,102 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
               ),
             ),
 
-            // Drawer Footer with Version & Portfolio Link
+            // Bottom Pinned Check for Updates Button + Version Footer
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: widget.cardBorder)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Flexible(
-                    child: Text(
-                      'Version $_appVersion',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: primaryText.withValues(alpha: 0.65),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: accent.withValues(
+                        alpha: widget.isDark ? 0.10 : 0.07,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: accent.withValues(alpha: 0.4)),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      onTap: _isCheckingUpdate
+                          ? null
+                          : () =>
+                              _checkForPlayStoreUpdate(silentOnUpToDate: false),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      leading: _isCheckingUpdate
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: accent,
+                              ),
+                            )
+                          : Icon(
+                              Icons.system_update_alt_rounded,
+                              color: accent,
+                            ),
+                      title: Text(
+                        _isCheckingUpdate
+                            ? 'Checking for Updates...'
+                            : 'Check for Updates',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: primaryText,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _updateStatusText,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: primaryText.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'Open Google Play Store',
+                        onPressed: _openPlayStoreListing,
+                        icon: Icon(
+                          Icons.shop_two_rounded,
+                          size: 19,
+                          color: accent,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: _openPortfolioWebsite,
-                    child: Text(
-                      'sivaprasadnk.dev ↗',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: accent,
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Version $_appVersion',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: primaryText.withValues(alpha: 0.65),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _openPortfolioWebsite,
+                        child: Text(
+                          'sivaprasadnk.dev ↗',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: accent,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -2227,20 +2262,24 @@ class _QrCodeMobileScreenState extends State<QrCodeMobileScreen> {
                         _showSnack('Copied to clipboard');
                       },
                     ),
-                    if (_isValidHttpUrl(_scannedResult!))
-                      _ResultActionChip(
-                        icon: Icons.open_in_new_rounded,
-                        label: 'Open URL',
-                        accent: accent,
-                        primaryText: primaryText,
-                        onTap: () async {
-                          final uri = Uri.parse(_scannedResult!.trim());
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        },
-                      ),
+                    _ResultActionChip(
+                      icon: _isUpiUri(_scannedResult!)
+                          ? Icons.currency_rupee_rounded
+                          : (_isValidHttpUrl(_scannedResult!) ||
+                                  _isActionableUriScheme(_scannedResult!)
+                              ? Icons.open_in_new_rounded
+                              : Icons.travel_explore_rounded),
+                      label: _isUpiUri(_scannedResult!)
+                          ? 'Open UPI App'
+                          : (_isValidHttpUrl(_scannedResult!)
+                              ? 'Open URL'
+                              : (_isActionableUriScheme(_scannedResult!)
+                                  ? 'Open App'
+                                  : 'Browse')),
+                      accent: accent,
+                      primaryText: primaryText,
+                      onTap: () => _browseScannedText(_scannedResult!),
+                    ),
                     _ResultActionChip(
                       icon: Icons.qr_code_rounded,
                       label: 'Edit in Generator',
