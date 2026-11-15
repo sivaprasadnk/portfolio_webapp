@@ -47,6 +47,8 @@ app.*.map.json
 **/*.jks
 **/*.keystore
 **/key.properties
+**/KEYSTORE_INFO.md
+**/mapping.txt
 **/.dart_tool/
 **/build/
 **/*.apk

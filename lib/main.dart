@@ -19,6 +19,7 @@ import 'package:spnk/views/screens/arcade/arcade_screen.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/qrcode_privacy_policy_screen.dart';
+import 'package:spnk/views/screens/privacy_policy/yt_downloader_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 
@@ -91,6 +92,10 @@ class MyApp extends StatelessWidget {
                   const QrCodePrivacyPolicyScreen(),
               '${QrCodePrivacyPolicyScreen.routeName}/': (context) =>
                   const QrCodePrivacyPolicyScreen(),
+              YtDownloaderPrivacyPolicyScreen.routeName: (context) =>
+                  const YtDownloaderPrivacyPolicyScreen(),
+              '${YtDownloaderPrivacyPolicyScreen.routeName}/': (context) =>
+                  const YtDownloaderPrivacyPolicyScreen(),
               QrCodeScreen.routeName: (context) => const QrCodeScreen(),
               '${QrCodeScreen.routeName}/': (context) => const QrCodeScreen(),
               ArcadeScreen.routeName: (context) => const ArcadeScreen(),
@@ -112,6 +117,13 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   settings: settings,
                   builder: (_) => const QrCodePrivacyPolicyScreen(),
+                );
+              }
+              if (name.startsWith('/yt-downloader/privacy-policy') ||
+                  name.startsWith('/youtube-downloader/privacy-policy')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const YtDownloaderPrivacyPolicyScreen(),
                 );
               }
               if (name.startsWith('/qrcode')) {
@@ -159,6 +171,12 @@ class SplashScreen extends StatelessWidget {
     if (path.startsWith('/qrcode/privacy-policy') ||
         fragment.startsWith('/qrcode/privacy-policy')) {
       return const QrCodePrivacyPolicyScreen();
+    }
+    if (path.startsWith('/yt-downloader/privacy-policy') ||
+        fragment.startsWith('/yt-downloader/privacy-policy') ||
+        path.startsWith('/youtube-downloader/privacy-policy') ||
+        fragment.startsWith('/youtube-downloader/privacy-policy')) {
+      return const YtDownloaderPrivacyPolicyScreen();
     }
     if (path.startsWith('/qrcode') || fragment.startsWith('/qrcode')) {
       return const QrCodeScreen();
