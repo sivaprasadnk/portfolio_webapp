@@ -17,6 +17,7 @@ class RacingTopTelemetryBar extends StatelessWidget {
     required this.gameMode,
     required this.visualTheme,
     required this.selectedVehicle,
+    required this.cameraPreset,
     required this.palette,
     required this.lapProgress,
     required this.isWarping,
@@ -24,6 +25,7 @@ class RacingTopTelemetryBar extends StatelessWidget {
     required this.onSelectGameMode,
     required this.onSelectVisualTheme,
     required this.onOpenGarage,
+    required this.onCycleCamera,
     required this.onToggleHologram,
     required this.onOpenPitWall,
     required this.onTriggerNitroQuest,
@@ -33,6 +35,7 @@ class RacingTopTelemetryBar extends StatelessWidget {
   final RacingGameMode gameMode;
   final RacingVisualTheme visualTheme;
   final VehicleType selectedVehicle;
+  final RacingCameraPreset cameraPreset;
   final RacingThemePalette palette;
   final double lapProgress; // 0.0 .. 1.0
   final bool isWarping;
@@ -40,6 +43,7 @@ class RacingTopTelemetryBar extends StatelessWidget {
   final ValueChanged<RacingGameMode> onSelectGameMode;
   final ValueChanged<RacingVisualTheme> onSelectVisualTheme;
   final VoidCallback onOpenGarage;
+  final VoidCallback onCycleCamera;
   final VoidCallback onToggleHologram;
   final VoidCallback onOpenPitWall;
   final VoidCallback onTriggerNitroQuest;
@@ -138,6 +142,49 @@ class RacingTopTelemetryBar extends StatelessWidget {
                                           const SizedBox(width: 5),
                                           Text(
                                             selectedVehicle.shortLabel,
+                                            style: context.bodySmall.copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.9,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Tooltip(
+                                message: 'Switch 3D Camera Angle (Q)',
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: onCycleCamera,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: accent.withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(7),
+                                        border: Border.all(
+                                          color: accent.withValues(alpha: 0.72),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            cameraPreset.icon,
+                                            size: 12.5,
+                                            color: accent,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'CAM: ${cameraPreset.shortLabel}',
                                             style: context.bodySmall.copyWith(
                                               fontSize: 10,
                                               fontWeight: FontWeight.bold,
@@ -681,11 +728,11 @@ class RacingBottomCockpitHud extends StatelessWidget {
 
         final hintText = switch (gameMode) {
           RacingGameMode.openPaddock =>
-            'WASD / ARROWS: FREE-ROAM & DRIFT   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE   •   T: THEME',
+            'WASD / ARROWS: 3D FREE-ROAM   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE   •   T: THEME',
           RacingGameMode.verticalHighway =>
-            'WASD / ARROWS: LANE WEAVE & THROTTLE   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE',
+            'WASD / ARROWS: 3D LANE WEAVE   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE',
           RacingGameMode.horizon3d =>
-            'WASD / ARROWS: DRIVE & STEER   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE   •   T: THEME',
+            'WASD / ARROWS: DRIVE & STEER   •   SPACE: NITRO   •   Q: 3D CAM   •   V/G: GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE',
         };
 
         return Padding(

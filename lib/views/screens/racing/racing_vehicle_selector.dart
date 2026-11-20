@@ -17,14 +17,16 @@ Future<void> showVehicleSelectorModal({
   required VehicleType currentVehicle,
   required RacingThemePalette palette,
   required ValueChanged<VehicleType> onSelectVehicle,
+  ValueChanged<VehicleType>? onPreviewVehicle,
 }) async {
   await showDialog<void>(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.78),
+    barrierColor: Colors.black.withValues(alpha: 0.70),
     builder: (ctx) {
       return _VehicleGarageDialog(
         initialVehicle: currentVehicle,
         palette: palette,
+        onPreviewVehicle: onPreviewVehicle,
         onDeployVehicle: (v) {
           Navigator.of(ctx).pop();
           onSelectVehicle(v);
@@ -39,11 +41,13 @@ class _VehicleGarageDialog extends StatefulWidget {
     required this.initialVehicle,
     required this.palette,
     required this.onDeployVehicle,
+    this.onPreviewVehicle,
   });
 
   final VehicleType initialVehicle;
   final RacingThemePalette palette;
   final ValueChanged<VehicleType> onDeployVehicle;
+  final ValueChanged<VehicleType>? onPreviewVehicle;
 
   @override
   State<_VehicleGarageDialog> createState() => _VehicleGarageDialogState();
@@ -206,7 +210,10 @@ class _VehicleGarageDialogState extends State<_VehicleGarageDialog>
                                 children: VehicleType.values.map((v) {
                                   final selected = v == _selected;
                                   return GestureDetector(
-                                    onTap: () => setState(() => _selected = v),
+                                    onTap: () {
+                                      setState(() => _selected = v);
+                                      widget.onPreviewVehicle?.call(v);
+                                    },
                                     child: MouseRegion(
                                       cursor: SystemMouseCursors.click,
                                       child: AnimatedContainer(

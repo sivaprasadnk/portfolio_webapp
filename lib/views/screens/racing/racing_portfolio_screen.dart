@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -20,6 +21,7 @@ import 'package:spnk/views/bloc/skills/skills_bloc.dart';
 import 'package:spnk/views/bloc/skills/skills_state.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/screens/racing/racing_3d_bridge.dart';
 import 'package:spnk/views/screens/racing/racing_car_painter.dart';
 import 'package:spnk/views/screens/racing/racing_collision_engine.dart';
 import 'package:spnk/views/screens/racing/racing_highway_painter.dart';
@@ -46,13 +48,16 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   static const double _hologramPreviewDuration = 6.0;
 
   late final Ticker _ticker;
+  late final Racing3dBridge _bridge3d;
   final FocusNode _focusNode = FocusNode();
   final math.Random _rng = math.Random();
 
-  // Switchable 3 Gameplay Modes, 3 Visual Themes & 5 Vehicles
+  // Switchable 3 Gameplay Modes, 3 Visual Themes, 5 Vehicles & 3D Camera
   RacingGameMode _gameMode = RacingGameMode.horizon3d;
   RacingVisualTheme _visualTheme = RacingVisualTheme.neonCyber;
   VehicleType _selectedVehicle = VehicleType.apexGt;
+  RacingCameraPreset _cameraPreset = RacingCameraPreset.chase3d;
+  bool _isGarageOpen = false;
 
   // Decoded Driver Portrait for in-world 3D/2D canvas rendering
   ImageStream? _photoStream;
@@ -125,6 +130,11 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   double _cameraShakeIntensity = 0.0;
   double _hitVignetteAlpha = 0.0;
   double _paddockMonumentHitCooldown = 0.0;
+  int _collisionEventSeq = 0;
+  double _lastImpactLaneX = 0.0;
+  double _lastImpactPushDir = 1.0;
+  Offset? _lastImpactWorldPoint;
+  int _arrivalEventSeq = 0;
 
   // Destination Hologram & HUD banner state
   RaceSectorMeta _activeSector = RaceSectorMeta.sectors.first;
@@ -139,6 +149,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   @override
   void initState() {
     super.initState();
+    _bridge3d = createRacing3dBridge();
     _trafficCars = CircuitBuilder.buildInitialTraffic();
     _obstacles = CircuitBuilder.buildInitialObstacles();
     _orbs = CircuitBuilder.buildInitialOrbs();
@@ -191,6 +202,11 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       contacts: const [],
     );
 
+    if (_bridge3d.isSupported) {
+      _bridge3d.mountView();
+      _pushTrackDataTo3d();
+    }
+
     _loadDriverPortrait();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -228,6 +244,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     if (_photoStream != null && _photoListener != null) {
       _photoStream!.removeListener(_photoListener!);
     }
+    _bridge3d.dispose();
     _ticker.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -249,6 +266,70 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       );
       _paddockBoosts = PaddockWorldBuilder.buildBoostStrips(skills);
     });
+    _pushTrackDataTo3d();
+  }
+
+  void _pushTrackDataTo3d() {
+    if (!_bridge3d.isSupported || _segments.isEmpty) return;
+    final payload = jsonEncode({
+      'segments': _segments
+          .map(
+            (s) => {
+              'index': s.index,
+              'curve': s.curve,
+              'y': s.y,
+              'isCheckered': s.isCheckered,
+              'gantryCode': s.gantryCode,
+              'gantryTitle': s.gantryTitle,
+              'gantryDest': s.gantryDestinationLabel,
+              'boostLane': s.boostLane,
+              'hasLightPylon': s.hasLightPylon,
+              'isTunnelZone': s.isTunnelZone,
+              'leftBillboard': s.leftBillboard == null
+                  ? null
+                  : {
+                      'tag': s.leftBillboard!.tag,
+                      'title': s.leftBillboard!.title,
+                      'sub': s.leftBillboard!.subtitle,
+                      'sec': s.leftBillboard!.useSecondaryAccent,
+                      'photo': s.leftBillboard!.showDriverPhoto,
+                    },
+              'rightBillboard': s.rightBillboard == null
+                  ? null
+                  : {
+                      'tag': s.rightBillboard!.tag,
+                      'title': s.rightBillboard!.title,
+                      'sub': s.rightBillboard!.subtitle,
+                      'sec': s.rightBillboard!.useSecondaryAccent,
+                      'photo': s.rightBillboard!.showDriverPhoto,
+                    },
+            },
+          )
+          .toList(),
+      'sectors': RaceSectorMeta.sectors
+          .map(
+            (sec) => {
+              'code': sec.code,
+              'dest': sec.destinationLabel,
+              'px': sec.paddockCenter.dx,
+              'py': sec.paddockCenter.dy,
+            },
+          )
+          .toList(),
+      'portals': _paddockPortals
+          .map(
+            (p) => {
+              'shortCode': p.link.shortCode,
+              'label': p.link.label,
+              'color': p.link.color.toARGB32(),
+              'px': p.center.dx,
+              'py': p.center.dy,
+              'r': p.radius,
+            },
+          )
+          .toList(),
+    });
+    _bridge3d.setTrackData(payload);
   }
 
   void _showCallout(String message) {
@@ -327,8 +408,11 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     if (_isModalOpen || !mounted) return;
     final themeState = context.read<ThemeBloc>().state;
     final palette = RacingThemePalette.resolve(themeState, _visualTheme);
+    final prevVehicle = _selectedVehicle;
+    var deployed = false;
     setState(() {
       _isModalOpen = true;
+      _isGarageOpen = true;
       _touchLeft = false;
       _touchRight = false;
       _touchGas = false;
@@ -340,13 +424,36 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       context: context,
       currentVehicle: _selectedVehicle,
       palette: palette,
-      onSelectVehicle: _selectVehicle,
+      onPreviewVehicle: (v) {
+        if (mounted) {
+          setState(() => _selectedVehicle = v);
+        }
+      },
+      onSelectVehicle: (v) {
+        deployed = true;
+        _selectVehicle(v);
+      },
     );
 
     if (mounted) {
-      setState(() => _isModalOpen = false);
+      setState(() {
+        _isModalOpen = false;
+        _isGarageOpen = false;
+        if (!deployed) {
+          _selectedVehicle = prevVehicle;
+        }
+      });
       _focusNode.requestFocus();
     }
+  }
+
+  void _cycleCameraPreset() {
+    final nextIdx =
+        (_cameraPreset.index + 1) % RacingCameraPreset.values.length;
+    setState(() {
+      _cameraPreset = RacingCameraPreset.values[nextIdx];
+      _showCallout('🎥 3D CAMERA: ${_cameraPreset.title.toUpperCase()}');
+    });
   }
 
   void _openDestinationHologram(
@@ -359,6 +466,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       _hologramPinned = pinned;
       _hologramAutoHideTimer = pinned ? 0.0 : _hologramPreviewDuration;
       _lastHologramTriggeredSectorIdx = sector.index;
+      _arrivalEventSeq++;
     });
     GamificationController.instance.completeQuest(sector.questId);
   }
@@ -429,6 +537,10 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       }
       if (key == LogicalKeyboardKey.keyG) {
         _openVehicleGarage();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.keyQ) {
+        _cycleCameraPreset();
         return KeyEventResult.handled;
       }
       if (key == LogicalKeyboardKey.keyH) {
@@ -502,11 +614,21 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
 
   void _handlePaddockCanvasTap(TapUpDetails details, Size canvasSize) {
     if (_gameMode != RacingGameMode.openPaddock || _isModalOpen) return;
-    final worldPt = RacingPaddockPainter.screenToWorld(
-      details.localPosition,
-      canvasSize,
-      _paddockCameraPos,
-    );
+    final worldPt = (_bridge3d.isSupported && canvasSize.width > 0 && canvasSize.height > 0)
+        ? (_bridge3d.raycastPaddock(
+              details.localPosition.dx / canvasSize.width,
+              details.localPosition.dy / canvasSize.height,
+            ) ??
+            RacingPaddockPainter.screenToWorld(
+              details.localPosition,
+              canvasSize,
+              _paddockCameraPos,
+            ))
+        : RacingPaddockPainter.screenToWorld(
+            details.localPosition,
+            canvasSize,
+            _paddockCameraPos,
+          );
 
     // 1. Check 7 Social/Dev Link Portal Pads
     for (final portal in _paddockPortals) {
@@ -813,7 +935,115 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       );
     }
 
+    _sync3dScene(
+      isBraking: !_isModalOpen && brake,
+      wantNitro: !_isModalOpen && wantNitro,
+    );
+
     setState(() {});
+  }
+
+  void _sync3dScene({
+    required bool isBraking,
+    required bool wantNitro,
+  }) {
+    if (!_bridge3d.isSupported || !mounted) return;
+    final themeState = context.read<ThemeBloc>().state;
+    final palette = RacingThemePalette.resolve(themeState, _visualTheme);
+    final nitroActive =
+        ((wantNitro && _nitroCharge > 0.04) ||
+                _warpTargetSector != null ||
+                _paddockGpsTarget != null) &&
+            !_isModalOpen;
+    final shakeMag = _cameraShakeIntensity *
+        (_cameraShakeTimer / 0.28).clamp(0.0, 1.0) *
+        11.0;
+    final shakeX =
+        _cameraShakeTimer > 0 ? math.sin(_timeSeconds * 75) * shakeMag : 0.0;
+    final shakeY = _cameraShakeTimer > 0
+        ? math.cos(_timeSeconds * 92) * shakeMag * 0.7
+        : 0.0;
+
+    final payload = jsonEncode({
+      'gameMode': _gameMode.index,
+      'visualTheme': _visualTheme.index,
+      'isDark': palette.isDark,
+      'vehicleType': _selectedVehicle.index,
+      'cameraPreset': _cameraPreset.index,
+      'isGarageOpen': _isGarageOpen,
+      'playerX': _playerX,
+      'playerZ': _playerZ,
+      'speedKmh': _speedKmh,
+      'steerVisual': _steerVisual,
+      'nitroActive': nitroActive,
+      'isBraking': isBraking,
+      'skyParallax': _skyParallax,
+      'timeSeconds': _timeSeconds,
+      'collisionFlash': _collisionFlashTimer > 0,
+      'accentHex': palette.accent.toARGB32(),
+      'secondaryHex': palette.secondary.toARGB32(),
+      'skyTopHex': palette.skyTop.toARGB32(),
+      'groundNearHex': palette.groundNear.toARGB32(),
+      'asphaltAHex': palette.asphaltA.toARGB32(),
+      'asphaltBHex': palette.asphaltB.toARGB32(),
+      'kerbAHex': palette.kerbA.toARGB32(),
+      'kerbBHex': palette.kerbB.toARGB32(),
+      'carBodyHex': palette.carBody.toARGB32(),
+      'trafficCars': _trafficCars
+          .map(
+            (c) => {
+              'z': c.z,
+              'lane': c.effectiveLane,
+              'kind': c.kind.index,
+              'recoil': c.lateralRecoil,
+              'hit': c.hitFlashTimer > 0,
+            },
+          )
+          .toList(),
+      'obstacles': _obstacles
+          .map(
+            (o) => {
+              'z': o.z,
+              'lane': o.lane,
+              'hit': o.hitFlashTimer > 0,
+            },
+          )
+          .toList(),
+      'orbs': _orbs
+          .map(
+            (o) => {
+              'z': o.z,
+              'lane': o.lane,
+              'collected': o.collected,
+            },
+          )
+          .toList(),
+      'paddockX': _paddockPos.dx,
+      'paddockY': _paddockPos.dy,
+      'paddockHeading': _paddockHeading,
+      'gpsX': _paddockGpsTarget?.dx,
+      'gpsY': _paddockGpsTarget?.dy,
+      'paddockRivals': _paddockRivals
+          .map(
+            (r) => {
+              'x': r.position.dx,
+              'y': r.position.dy,
+              'heading': r.heading,
+              'kind': r.kind.index,
+              'hit': r.hitFlashTimer > 0,
+            },
+          )
+          .toList(),
+      'collisionEventSeq': _collisionEventSeq,
+      'impactLaneX': _lastImpactLaneX,
+      'impactPushDir': _lastImpactPushDir,
+      'impactWorldX': _lastImpactWorldPoint?.dx,
+      'impactWorldY': _lastImpactWorldPoint?.dy,
+      'arrivalEventSeq': _arrivalEventSeq,
+      'shakeX': shakeX,
+      'shakeY': shakeY,
+    });
+    _bridge3d.syncState(payload);
   }
 
   // ===========================================================================
@@ -1017,6 +1247,8 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
             r.hitFlashTimer = 0.35;
             _collisionFlashTimer = 0.35;
             _collisionCount++;
+            _collisionEventSeq++;
+            _lastImpactWorldPoint = hit.contactPoint;
             final armor = _selectedVehicle.armorFactor;
             _paddockSignedSpeed = _paddockSignedSpeed * (0.45 + armor * 0.35);
             _hullIntegrity =
@@ -1043,6 +1275,8 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         if (_paddockMonumentHitCooldown <= 0) {
           _paddockMonumentHitCooldown = 0.50;
           _collisionFlashTimer = 0.30;
+          _collisionEventSeq++;
+          _lastImpactWorldPoint = monumentHit.contactPoint;
           _paddockSignedSpeed = -_paddockSignedSpeed * 0.35;
           _cameraShakeTimer = 0.22;
           _cameraShakeIntensity = 0.60;
@@ -1450,6 +1684,9 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
           car.hitFlashTimer = 0.35;
           _collisionFlashTimer = 0.35;
           _collisionCount++;
+          _collisionEventSeq++;
+          _lastImpactLaneX = hit.impactLaneX;
+          _lastImpactPushDir = hit.pushDirection;
           _hullIntegrity =
               (_hullIntegrity - res.hullDamage / 100.0).clamp(0.10, 1.0);
           _cameraShakeTimer = 0.28;
@@ -1575,6 +1812,9 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         obs.hitFlashTimer = 0.38;
         _collisionFlashTimer = 0.35;
         _collisionCount++;
+        _collisionEventSeq++;
+        _lastImpactLaneX = hit.impactLaneX;
+        _lastImpactPushDir = hit.pushDirection;
         _hullIntegrity =
             (_hullIntegrity - res.hullDamage / 100.0).clamp(0.10, 1.0);
         _cameraShakeTimer = 0.28;
@@ -1684,27 +1924,54 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                     return Stack(
                       fit: StackFit.expand,
                       children: [
-                        // 1. ACTIVE RACING GAMEPLAY CANVAS (3 SWITCHABLE MODES!)
+                        // 1. ACTIVE RACING GAMEPLAY CANVAS (TRUE WEBGL 3D OR FALLBACK)
                         GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTapUp: (details) => _handlePaddockCanvasTap(
                             details,
                             Size(maxW, maxH),
                           ),
-                          child: RepaintBoundary(
-                            child: _buildActiveModeCanvas(
-                              themeState: themeState,
-                              palette: palette,
-                              nitroActive: nitroActive,
-                              isAccelerating: isAccelerating,
-                              isBraking: isBraking,
-                              cameraShake: cameraShake,
-                            ),
-                          ),
+                          child: _bridge3d.isSupported
+                              ? Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    IgnorePointer(child: _bridge3d.buildView()),
+                                    if (_hitVignetteAlpha > 0.01)
+                                      IgnorePointer(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            gradient: RadialGradient(
+                                              radius: 1.05,
+                                              colors: [
+                                                Colors.transparent,
+                                                const Color(0xFFFF1E42)
+                                                    .withValues(
+                                                  alpha: _hitVignetteAlpha
+                                                      .clamp(0.0, 0.45),
+                                                ),
+                                              ],
+                                              stops: const [0.55, 1.0],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                )
+                              : RepaintBoundary(
+                                  child: _buildActiveModeCanvas(
+                                    themeState: themeState,
+                                    palette: palette,
+                                    nitroActive: nitroActive,
+                                    isAccelerating: isAccelerating,
+                                    isBraking: isBraking,
+                                    cameraShake: cameraShake,
+                                  ),
+                                ),
                         ),
 
-                        // 2. CHASE-CAM PLAYER VEHICLE OVERLAY (ONLY IN 3D HORIZON MODE)
-                        if (_gameMode == RacingGameMode.horizon3d)
+                        // 2. CHASE-CAM PLAYER VEHICLE OVERLAY (2D FALLBACK ONLY)
+                        if (!_bridge3d.isSupported &&
+                            _gameMode == RacingGameMode.horizon3d)
                           Positioned(
                             left: (maxW - carWidth) / 2 + cameraShake.dx * 0.35,
                             bottom: (isCompact ? 132 : 102) - cameraShake.dy * 0.35,
@@ -1907,6 +2174,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                               gameMode: _gameMode,
                               visualTheme: _visualTheme,
                               selectedVehicle: _selectedVehicle,
+                              cameraPreset: _cameraPreset,
                               palette: palette,
                               lapProgress: lapProgress,
                               isWarping: _warpTargetSector != null ||
@@ -1915,6 +2183,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                               onSelectGameMode: _switchGameMode,
                               onSelectVisualTheme: _switchVisualTheme,
                               onOpenGarage: _openVehicleGarage,
+                              onCycleCamera: _cycleCameraPreset,
                               onToggleHologram: _toggleCurrentHologram,
                               onOpenPitWall: () =>
                                   _openPitStop(_activeSector.screen),

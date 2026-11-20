@@ -278,6 +278,17 @@ void main() {
         findsNothing,
       );
 
+      // Cycle 3D camera presets via HUD pill & [Q] key
+      expect(find.text('CAM: CHASE'), findsOneWidget);
+      await tester.ensureVisible(find.text('CAM: CHASE'));
+      await tester.tap(find.text('CAM: CHASE'));
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(find.text('CAM: HOOD'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyQ);
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(find.text('CAM: ORBIT'), findsOneWidget);
+
       await tester.pump(const Duration(seconds: 3));
     },
   );

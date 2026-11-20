@@ -44,6 +44,35 @@ enum RacingGameMode {
   final IconData icon;
 }
 
+/// 3D camera angles switchable via top HUD or [Q] key.
+enum RacingCameraPreset {
+  chase3d(
+    shortLabel: 'CHASE',
+    title: 'Dynamic 3D Chase Cam',
+    icon: Icons.videocam_rounded,
+  ),
+  cockpitHood(
+    shortLabel: 'HOOD',
+    title: 'Low Cockpit Hood Cam',
+    icon: Icons.speed_rounded,
+  ),
+  cinematic3d(
+    shortLabel: 'ORBIT',
+    title: 'Low-Angle Hero Cam',
+    icon: Icons.threesixty_rounded,
+  );
+
+  const RacingCameraPreset({
+    required this.shortLabel,
+    required this.title,
+    required this.icon,
+  });
+
+  final String shortLabel;
+  final String title;
+  final IconData icon;
+}
+
 /// The 3 switchable racing visual themes.
 enum RacingVisualTheme {
   neonCyber(
