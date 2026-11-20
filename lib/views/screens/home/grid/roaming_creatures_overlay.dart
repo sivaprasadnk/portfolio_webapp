@@ -70,6 +70,7 @@ class RoamingCreature {
   String? speechText;
   bool isScanningPointer = false;
   Offset? fetchTarget;
+  Offset? patrolTarget;
 }
 
 /// Real-time 2D physics & mouse-reactivity simulation for roaming birds, cats,
@@ -82,52 +83,81 @@ class RoamingCreaturesSimulation {
 
   bool get isInitialized => _initialized;
 
+  Offset _pickPatrolTarget(
+    Size viewport,
+    RoamingCreatureType type, {
+    Offset? awayFrom,
+  }) {
+    const edgePad = 56.0;
+    const topSafe = 92.0;
+    final minX = edgePad;
+    final maxX = math.max(minX + 10.0, viewport.width - edgePad);
+    final minY = topSafe;
+    final maxY = type == RoamingCreatureType.bird
+        ? math.max(minY + 10.0, viewport.height * 0.52)
+        : math.max(minY + 10.0, viewport.height - edgePad);
+
+    double tx;
+    if (awayFrom != null) {
+      final midX = viewport.width * 0.5;
+      // Pick target in the opposite horizontal half so creatures cross the screen
+      if (awayFrom.dx >= midX) {
+        tx = minX + _rng.nextDouble() * (midX - minX);
+      } else {
+        tx = midX + _rng.nextDouble() * (maxX - midX);
+      }
+    } else {
+      tx = minX + _rng.nextDouble() * (maxX - minX);
+    }
+    final ty = minY + _rng.nextDouble() * (maxY - minY);
+    return Offset(tx, ty);
+  }
+
   void ensureInitialized(Size viewport, {bool compact = false}) {
     if (_initialized || viewport.width < 120 || viewport.height < 120) return;
     _initialized = true;
     creatures.clear();
     particles.clear();
 
+    // 4 clean, uncluttered creatures: 1 bird, 1 cat, 1 dog, 1 bot
     final specs = compact
         ? const [
-            (RoamingCreatureType.bird, 0.22, 0.20, 74.0, 26.0, 0),
-            (RoamingCreatureType.bird, 0.78, 0.28, 68.0, 24.0, 1),
-            (RoamingCreatureType.cat, 0.18, 0.76, 46.0, 30.0, 0),
-            (RoamingCreatureType.dog, 0.80, 0.82, 58.0, 32.0, 0),
-            (RoamingCreatureType.bot, 0.55, 0.44, 52.0, 30.0, 0),
+            (RoamingCreatureType.bird, 0.22, 0.20, 72.0, 26.0, 0),
+            (RoamingCreatureType.cat, 0.78, 0.72, 48.0, 30.0, 0),
+            (RoamingCreatureType.dog, 0.24, 0.82, 58.0, 32.0, 0),
+            (RoamingCreatureType.bot, 0.74, 0.36, 52.0, 30.0, 0),
           ]
         : const [
-            (RoamingCreatureType.bird, 0.18, 0.18, 82.0, 28.0, 0),
-            (RoamingCreatureType.bird, 0.62, 0.24, 74.0, 25.0, 1),
-            (RoamingCreatureType.bird, 0.86, 0.16, 88.0, 24.0, 2),
-            (RoamingCreatureType.cat, 0.14, 0.72, 48.0, 32.0, 0),
-            (RoamingCreatureType.cat, 0.76, 0.64, 44.0, 30.0, 1),
-            (RoamingCreatureType.dog, 0.32, 0.84, 62.0, 34.0, 0),
-            (RoamingCreatureType.dog, 0.84, 0.82, 58.0, 32.0, 1),
-            (RoamingCreatureType.bot, 0.46, 0.36, 54.0, 32.0, 0),
-            (RoamingCreatureType.bot, 0.88, 0.48, 50.0, 30.0, 1),
+            (RoamingCreatureType.bird, 0.20, 0.18, 82.0, 28.0, 0),
+            (RoamingCreatureType.cat, 0.78, 0.72, 50.0, 32.0, 0),
+            (RoamingCreatureType.dog, 0.28, 0.84, 62.0, 34.0, 0),
+            (RoamingCreatureType.bot, 0.72, 0.34, 56.0, 32.0, 0),
           ];
 
     for (int i = 0; i < specs.length; i++) {
       final (type, nx, ny, speed, size, variant) = specs[i];
-      final angle = (i * 1.37) % (math.pi * 2);
+      final startPos = Offset(
+        (viewport.width * nx).clamp(48.0, viewport.width - 48.0),
+        (viewport.height * ny).clamp(90.0, viewport.height - 48.0),
+      );
+      final target = _pickPatrolTarget(viewport, type, awayFrom: startPos);
+      final toTarget = target - startPos;
+      final angle = math.atan2(toTarget.dy, toTarget.dx);
       final vx = math.cos(angle) * speed;
-      final vy = type == RoamingCreatureType.bird
-          ? math.sin(angle) * speed * 0.35
-          : math.sin(angle) * speed * 0.65;
+      final vy = math.sin(angle) * speed;
       final creature = RoamingCreature(
         id: i,
         type: type,
-        position: Offset(
-          (viewport.width * nx).clamp(36.0, viewport.width - 36.0),
-          (viewport.height * ny).clamp(84.0, viewport.height - 36.0),
-        ),
+        position: startPos,
         velocity: Offset(vx, vy),
         baseSpeed: speed,
         size: size,
-        phaseOffset: i * 1.15,
+        phaseOffset: i * 1.35,
         colorVariant: variant,
-      )..facingRight = vx >= 0;
+      )
+        ..facingRight = vx >= 0
+        ..wanderAngle = angle
+        ..patrolTarget = target;
       creatures.add(creature);
     }
   }
@@ -150,13 +180,28 @@ class RoamingCreaturesSimulation {
       }
       c.isScanningPointer = false;
 
-      // 1. Organic wandering acceleration
-      c.wanderAngle += (_rng.nextDouble() - 0.5) * 2.4 * clampedDt;
-      var desiredAccel = Offset(
-        math.cos(c.wanderAngle) * 28.0,
-        math.sin(c.wanderAngle) *
-            (c.type == RoamingCreatureType.bird ? 16.0 : 24.0),
-      );
+      // 1. Cross-viewport waypoint patrol steering + subtle organic sway
+      c.patrolTarget ??=
+          _pickPatrolTarget(viewport, c.type, awayFrom: c.position);
+      final toPatrol = c.patrolTarget! - c.position;
+      final patrolDist = toPatrol.distance;
+      if (patrolDist < 58.0) {
+        c.patrolTarget =
+            _pickPatrolTarget(viewport, c.type, awayFrom: c.position);
+      }
+      final activePatrol = c.patrolTarget! - c.position;
+      final activeDist = activePatrol.distance;
+      final patrolDir = activeDist > 1.0
+          ? activePatrol / activeDist
+          : Offset(math.cos(c.wanderAngle), math.sin(c.wanderAngle));
+
+      c.wanderAngle += (_rng.nextDouble() - 0.5) * 1.4 * clampedDt;
+      var desiredAccel = patrolDir * 72.0 +
+          Offset(
+            math.cos(c.wanderAngle) * 14.0,
+            math.sin(c.wanderAngle) *
+                (c.type == RoamingCreatureType.bird ? 10.0 : 14.0),
+          );
 
       // 2. Fetch target for excited dogs
       if (c.type == RoamingCreatureType.dog && c.fetchTarget != null) {
@@ -268,21 +313,45 @@ class RoamingCreaturesSimulation {
 
       c.position += c.velocity * clampedDt;
 
-      // 5. Soft viewport boundaries (keep below header bar)
+      // 5. Crisp viewport boundaries with inward rebound & opposite-side patrol retarget
+      var hitEdge = false;
+      final minBounceSpeed = c.baseSpeed * 0.65;
       if (c.position.dx < edgePad) {
         c.position = Offset(edgePad, c.position.dy);
-        c.velocity = Offset(c.velocity.dx.abs(), c.velocity.dy);
+        c.velocity = Offset(
+          math.max(c.velocity.dx.abs(), minBounceSpeed),
+          c.velocity.dy,
+        );
+        hitEdge = true;
       } else if (c.position.dx > viewport.width - edgePad) {
         c.position = Offset(viewport.width - edgePad, c.position.dy);
-        c.velocity = Offset(-c.velocity.dx.abs(), c.velocity.dy);
+        c.velocity = Offset(
+          -math.max(c.velocity.dx.abs(), minBounceSpeed),
+          c.velocity.dy,
+        );
+        hitEdge = true;
       }
 
       if (c.position.dy < topSafe) {
         c.position = Offset(c.position.dx, topSafe);
-        c.velocity = Offset(c.velocity.dx, c.velocity.dy.abs());
+        c.velocity = Offset(
+          c.velocity.dx,
+          math.max(c.velocity.dy.abs(), minBounceSpeed * 0.5),
+        );
+        hitEdge = true;
       } else if (c.position.dy > viewport.height - edgePad) {
         c.position = Offset(c.position.dx, viewport.height - edgePad);
-        c.velocity = Offset(c.velocity.dx, -c.velocity.dy.abs());
+        c.velocity = Offset(
+          c.velocity.dx,
+          -math.max(c.velocity.dy.abs(), minBounceSpeed * 0.5),
+        );
+        hitEdge = true;
+      }
+
+      if (hitEdge) {
+        c.wanderAngle = math.atan2(c.velocity.dy, c.velocity.dx);
+        c.patrolTarget =
+            _pickPatrolTarget(viewport, c.type, awayFrom: c.position);
       }
 
       if (c.velocity.dx.abs() > 4.0) {

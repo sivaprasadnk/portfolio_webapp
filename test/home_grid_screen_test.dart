@@ -203,6 +203,7 @@ void main() {
       sim.ensureInitialized(viewport);
 
       final types = sim.creatures.map((c) => c.type).toSet();
+      expect(sim.creatures.length, 4);
       expect(
         types,
         containsAll([
@@ -223,6 +224,17 @@ void main() {
       for (int i = 0; i < sim.creatures.length; i++) {
         expect(sim.creatures[i].position, isNot(equals(initialPositions[i])));
       }
+
+      // Force bird into right corner moving right -> must reverse left & travel away
+      final bird =
+          sim.creatures.firstWhere((c) => c.type == RoamingCreatureType.bird);
+      bird.position = Offset(viewport.width - 10, viewport.height - 10);
+      bird.velocity = const Offset(90, 40);
+      for (int i = 0; i < 60; i++) {
+        sim.step(0.033, viewport, null);
+      }
+      expect(bird.facingRight, isFalse);
+      expect(bird.position.dx, lessThan(viewport.width - 120));
 
       // Hover near a bot -> triggers scanner beam
       final bot =
