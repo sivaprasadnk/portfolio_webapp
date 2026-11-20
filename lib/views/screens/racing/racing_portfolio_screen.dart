@@ -52,9 +52,9 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   final FocusNode _focusNode = FocusNode();
   final math.Random _rng = math.Random();
 
-  // Switchable 3 Gameplay Modes, 3 Visual Themes, 5 Vehicles & 3D Camera
+  // Switchable 3 Gameplay Modes, 4 Visual Themes, 5 Vehicles & 3D Camera
   RacingGameMode _gameMode = RacingGameMode.horizon3d;
-  RacingVisualTheme _visualTheme = RacingVisualTheme.neonCyber;
+  RacingVisualTheme _visualTheme = RacingVisualTheme.nfsMostWanted;
   VehicleType _selectedVehicle = VehicleType.apexGt;
   RacingCameraPreset _cameraPreset = RacingCameraPreset.chase3d;
   bool _isGarageOpen = false;
@@ -967,6 +967,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     final payload = jsonEncode({
       'gameMode': _gameMode.index,
       'visualTheme': _visualTheme.index,
+      'themeId': _visualTheme.name,
       'isDark': palette.isDark,
       'vehicleType': _selectedVehicle.index,
       'cameraPreset': _cameraPreset.index,

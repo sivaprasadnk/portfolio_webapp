@@ -73,8 +73,13 @@ enum RacingCameraPreset {
   final IconData icon;
 }
 
-/// The 3 switchable racing visual themes.
+/// The 4 switchable racing visual themes.
 enum RacingVisualTheme {
+  nfsMostWanted(
+    shortLabel: 'MOST WANTED',
+    title: 'NFS Most Wanted • Rockport',
+    icon: Icons.local_police_rounded,
+  ),
   neonCyber(
     shortLabel: 'NEON CYBER',
     title: 'Neon Cyber Telemetry',
@@ -353,6 +358,33 @@ class RacingThemePalette {
     final isDark = themeState.isDark;
 
     switch (visualTheme) {
+      case RacingVisualTheme.nfsMostWanted:
+        // Rockport City Golden-Hour Sunset & Metallic Street-Racing Livery
+        const mwAmber = Color(0xFFF59E0B);
+        const mwBlue = Color(0xFF38BDF8);
+        const mwRed = Color(0xFFEF4444);
+        return RacingThemePalette(
+          visualTheme: visualTheme,
+          isDark: isDark,
+          accent: mwAmber,
+          secondary: mwBlue,
+          tertiary: mwRed,
+          skyTop: isDark ? const Color(0xFF282420) : const Color(0xFF475569),
+          skyMid: isDark ? const Color(0xFF7C4D1E) : const Color(0xFFB4783A),
+          skyBottom: isDark ? const Color(0xFFD9913B) : const Color(0xFFF5C16C),
+          groundFar: isDark ? const Color(0xFF1F1A14) : const Color(0xFF4A3D2C),
+          groundNear:
+              isDark ? const Color(0xFF14110D) : const Color(0xFF2D251A),
+          gridLine: mwAmber.withValues(alpha: 0.14),
+          asphaltA: isDark ? const Color(0xFF222428) : const Color(0xFF2F333A),
+          asphaltB: isDark ? const Color(0xFF282B30) : const Color(0xFF383C44),
+          kerbA: const Color(0xFFD97706),
+          kerbB: const Color(0xFFE5E7EB),
+          carBody: const Color(0xFFD1D5DB),
+          carStripe: const Color(0xFF1D4ED8),
+          hudSurface: const Color(0xFF0E0D0B),
+        );
+
       case RacingVisualTheme.neonCyber:
         final accent = themeState.accentColor;
         final secondary = themeState.secondaryAccent;

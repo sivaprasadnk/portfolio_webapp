@@ -137,7 +137,9 @@ void main() {
       await tester.tap(find.text('3D HORIZON'));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // 2. Switch across all 3 Visual Themes: NEON CYBER -> F1 PIT-WALL -> SYNTHWAVE
+      // 2. Switch across all 4 Visual Themes: MOST WANTED -> NEON CYBER -> F1 PIT-WALL -> SYNTHWAVE
+      expect(find.text('MOST WANTED'), findsOneWidget);
+
       await tester.ensureVisible(find.text('F1 PIT-WALL'));
       await tester.pump(const Duration(milliseconds: 50));
       await tester.tap(find.text('F1 PIT-WALL'));
@@ -151,6 +153,11 @@ void main() {
       await tester.ensureVisible(find.text('NEON CYBER'));
       await tester.pump(const Duration(milliseconds: 50));
       await tester.tap(find.text('NEON CYBER'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.ensureVisible(find.text('MOST WANTED'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('MOST WANTED'));
       await tester.pump(const Duration(milliseconds: 200));
 
       // Toggle Cruise Auto-Pilot & Light/Dark brightness
