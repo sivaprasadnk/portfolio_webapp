@@ -249,87 +249,92 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
               borderRadius: BorderRadius.circular(18),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: PortfolioStyledCard(
-                  cyberHeader: 'ABOUT ME // COMMANDER BIO',
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          AnimatedPortfolioCharacter(
-                            kind: GridCharacterKind.nekoCat,
-                            elapsedSeconds: _elapsedSeconds,
-                            pointerNorm: _pointerNorm,
-                            size: 64,
-                            showSpeechOnTap: false,
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Sivaprasad NK',
-                                  style: context.displaySmall.copyWith(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'Senior Flutter Architect • Tripunithura, Kerala',
-                                  style: context.bodySmall.copyWith(
-                                    fontSize: 13,
-                                    color: accent,
-                                  ),
-                                ),
-                              ],
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: context.scaffoldColor.withValues(alpha: 0.92),
+                  ),
+                  child: PortfolioStyledCard(
+                    cyberHeader: 'ABOUT ME // COMMANDER BIO',
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            AnimatedPortfolioCharacter(
+                              kind: GridCharacterKind.nekoCat,
+                              elapsedSeconds: _elapsedSeconds,
+                              pointerNorm: _pointerNorm,
+                              size: 64,
+                              showSpeechOnTap: false,
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            icon: Icon(Icons.close_rounded, color: accent),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        bio,
-                        style: context.bodySmall.copyWith(
-                          fontSize: 15,
-                          height: 1.55,
-                          color: Colors.white.withValues(alpha: 0.9),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sivaprasad NK',
+                                    style: context.displaySmall.copyWith(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Senior Flutter Architect • Tripunithura, Kerala',
+                                    style: context.bodySmall.copyWith(
+                                      fontSize: 13,
+                                      color: accent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              icon: Icon(Icons.close_rounded, color: accent),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 8,
-                        children: [
-                          OpenAirActionTrigger(
-                            label: 'Open 3D Racer /v2',
-                            icon: Icons.sports_motorsports_rounded,
-                            color: accent,
-                            isPrimary: true,
-                            onTap: () {
-                              Navigator.of(ctx).pop();
-                              _openRacingV2();
-                            },
+                        const SizedBox(height: 14),
+                        Text(
+                          bio,
+                          style: context.bodySmall.copyWith(
+                            fontSize: 15,
+                            height: 1.55,
+                            color: context.primaryColor.withValues(alpha: 0.88),
                           ),
-                          OpenAirActionTrigger(
-                            label: 'Download CV',
-                            icon: Icons.download_rounded,
-                            color: secondary,
-                            onTap: () => _launchExternal(
-                              resumeLink,
-                              xpReason: 'Downloaded CV',
-                              key: 'cv_dialog',
+                        ),
+                        const SizedBox(height: 18),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 8,
+                          children: [
+                            OpenAirActionTrigger(
+                              label: 'Open 3D Racer /v2',
+                              icon: Icons.sports_motorsports_rounded,
+                              color: accent,
+                              isPrimary: true,
+                              onTap: () {
+                                Navigator.of(ctx).pop();
+                                _openRacingV2();
+                              },
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            OpenAirActionTrigger(
+                              label: 'Download CV',
+                              icon: Icons.download_rounded,
+                              color: secondary,
+                              onTap: () => _launchExternal(
+                                resumeLink,
+                                xpReason: 'Downloaded CV',
+                                key: 'cv_dialog',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -360,109 +365,116 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
               borderRadius: BorderRadius.circular(18),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: PortfolioStyledCard(
-                  cyberHeader: 'PROJECT SHOWCASE // SPNK LABS',
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              project.projName,
-                              style: context.displaySmall.copyWith(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            icon: Icon(Icons.close_rounded, color: accent),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: project.techStackList.map((tech) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: accent.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: accent.withValues(alpha: 0.45),
-                              ),
-                            ),
-                            child: Text(
-                              tech,
-                              style: context.bodySmall.copyWith(
-                                fontSize: 11.5,
-                                color: accent,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 14),
-                      ...project.descList.map(
-                        (d) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.bolt_rounded, size: 16, color: secondary),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  d,
-                                  style: context.bodySmall.copyWith(
-                                    fontSize: 14,
-                                    color: Colors.white.withValues(alpha: 0.88),
-                                  ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: context.scaffoldColor.withValues(alpha: 0.92),
+                  ),
+                  child: PortfolioStyledCard(
+                    cyberHeader: 'PROJECT SHOWCASE // SPNK LABS',
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                project.projName,
+                                style: context.displaySmall.copyWith(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              icon: Icon(Icons.close_rounded, color: accent),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: project.techStackList.map((tech) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: accent.withValues(alpha: 0.45),
+                                ),
+                              ),
+                              child: Text(
+                                tech,
+                                style: context.bodySmall.copyWith(
+                                  fontSize: 11.5,
+                                  color: accent,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 14),
+                        ...project.descList.map(
+                          (d) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.bolt_rounded, size: 16, color: secondary),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    d,
+                                    style: context.bodySmall.copyWith(
+                                      fontSize: 14,
+                                      color: context.primaryColor
+                                          .withValues(alpha: 0.88),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          if (project.webUrl.isNotEmpty)
-                            OpenAirActionTrigger(
-                              label: 'Launch Web App',
-                              icon: Icons.open_in_new_rounded,
-                              color: accent,
-                              isPrimary: true,
-                              onTap: () {
-                                Navigator.of(ctx).pop();
-                                _openProjectAction(project);
-                              },
-                            ),
-                          if (project.playStoreUrl.isNotEmpty)
-                            OpenAirActionTrigger(
-                              label: 'Play Store',
-                              icon: Icons.shop_rounded,
-                              color: secondary,
-                              onTap: () => _launchExternal(
-                                project.playStoreUrl,
-                                xpReason: 'Opened ${project.projName} Play Store',
-                                key: 'play_${project.projName}',
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 10,
+                          children: [
+                            if (project.webUrl.isNotEmpty)
+                              OpenAirActionTrigger(
+                                label: 'Launch Web App',
+                                icon: Icons.open_in_new_rounded,
+                                color: accent,
+                                isPrimary: true,
+                                onTap: () {
+                                  Navigator.of(ctx).pop();
+                                  _openProjectAction(project);
+                                },
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
+                            if (project.playStoreUrl.isNotEmpty)
+                              OpenAirActionTrigger(
+                                label: 'Play Store',
+                                icon: Icons.shop_rounded,
+                                color: secondary,
+                                onTap: () => _launchExternal(
+                                  project.playStoreUrl,
+                                  xpReason:
+                                      'Opened ${project.projName} Play Store',
+                                  key: 'play_${project.projName}',
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -552,162 +564,194 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
     double maxW,
   ) {
     final accent = themeState.accentColor;
-    final secondary = themeState.secondaryAccent;
     final isCompact = maxW < 680;
+    const racerAmber = Color(0xFFF59E0B);
 
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
+          key: const ValueKey('home_grid_header_bar'),
           decoration: BoxDecoration(
-            color: themeState.cardSurfaceColor.withValues(
-              alpha: themeState.isDark ? 0.85 : 0.90,
+            color: themeState.themeData.scaffoldBackgroundColor.withValues(
+              alpha: themeState.isDark ? 0.80 : 0.90,
             ),
             border: Border(
               bottom: BorderSide(
-                color: accent.withValues(alpha: 0.35),
+                color: themeState.cardBorderColor,
                 width: 1.1,
               ),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(
+                  alpha: themeState.isDark ? 0.25 : 0.06,
+                ),
+                blurRadius: 14,
+              ),
+            ],
           ),
           padding: EdgeInsets.symmetric(
-            horizontal: maxW >= 1100 ? 28 : 12,
+            horizontal: maxW >= 1200 ? 40 : (maxW >= 700 ? 22 : 12),
             vertical: 8,
           ),
           child: SafeArea(
             bottom: false,
-            child: Row(
-              children: [
-                LogoText(
-                  onTap: () => setState(() => _activeFilter = _GridCategory.all),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ..._GridCategory.values.map((cat) {
-                          final selected = _activeFilter == cat;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onTap: () => setState(() => _activeFilter = cat),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 160),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? accent.withValues(alpha: 0.20)
-                                        : context.primaryColor
-                                            .withValues(alpha: 0.04),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: selected
-                                          ? accent
-                                          : context.primaryColor
-                                              .withValues(alpha: 0.14),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    cat.label,
-                                    style: context.bodySmall.copyWith(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.0,
-                                      color: selected
-                                          ? accent
-                                          : context.primaryColor
-                                              .withValues(alpha: 0.78),
-                                    ),
-                                  ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1360),
+                child: Row(
+                  children: [
+                    LogoText(
+                      onTap: () =>
+                          setState(() => _activeFilter = _GridCategory.all),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: themeState.cardSurfaceColor,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: themeState.cardBorderColor,
                                 ),
                               ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: _GridCategory.values.map((cat) {
+                                  final selected = _activeFilter == cat;
+                                  return MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: GestureDetector(
+                                      onTap: () =>
+                                          setState(() => _activeFilter = cat),
+                                      child: AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 160),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: selected
+                                              ? accent.withValues(alpha: 0.20)
+                                              : Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(7),
+                                          border: Border.all(
+                                            color: selected
+                                                ? accent
+                                                : Colors.transparent,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          cat.label,
+                                          style: context.bodySmall.copyWith(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.0,
+                                            color: selected
+                                                ? accent
+                                                : context.primaryColor
+                                                    .withValues(alpha: 0.78),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
-                          );
-                        }),
-                        if (maxW >= 1040) ...[
-                          const SizedBox(width: 8),
-                          const StyleSwitcherBar(compact: true),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: _openRacingV2,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isCompact ? 10 : 13,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFFF59E0B).withValues(alpha: 0.28),
-                            secondary.withValues(alpha: 0.24),
+                            if (maxW >= 1040) ...[
+                              const SizedBox(width: 10),
+                              const StyleSwitcherBar(compact: true),
+                            ],
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.85),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFF59E0B)
-                                .withValues(alpha: 0.25),
-                            blurRadius: 12,
-                          ),
-                        ],
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.sports_motorsports_rounded,
-                            size: 14,
-                            color: Color(0xFFFBBF24),
+                    ),
+                    const SizedBox(width: 8),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: _openRacingV2,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 9 : 12,
+                            vertical: 6,
                           ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '3D RACER /v2',
-                            style: context.bodySmall.copyWith(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.9,
-                              color: context.primaryColor,
+                          decoration: BoxDecoration(
+                            color: racerAmber.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: racerAmber.withValues(alpha: 0.75),
+                              width: 1.1,
                             ),
                           ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.sports_motorsports_rounded,
+                                size: 14,
+                                color: racerAmber,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                '3D RACER /v2',
+                                style: context.bodySmall.copyWith(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.9,
+                                  color: context.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (maxW >= 740) ...[
+                      const SizedBox(width: 10),
+                      GamificationHudPill(
+                        compact: true,
+                        onOpenQuests: () => showQuestLogModal(
+                          context,
+                          onJumpToArcade: _openRacingV2,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: themeState.cardSurfaceColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: themeState.cardBorderColor,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          BrightnessSwitch(),
+                          SizedBox(width: 8),
+                          ThemeIcon(),
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                if (maxW >= 740) ...[
-                  const SizedBox(width: 10),
-                  GamificationHudPill(
-                    compact: true,
-                    onOpenQuests: () => showQuestLogModal(
-                      context,
-                      onJumpToArcade: _openRacingV2,
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                const BrightnessSwitch(),
-                const SizedBox(width: 8),
-                const ThemeIcon(),
-              ],
+              ),
             ),
           ),
         ),

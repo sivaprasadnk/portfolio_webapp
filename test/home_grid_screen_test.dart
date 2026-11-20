@@ -162,4 +162,35 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     },
   );
+
+  testWidgets(
+    'Header bar uses dark glass scaffold background in dark mode and adapts to light mode',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const MyApp());
+      await tester.pump(const Duration(milliseconds: 150));
+
+      final headerFinder = find.byKey(const ValueKey('home_grid_header_bar'));
+      expect(headerFinder, findsOneWidget);
+
+      final darkContainer = tester.widget<Container>(headerFinder);
+      final darkColor = (darkContainer.decoration! as BoxDecoration).color!;
+      expect(darkColor.computeLuminance(), lessThan(0.15));
+
+      await tester.tap(find.byIcon(Icons.light_mode));
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+
+      final lightContainer = tester.widget<Container>(headerFinder);
+      final lightColor = (lightContainer.decoration! as BoxDecoration).color!;
+      expect(lightColor.computeLuminance(), greaterThan(0.70));
+
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
 }
