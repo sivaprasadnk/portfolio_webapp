@@ -6,8 +6,6 @@ import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/string_constants.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/home/widgets/logo_text.dart';
-import 'package:spnk/views/screens/home/widgets/theme_icon.dart';
-import 'package:spnk/views/screens/home/widgets/theme_switch.dart';
 import 'package:spnk/views/screens/solar/solar_models.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 
@@ -258,23 +256,6 @@ class SolarTopNavBar extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: themeState.cardSurfaceColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: themeState.cardBorderColor),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          BrightnessSwitch(),
-                          SizedBox(width: 6),
-                          ThemeIcon(),
-                        ],
                       ),
                     ),
                   ],

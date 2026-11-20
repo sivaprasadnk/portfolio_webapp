@@ -88,6 +88,8 @@ void main() {
       expect(find.descendant(of: solarScope, matching: find.text('EXPERIENCE')), findsOneWidget);
       expect(find.descendant(of: solarScope, matching: find.text('PROJECTS')), findsOneWidget);
       expect(find.descendant(of: solarScope, matching: find.text('CONTACT')), findsOneWidget);
+      expect(find.byIcon(Icons.light_mode), findsNothing);
+      expect(find.byIcon(Icons.color_lens), findsNothing);
 
       // Focus PROJECTS planet
       await tester.tap(find.descendant(of: solarScope, matching: find.text('PROJECTS')));

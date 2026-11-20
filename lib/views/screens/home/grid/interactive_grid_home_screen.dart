@@ -31,8 +31,6 @@ import 'package:spnk/views/screens/home/grid/animated_characters.dart';
 import 'package:spnk/views/screens/home/grid/interactive_grid_backdrop.dart';
 import 'package:spnk/views/screens/home/grid/roaming_creatures_overlay.dart';
 import 'package:spnk/views/screens/home/widgets/logo_text.dart';
-import 'package:spnk/views/screens/home/widgets/theme_icon.dart';
-import 'package:spnk/views/screens/home/widgets/theme_switch.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 import 'package:spnk/views/screens/racing/racing_portfolio_screen.dart';
 import 'package:spnk/views/screens/solar/solar_system_screen.dart';
@@ -838,28 +836,6 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
                         ),
                       ),
                     ],
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: themeState.cardSurfaceColor,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: themeState.cardBorderColor,
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          BrightnessSwitch(),
-                          SizedBox(width: 8),
-                          ThemeIcon(),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),

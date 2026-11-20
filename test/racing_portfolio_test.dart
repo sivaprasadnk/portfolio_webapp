@@ -161,14 +161,13 @@ void main() {
       await tester.tap(find.text('MOST WANTED'));
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Toggle Cruise Auto-Pilot & Light/Dark brightness
+      // Toggle Cruise Auto-Pilot & verify color/brightness controls are removed
       await tester.tap(find.text('CRUISE: ON'));
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('CRUISE: OFF'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.light_mode));
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+      expect(find.byIcon(Icons.light_mode), findsNothing);
+      expect(find.byIcon(Icons.color_lens), findsNothing);
 
       await tester.pump(const Duration(seconds: 3));
     },

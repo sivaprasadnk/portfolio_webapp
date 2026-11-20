@@ -165,7 +165,7 @@ void main() {
   );
 
   testWidgets(
-    'Header bar uses dark glass scaffold background in dark mode and adapts to light mode',
+    'Header bar uses dark glass scaffold background and omits color/brightness controls',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -182,14 +182,9 @@ void main() {
       final darkColor = (darkContainer.decoration! as BoxDecoration).color!;
       expect(darkColor.computeLuminance(), lessThan(0.15));
 
-      await tester.tap(find.byIcon(Icons.light_mode));
-      await tester.pump(const Duration(milliseconds: 150));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byIcon(Icons.dark_mode), findsOneWidget);
-
-      final lightContainer = tester.widget<Container>(headerFinder);
-      final lightColor = (lightContainer.decoration! as BoxDecoration).color!;
-      expect(lightColor.computeLuminance(), greaterThan(0.70));
+      expect(find.byIcon(Icons.light_mode), findsNothing);
+      expect(find.byIcon(Icons.dark_mode), findsNothing);
+      expect(find.byIcon(Icons.color_lens), findsNothing);
 
       await tester.pump(const Duration(seconds: 3));
     },

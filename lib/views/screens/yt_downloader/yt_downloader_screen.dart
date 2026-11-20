@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
-import 'package:spnk/views/bloc/theme_switch/theme_event.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_models.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_service.dart';
@@ -829,24 +828,6 @@ class _YtDownloaderScreenState extends State<YtDownloaderScreen> {
                     ),
                     onPressed: () =>
                         _openEngineSettingsDialog(themeState, accent),
-                  ),
-                  IconButton(
-                    tooltip: themeState.isDark ? 'Light Mode' : 'Dark Mode',
-                    icon: Icon(
-                      themeState.isDark
-                          ? Icons.light_mode_rounded
-                          : Icons.dark_mode_rounded,
-                      size: 20,
-                      color: context.primaryColor.withValues(alpha: 0.82),
-                    ),
-                    onPressed: () {
-                      context.read<ThemeBloc>().add(
-                            ToggleTheme(
-                              isDarkTheme: themeState.isDark,
-                              currentTheme: themeState.themeData,
-                            ),
-                          );
-                    },
                   ),
                   const SizedBox(width: 6),
                 ],

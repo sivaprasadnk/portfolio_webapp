@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:spnk/utils/extensions/context_extension.dart';
 import 'package:spnk/utils/screen_type.dart';
 import 'package:spnk/views/screens/home/widgets/logo_text.dart';
-import 'package:spnk/views/screens/home/widgets/theme_icon.dart';
-import 'package:spnk/views/screens/home/widgets/theme_switch.dart';
 import 'package:spnk/views/screens/racing/racing_models.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 
@@ -345,10 +343,6 @@ class RacingTopTelemetryBar extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const BrightnessSwitch(),
-                      const SizedBox(width: 8),
-                      const ThemeIcon(),
                     ],
                   ),
                   const SizedBox(height: 5),
