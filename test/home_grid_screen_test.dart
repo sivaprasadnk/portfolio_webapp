@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:spnk/main.dart';
 import 'package:spnk/utils/locator.dart';
 import 'package:spnk/views/screens/home/grid/animated_characters.dart';
+import 'package:spnk/views/screens/home/grid/roaming_creatures_overlay.dart';
 
 void main() {
   setUp(() async {
@@ -189,6 +190,81 @@ void main() {
       final lightContainer = tester.widget<Container>(headerFinder);
       final lightColor = (lightContainer.decoration! as BoxDecoration).color!;
       expect(lightColor.computeLuminance(), greaterThan(0.70));
+
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
+
+  test(
+    'RoamingCreaturesSimulation moves birds, cats, dogs & bots continuously and reacts to mouse',
+    () {
+      final sim = RoamingCreaturesSimulation();
+      const viewport = Size(1280, 800);
+      sim.ensureInitialized(viewport);
+
+      final types = sim.creatures.map((c) => c.type).toSet();
+      expect(
+        types,
+        containsAll([
+          RoamingCreatureType.bird,
+          RoamingCreatureType.cat,
+          RoamingCreatureType.dog,
+          RoamingCreatureType.bot,
+        ]),
+      );
+
+      final initialPositions =
+          sim.creatures.map((c) => c.position).toList(growable: false);
+
+      for (int i = 0; i < 15; i++) {
+        sim.step(0.033, viewport, null);
+      }
+
+      for (int i = 0; i < sim.creatures.length; i++) {
+        expect(sim.creatures[i].position, isNot(equals(initialPositions[i])));
+      }
+
+      // Hover near a bot -> triggers scanner beam
+      final bot =
+          sim.creatures.firstWhere((c) => c.type == RoamingCreatureType.bot);
+      sim.step(0.033, viewport, bot.position + const Offset(40, 0));
+      expect(bot.isScanningPointer, isTrue);
+
+      // Click directly on a cat -> spawns heart particles & speech bubble
+      final cat =
+          sim.creatures.firstWhere((c) => c.type == RoamingCreatureType.cat);
+      final tapped = sim.handlePointerDown(cat.position);
+      expect(tapped, equals(cat));
+      expect(cat.speechText, isNotNull);
+      expect(sim.particles, isNotEmpty);
+    },
+  );
+
+  testWidgets(
+    'RoamingCreaturesOverlay renders continuously on home screen and toggles cleanly via PETS pill',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const MyApp());
+      await tester.pump(const Duration(milliseconds: 160));
+
+      expect(find.byType(RoamingCreaturesOverlay), findsOneWidget);
+      expect(find.text('PETS: ON'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('toggle_roaming_creatures')));
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(find.byType(RoamingCreaturesOverlay), findsNothing);
+      expect(find.text('PETS: OFF'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('toggle_roaming_creatures')));
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(find.byType(RoamingCreaturesOverlay), findsOneWidget);
+      expect(find.text('PETS: ON'), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 3));
     },

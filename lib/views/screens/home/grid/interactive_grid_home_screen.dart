@@ -29,6 +29,7 @@ import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/arcade/arcade_screen.dart';
 import 'package:spnk/views/screens/home/grid/animated_characters.dart';
 import 'package:spnk/views/screens/home/grid/interactive_grid_backdrop.dart';
+import 'package:spnk/views/screens/home/grid/roaming_creatures_overlay.dart';
 import 'package:spnk/views/screens/home/widgets/logo_text.dart';
 import 'package:spnk/views/screens/home/widgets/theme_icon.dart';
 import 'package:spnk/views/screens/home/widgets/theme_switch.dart';
@@ -74,11 +75,15 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
 
   late final Ticker _ticker;
   double _elapsedSeconds = 0.0;
+  double _lastTickSeconds = 0.0;
 
   Offset? _pointerPos;
   Offset _pointerNorm = Offset.zero;
+  Size _lastViewportSize = Size.zero;
   final List<GridTrailCell> _trailCells = [];
   final List<GridRipple> _ripples = [];
+  final RoamingCreaturesSimulation _roamingSim = RoamingCreaturesSimulation();
+  bool _showRoamingCreatures = true;
 
   _GridCategory _activeFilter = _GridCategory.all;
   int _selectedExpIndex = 0;
@@ -93,10 +98,15 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
   void _onTick(Duration elapsed) {
     if (!mounted) return;
     final now = elapsed.inMicroseconds / 1000000.0;
+    final dt = (now - _lastTickSeconds).clamp(0.0, 0.05);
+    _lastTickSeconds = now;
     setState(() {
       _elapsedSeconds = now;
       _trailCells.removeWhere((c) => now - c.lastTouchedTime > 2.2);
       _ripples.removeWhere((r) => now - r.birthTime > 1.4);
+      if (_showRoamingCreatures && _lastViewportSize != Size.zero) {
+        _roamingSim.step(dt, _lastViewportSize, _pointerPos);
+      }
     });
   }
 
@@ -497,6 +507,8 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
             builder: (context, viewport) {
               final maxW = viewport.maxWidth;
               final viewSize = Size(viewport.maxWidth, viewport.maxHeight);
+              _lastViewportSize = viewSize;
+              _roamingSim.ensureInitialized(viewSize, compact: maxW < 700);
 
               return Listener(
                 onPointerHover: (e) => _recordPointerMove(e.localPosition, viewSize),
@@ -504,6 +516,18 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
                 onPointerDown: (e) {
                   _recordPointerMove(e.localPosition, viewSize);
                   _recordPointerRipple(e.localPosition, accent);
+                  if (_showRoamingCreatures) {
+                    _roamingSim.handlePointerDown(
+                      e.localPosition,
+                      onCreatureTapped: (creature) {
+                        GamificationController.instance.addXp(
+                          10,
+                          reason: 'Interacted with roaming ${creature.type.label}!',
+                          uniqueKey: 'roam_${creature.type.name}',
+                        );
+                      },
+                    );
+                  }
                 },
                 child: Stack(
                   children: [
@@ -545,6 +569,21 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
                         ),
                       ],
                     ),
+
+                    // Layer 2.5: Continuously moving mouse-interactive birds, cats, dogs & bots
+                    if (_showRoamingCreatures)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: RoamingCreaturesOverlay(
+                            simulation: _roamingSim,
+                            elapsedSeconds: _elapsedSeconds,
+                            pointerPos: _pointerPos,
+                            isDark: themeState.isDark,
+                            accent: accent,
+                            secondary: themeState.secondaryAccent,
+                          ),
+                        ),
+                      ),
 
                     // Layer 3: Achievement toast overlay
                     const AchievementToastBanner(),
@@ -666,6 +705,68 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
                                     ),
                                   );
                                 }).toList(),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message: _showRoamingCreatures
+                                  ? 'Hide roaming birds, cats, dogs & bots'
+                                  : 'Show roaming birds, cats, dogs & bots',
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  key: const ValueKey('toggle_roaming_creatures'),
+                                  onTap: () => setState(
+                                    () => _showRoamingCreatures =
+                                        !_showRoamingCreatures,
+                                  ),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 160),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _showRoamingCreatures
+                                          ? accent.withValues(alpha: 0.16)
+                                          : themeState.cardSurfaceColor,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _showRoamingCreatures
+                                            ? accent.withValues(alpha: 0.7)
+                                            : themeState.cardBorderColor,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.pets_rounded,
+                                          size: 13,
+                                          color: _showRoamingCreatures
+                                              ? accent
+                                              : context.primaryColor
+                                                  .withValues(alpha: 0.65),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          _showRoamingCreatures
+                                              ? 'PETS: ON'
+                                              : 'PETS: OFF',
+                                          style: context.bodySmall.copyWith(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.8,
+                                            color: _showRoamingCreatures
+                                                ? accent
+                                                : context.primaryColor
+                                                    .withValues(alpha: 0.72),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                             if (maxW >= 1040) ...[
