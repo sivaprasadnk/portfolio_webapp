@@ -28,6 +28,10 @@ class RacingTrackPainter extends CustomPainter {
   final ThemeState themeState;
   final RacingThemePalette palette;
   final ui.Image? driverPhoto;
+  final List<TrackObstacle> obstacles;
+  final List<ImpactSpark> sparks;
+  final Offset cameraShake;
+  final double hitVignetteAlpha;
 
   RacingTrackPainter({
     required this.segments,
@@ -43,6 +47,10 @@ class RacingTrackPainter extends CustomPainter {
     required this.themeState,
     required this.palette,
     this.driverPhoto,
+    this.obstacles = const [],
+    this.sparks = const [],
+    this.cameraShake = Offset.zero,
+    this.hitVignetteAlpha = 0.0,
   });
 
   static const int _drawDistance = 96;
@@ -77,6 +85,11 @@ class RacingTrackPainter extends CustomPainter {
     final slopeDelta = (nextSeg.y - baseSeg.y) * _hillWorldMultiplier;
     final horizonY =
         (size.height * 0.41) + (slopeDelta * 0.012).clamp(-26.0, 26.0);
+
+    canvas.save();
+    if (cameraShake != Offset.zero) {
+      canvas.translate(cameraShake.dx, cameraShake.dy);
+    }
 
     // 1. SKY, SUN/STADIUM & PARALLAX HORIZON
     _paintSkyAndHorizon(
@@ -170,6 +183,16 @@ class RacingTrackPainter extends CustomPainter {
       if (dz >= 0 && dz < _drawDistance * segLen) {
         final offsetIdx = (dz ~/ segLen).clamp(0, _drawDistance - 1);
         (orbsByOffset[offsetIdx] ??= []).add(orb);
+      }
+    }
+
+    final obstaclesByOffset = <int, List<TrackObstacle>>{};
+    for (final obs in obstacles) {
+      double dz = obs.z - normalizedZ;
+      if (dz < -segLen) dz += trackLen;
+      if (dz >= 0 && dz < _drawDistance * segLen) {
+        final offsetIdx = (dz ~/ segLen).clamp(0, _drawDistance - 1);
+        (obstaclesByOffset[offsetIdx] ??= []).add(obs);
       }
     }
 
@@ -273,6 +296,7 @@ class RacingTrackPainter extends CustomPainter {
             code: seg.gantryCode ?? 'CHECKPOINT',
             title: seg.gantryTitle!,
             subtitle: seg.gantrySubtitle ?? '',
+            destinationLabel: seg.gantryDestinationLabel,
             roadCenterX: far.x,
             groundY: far.y,
             roadHalfW: far.w,
@@ -281,6 +305,26 @@ class RacingTrackPainter extends CustomPainter {
             secondary: secondary,
             visualTheme: visualTheme,
           );
+        }
+
+        final sliceObstacles = obstaclesByOffset[n];
+        if (sliceObstacles != null) {
+          for (final obs in sliceObstacles) {
+            double dz = obs.z - normalizedZ;
+            if (dz < 0) dz += trackLen;
+            final t = ((dz - n * segLen) / segLen).clamp(0.0, 1.0);
+            final ox = near.x + (far.x - near.x) * t;
+            final oy = near.y + (far.y - near.y) * t;
+            final ow = near.w + (far.w - near.w) * t;
+            _paintTrackObstacle3D(
+              canvas: canvas,
+              obstacle: obs,
+              screenX: ox + obs.lane * ow,
+              screenY: oy,
+              roadHalfW: ow,
+              distanceSteps: n,
+            );
+          }
         }
 
         final sliceOrbs = orbsByOffset[n];
@@ -316,7 +360,7 @@ class RacingTrackPainter extends CustomPainter {
             _paintRivalCar3D(
               canvas: canvas,
               car: car,
-              screenX: cx + car.lane * cw,
+              screenX: cx + car.effectiveLane * cw,
               screenY: cy,
               roadHalfW: cw,
               distanceSteps: n,
@@ -331,6 +375,42 @@ class RacingTrackPainter extends CustomPainter {
     // 5. HIGH-SPEED WIND / NITRO WARP LINES
     if (speedKmh > 210 || nitroActive) {
       _paintSpeedWarpLines(canvas, size, horizonY, accent);
+    }
+
+    canvas.restore();
+
+    // 6. COLLISION IMPACT SPARKS
+    if (sparks.isNotEmpty) {
+      final lanePx = (size.width * 0.18).clamp(80.0, 180.0);
+      final originX = size.width * 0.5;
+      final originY = size.height * 0.80;
+      for (final sp in sparks) {
+        final alpha = (sp.life / sp.maxLife).clamp(0.0, 1.0);
+        final sx = originX + (sp.x - playerX) * lanePx;
+        final sy = originY + sp.y;
+        canvas.drawCircle(
+          Offset(sx, sy),
+          sp.size * (0.6 + 0.6 * alpha),
+          Paint()..color = sp.color.withValues(alpha: alpha),
+        );
+      }
+    }
+
+    // 7. IMPACT EDGE VIGNETTE FLASH
+    if (hitVignetteAlpha > 0.01) {
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()
+          ..shader = RadialGradient(
+            radius: 1.05,
+            colors: [
+              Colors.transparent,
+              const Color(0xFFFF1E42)
+                  .withValues(alpha: hitVignetteAlpha.clamp(0.0, 0.45)),
+            ],
+            stops: const [0.55, 1.0],
+          ).createShader(Offset.zero & size),
+      );
     }
   }
 
@@ -908,6 +988,7 @@ class RacingTrackPainter extends CustomPainter {
     required String code,
     required String title,
     required String subtitle,
+    String? destinationLabel,
     required double roadCenterX,
     required double groundY,
     required double roadHalfW,
@@ -922,6 +1003,39 @@ class RacingTrackPainter extends CustomPainter {
     final legH = roadHalfW * 0.96;
     final bannerH = (roadHalfW * 0.30).clamp(10.0, 96.0);
     final pillarW = (roadHalfW * 0.055).clamp(2.0, 18.0);
+    const holoCyan = Color(0xFF00F0FF);
+
+    // Holographic projection pad across road surface
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(roadCenterX, groundY),
+        width: spanHalfW * 1.88,
+        height: (roadHalfW * 0.22).clamp(4.0, 36.0),
+      ),
+      Paint()..color = holoCyan.withValues(alpha: 0.22),
+    );
+
+    // Volumetric light pillars rising skyward from gantry towers
+    for (final px in [roadCenterX - spanHalfW, roadCenterX + spanHalfW]) {
+      final beamRect = Rect.fromLTWH(
+        px - pillarW * 0.7,
+        groundY - legH * 1.85,
+        pillarW * 1.4,
+        legH * 1.85,
+      );
+      canvas.drawRect(
+        beamRect,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              holoCyan.withValues(alpha: 0.26),
+              Colors.transparent,
+            ],
+          ).createShader(beamRect),
+      );
+    }
 
     final pillarPaint = Paint()
       ..color = palette.hudSurface.withValues(alpha: 0.95);
@@ -970,10 +1084,46 @@ class RacingTrackPainter extends CustomPainter {
     canvas.drawRRect(
       bannerRRect,
       Paint()
-        ..color = accent
+        ..color = holoCyan.withValues(alpha: 0.85)
         ..style = PaintingStyle.stroke
         ..strokeWidth = (roadHalfW * 0.014).clamp(1.2, 3.2),
     );
+
+    // Floating 3D wireframe hologram beacon hovering above gantry banner
+    if (bannerH >= 16 && distanceSteps < 58) {
+      final holoR = (bannerH * 0.38).clamp(6.0, 26.0);
+      final holoCy =
+          bannerRect.top - holoR * 1.45 + math.sin(timeSeconds * 4.0) * 3.5;
+      final spinW = holoR * (0.45 + 0.55 * math.cos(timeSeconds * 2.6).abs());
+      final diamond = Path()
+        ..moveTo(roadCenterX, holoCy - holoR)
+        ..lineTo(roadCenterX + spinW, holoCy)
+        ..lineTo(roadCenterX, holoCy + holoR)
+        ..lineTo(roadCenterX - spinW, holoCy)
+        ..close();
+      canvas.drawPath(
+        diamond,
+        Paint()..color = holoCyan.withValues(alpha: 0.24),
+      );
+      canvas.drawPath(
+        diamond,
+        Paint()
+          ..color = holoCyan
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
+      );
+      if (destinationLabel != null && bannerRect.width >= 130) {
+        _drawCenteredText(
+          canvas: canvas,
+          text: 'HOLO-GATE • $destinationLabel',
+          center: Offset(roadCenterX, holoCy - holoR - 10),
+          maxWidth: bannerRect.width * 0.85,
+          fontSize: (bannerH * 0.20).clamp(7.5, 13.0),
+          color: holoCyan,
+          weight: FontWeight.w800,
+        );
+      }
+    }
 
     if (bannerRect.width >= 95 && distanceSteps < 56) {
       final prefix =
@@ -1004,6 +1154,91 @@ class RacingTrackPainter extends CustomPainter {
           weight: FontWeight.w700,
         );
       }
+    }
+  }
+
+  void _paintTrackObstacle3D({
+    required Canvas canvas,
+    required TrackObstacle obstacle,
+    required double screenX,
+    required double screenY,
+    required double roadHalfW,
+    required int distanceSteps,
+  }) {
+    final obsW = (roadHalfW * 0.32).clamp(6.0, 140.0);
+    if (obsW < 7.0) return;
+    final obsH = obsW * 0.48;
+    final isFlashing = obstacle.hitFlashTimer > 0;
+    final beaconColor = isFlashing
+        ? Colors.white
+        : ((timeSeconds * 8).floor().isEven
+            ? const Color(0xFFFF3B5C)
+            : const Color(0xFFF59E0B));
+
+    final rect = Rect.fromLTWH(
+      screenX - obsW * 0.5,
+      screenY - obsH,
+      obsW,
+      obsH,
+    );
+
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(screenX, screenY - obsH * 0.05),
+        width: obsW * 1.15,
+        height: obsH * 0.24,
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.45),
+    );
+
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(4));
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..color = isFlashing
+            ? const Color(0xFFFF3B5C)
+            : const Color(0xFF1F1224),
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..color = beaconColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (obsW * 0.03).clamp(1.2, 3.0),
+    );
+
+    // Hazard diagonal stripes
+    final stripePaint = Paint()
+      ..color = const Color(0xFFF59E0B).withValues(alpha: 0.85)
+      ..strokeWidth = (obsW * 0.06).clamp(1.5, 5.5);
+    for (int s = -1; s <= 1; s++) {
+      final sx = screenX + s * obsW * 0.26;
+      canvas.drawLine(
+        Offset(sx - obsW * 0.08, rect.bottom - 2),
+        Offset(sx + obsW * 0.08, rect.top + 2),
+        stripePaint,
+      );
+    }
+
+    // Twin top hazard beacons
+    for (final side in const [-1.0, 1.0]) {
+      canvas.drawCircle(
+        Offset(screenX + side * obsW * 0.34, rect.top),
+        (obsW * 0.07).clamp(1.5, 6.0),
+        Paint()..color = beaconColor,
+      );
+    }
+
+    if (obsW >= 54 && distanceSteps < 20) {
+      _drawCenteredText(
+        canvas: canvas,
+        text: obstacle.label,
+        center: Offset(screenX, rect.top - obsH * 0.28),
+        maxWidth: obsW * 1.2,
+        fontSize: (obsH * 0.24).clamp(7.5, 11.5),
+        color: const Color(0xFFFBBF24),
+        weight: FontWeight.w800,
+      );
     }
   }
 
@@ -1052,9 +1287,11 @@ class RacingTrackPainter extends CustomPainter {
     required double roadHalfW,
     required int distanceSteps,
   }) {
-    final carW = (roadHalfW * 0.34).clamp(6.0, 145.0);
+    final carW = (roadHalfW * car.kind.visualWidthFactor).clamp(6.0, 175.0);
     if (carW < 7.0) return;
-    final carH = carW * 0.56;
+    final isTruck = car.kind == OpponentVehicleKind.truck;
+    final carH = carW * (isTruck ? 0.74 : 0.56);
+    final isHit = car.hitFlashTimer > 0;
 
     const rivalPalette = [
       Color(0xFF38BDF8),
@@ -1062,7 +1299,9 @@ class RacingTrackPainter extends CustomPainter {
       Color(0xFFA855F7),
       Color(0xFF10B981),
     ];
-    final trimColor = rivalPalette[car.colorVariant % rivalPalette.length];
+    final trimColor = isHit
+        ? const Color(0xFFFF3B5C)
+        : rivalPalette[car.colorVariant % rivalPalette.length];
 
     final rect = Rect.fromLTWH(
       screenX - carW * 0.5,
@@ -1077,11 +1316,11 @@ class RacingTrackPainter extends CustomPainter {
         width: carW * 1.12,
         height: carH * 0.26,
       ),
-      Paint()..color = trimColor.withValues(alpha: 0.28),
+      Paint()..color = trimColor.withValues(alpha: isHit ? 0.52 : 0.28),
     );
 
     final wheelW = carW * 0.18;
-    final wheelH = carH * 0.38;
+    final wheelH = carH * 0.36;
     final tirePaint = Paint()..color = const Color(0xFF090D16);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -1098,30 +1337,69 @@ class RacingTrackPainter extends CustomPainter {
       tirePaint,
     );
 
-    final bodyPath = Path()
-      ..moveTo(rect.left + carW * 0.05, screenY - wheelH * 0.35)
-      ..lineTo(rect.left + carW * 0.12, rect.top + carH * 0.36)
-      ..lineTo(rect.right - carW * 0.12, rect.top + carH * 0.36)
-      ..lineTo(rect.right - carW * 0.05, screenY - wheelH * 0.35)
-      ..close();
-    canvas.drawPath(bodyPath, Paint()..color = const Color(0xFF161F33));
-    canvas.drawPath(
-      bodyPath,
-      Paint()
-        ..color = trimColor.withValues(alpha: 0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = (carW * 0.02).clamp(1.0, 2.5),
-    );
+    final bodyFill = isHit ? const Color(0xFF5A1625) : const Color(0xFF161F33);
+    if (isTruck) {
+      final cargoRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          rect.left + carW * 0.06,
+          rect.top + carH * 0.10,
+          carW * 0.88,
+          carH * 0.72,
+        ),
+        const Radius.circular(4),
+      );
+      canvas.drawRRect(cargoRect, Paint()..color = bodyFill);
+      canvas.drawRRect(
+        cargoRect,
+        Paint()
+          ..color = trimColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (carW * 0.022).clamp(1.0, 2.8),
+      );
+      // Roof hazard clearance lights on armored trucks
+      for (final side in const [-0.26, 0.0, 0.26]) {
+        canvas.drawCircle(
+          Offset(screenX + side * carW, rect.top + carH * 0.14),
+          (carW * 0.032).clamp(1.2, 4.0),
+          Paint()..color = const Color(0xFFF59E0B),
+        );
+      }
+    } else {
+      final bodyPath = Path()
+        ..moveTo(rect.left + carW * 0.05, screenY - wheelH * 0.35)
+        ..lineTo(rect.left + carW * 0.12, rect.top + carH * 0.36)
+        ..lineTo(rect.right - carW * 0.12, rect.top + carH * 0.36)
+        ..lineTo(rect.right - carW * 0.05, screenY - wheelH * 0.35)
+        ..close();
+      canvas.drawPath(bodyPath, Paint()..color = bodyFill);
+      canvas.drawPath(
+        bodyPath,
+        Paint()
+          ..color = trimColor.withValues(alpha: 0.88)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (carW * 0.02).clamp(1.0, 2.5),
+      );
 
-    final cabinPath = Path()
-      ..moveTo(rect.left + carW * 0.20, rect.top + carH * 0.38)
-      ..lineTo(rect.left + carW * 0.28, rect.top + carH * 0.06)
-      ..lineTo(rect.right - carW * 0.28, rect.top + carH * 0.06)
-      ..lineTo(rect.right - carW * 0.20, rect.top + carH * 0.38)
-      ..close();
-    canvas.drawPath(cabinPath, Paint()..color = const Color(0xFF0B1120));
+      final cabinPath = Path()
+        ..moveTo(rect.left + carW * 0.20, rect.top + carH * 0.38)
+        ..lineTo(rect.left + carW * 0.28, rect.top + carH * 0.06)
+        ..lineTo(rect.right - carW * 0.28, rect.top + carH * 0.06)
+        ..lineTo(rect.right - carW * 0.20, rect.top + carH * 0.38)
+        ..close();
+      canvas.drawPath(cabinPath, Paint()..color = const Color(0xFF0B1120));
 
-    final tailY = rect.top + carH * 0.50;
+      if (car.kind == OpponentVehicleKind.interceptor) {
+        canvas.drawLine(
+          Offset(rect.left + carW * 0.12, rect.top + carH * 0.28),
+          Offset(rect.right - carW * 0.12, rect.top + carH * 0.28),
+          Paint()
+            ..color = trimColor
+            ..strokeWidth = (carH * 0.07).clamp(1.2, 3.6),
+        );
+      }
+    }
+
+    final tailY = rect.top + carH * (isTruck ? 0.62 : 0.50);
     canvas.drawLine(
       Offset(rect.left + carW * 0.14, tailY),
       Offset(rect.right - carW * 0.14, tailY),
@@ -1130,13 +1408,23 @@ class RacingTrackPainter extends CustomPainter {
         ..strokeWidth = (carH * 0.10).clamp(1.5, 5.0),
     );
 
+    if (isHit) {
+      canvas.drawOval(
+        rect.inflate(carW * 0.10),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.65)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0,
+      );
+    }
+
     if (carW >= 54 && distanceSteps < 22) {
       _drawCenteredText(
         canvas: canvas,
         text: car.label,
         center: Offset(screenX, rect.top + carH * 0.74),
         maxWidth: carW * 0.72,
-        fontSize: (carH * 0.19).clamp(7.0, 12.0),
+        fontSize: (carH * 0.18).clamp(7.0, 12.0),
         color: trimColor,
         weight: FontWeight.w800,
       );

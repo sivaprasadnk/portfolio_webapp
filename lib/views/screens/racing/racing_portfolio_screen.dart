@@ -21,12 +21,15 @@ import 'package:spnk/views/bloc/skills/skills_state.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/racing/racing_car_painter.dart';
+import 'package:spnk/views/screens/racing/racing_collision_engine.dart';
 import 'package:spnk/views/screens/racing/racing_highway_painter.dart';
+import 'package:spnk/views/screens/racing/racing_hologram_overlay.dart';
 import 'package:spnk/views/screens/racing/racing_hud_widgets.dart';
 import 'package:spnk/views/screens/racing/racing_models.dart';
 import 'package:spnk/views/screens/racing/racing_paddock_painter.dart';
 import 'package:spnk/views/screens/racing/racing_pit_dossier.dart';
 import 'package:spnk/views/screens/racing/racing_track_painter.dart';
+import 'package:spnk/views/screens/racing/racing_vehicle_selector.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -39,16 +42,17 @@ class RacingPortfolioScreen extends StatefulWidget {
 
 class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     with SingleTickerProviderStateMixin {
-  static const double _baseMaxSpeed = 295.0;
-  static const double _nitroMaxSpeed = 420.0;
   static const double _cruiseTargetSpeed = 148.0;
+  static const double _hologramPreviewDuration = 6.0;
 
   late final Ticker _ticker;
   final FocusNode _focusNode = FocusNode();
+  final math.Random _rng = math.Random();
 
-  // Switchable 3 Gameplay Modes & 3 Visual Themes
+  // Switchable 3 Gameplay Modes, 3 Visual Themes & 5 Vehicles
   RacingGameMode _gameMode = RacingGameMode.horizon3d;
   RacingVisualTheme _visualTheme = RacingVisualTheme.neonCyber;
+  VehicleType _selectedVehicle = VehicleType.apexGt;
 
   // Decoded Driver Portrait for in-world 3D/2D canvas rendering
   ImageStream? _photoStream;
@@ -58,7 +62,9 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   // Circuit (3D Horizon + Vertical Highway) world state
   List<RoadSegment> _segments = [];
   late final List<TrafficCar> _trafficCars;
+  late final List<TrackObstacle> _obstacles;
   late final List<DataCrystalOrb> _orbs;
+  final List<ImpactSpark> _sparks = [];
 
   // Open-World Top-Down Paddock state
   late final List<PaddockLinkPortal> _paddockPortals;
@@ -104,16 +110,29 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   // Hyper-Warp target state (3D Horizon & Highway modes)
   RaceSectorMeta? _warpTargetSector;
 
-  // Race telemetry
+  // Race telemetry & collision state
   int _lapCount = 1;
   double _lapTimeSeconds = 0.0;
   double? _bestLapSeconds;
   int _overtakes = 0;
+  int _collisionCount = 0;
+  int _nearMissCount = 0;
+  double _hullIntegrity = 1.0;
   int _lastBoostSegIndex = -1;
   double _collisionFlashTimer = 0.0;
+  double _lateralBounceVel = 0.0;
+  double _cameraShakeTimer = 0.0;
+  double _cameraShakeIntensity = 0.0;
+  double _hitVignetteAlpha = 0.0;
+  double _paddockMonumentHitCooldown = 0.0;
 
-  // Sector & HUD banner state
+  // Destination Hologram & HUD banner state
   RaceSectorMeta _activeSector = RaceSectorMeta.sectors.first;
+  RaceSectorMeta? _activeHologramSector;
+  bool _hologramPinned = false;
+  double _hologramAutoHideTimer = 0.0;
+  bool _autoPopHolograms = true;
+  int _lastHologramTriggeredSectorIdx = 0;
   String? _hudCallout;
   double _hudCalloutTimer = 0.0;
 
@@ -121,15 +140,48 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
   void initState() {
     super.initState();
     _trafficCars = CircuitBuilder.buildInitialTraffic();
+    _obstacles = CircuitBuilder.buildInitialObstacles();
     _orbs = CircuitBuilder.buildInitialOrbs();
     _paddockPortals = PaddockWorldBuilder.buildLinkPortals();
     _paddockBoosts = PaddockWorldBuilder.buildBoostStrips(const []);
     _paddockOrbs = PaddockWorldBuilder.buildOrbs();
     _paddockRivals = [
-      PaddockRivalState(angle: 0.2, speedRad: 0.26, colorVariant: 0, label: 'DART'),
-      PaddockRivalState(angle: 1.8, speedRad: 0.22, colorVariant: 1, label: 'WASM'),
-      PaddockRivalState(angle: 3.5, speedRad: 0.28, colorVariant: 2, label: 'BLOC'),
-      PaddockRivalState(angle: 5.0, speedRad: 0.24, colorVariant: 3, label: 'IMPEL'),
+      PaddockRivalState(
+        angle: 0.2,
+        speedRad: 0.26,
+        radiusX: 950.0,
+        radiusY: 570.0,
+        colorVariant: 0,
+        label: 'DART',
+        kind: OpponentVehicleKind.coupe,
+      ),
+      PaddockRivalState(
+        angle: 1.8,
+        speedRad: 0.21,
+        radiusX: 845.0,
+        radiusY: 495.0,
+        colorVariant: 1,
+        label: 'TITAN',
+        kind: OpponentVehicleKind.truck,
+      ),
+      PaddockRivalState(
+        angle: 3.5,
+        speedRad: 0.29,
+        radiusX: 950.0,
+        radiusY: 570.0,
+        colorVariant: 2,
+        label: 'BLOC',
+        kind: OpponentVehicleKind.interceptor,
+      ),
+      PaddockRivalState(
+        angle: 5.0,
+        speedRad: 0.24,
+        radiusX: 845.0,
+        radiusY: 495.0,
+        colorVariant: 3,
+        label: 'IMPEL',
+        kind: OpponentVehicleKind.coupe,
+      ),
     ];
 
     _segments = CircuitBuilder.buildCircuit(
@@ -250,6 +302,85 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     GamificationController.instance.completeQuest('style_shifter');
   }
 
+  void _selectVehicle(VehicleType nextVehicle) {
+    setState(() {
+      _selectedVehicle = nextVehicle;
+      _showCallout(
+        '🏎️ CHASSIS DEPLOYED: ${nextVehicle.name} (${nextVehicle.shortLabel})',
+      );
+    });
+    GamificationController.instance.addXp(
+      15,
+      reason: 'Selected Vehicle: ${nextVehicle.name}',
+      uniqueKey: 'vehicle_${nextVehicle.name}',
+    );
+    _focusNode.requestFocus();
+  }
+
+  void _cycleVehicle() {
+    final nextIdx =
+        (_selectedVehicle.index + 1) % VehicleType.values.length;
+    _selectVehicle(VehicleType.values[nextIdx]);
+  }
+
+  Future<void> _openVehicleGarage() async {
+    if (_isModalOpen || !mounted) return;
+    final themeState = context.read<ThemeBloc>().state;
+    final palette = RacingThemePalette.resolve(themeState, _visualTheme);
+    setState(() {
+      _isModalOpen = true;
+      _touchLeft = false;
+      _touchRight = false;
+      _touchGas = false;
+      _touchBrake = false;
+      _touchNitro = false;
+    });
+
+    await showVehicleSelectorModal(
+      context: context,
+      currentVehicle: _selectedVehicle,
+      palette: palette,
+      onSelectVehicle: _selectVehicle,
+    );
+
+    if (mounted) {
+      setState(() => _isModalOpen = false);
+      _focusNode.requestFocus();
+    }
+  }
+
+  void _openDestinationHologram(
+    RaceSectorMeta sector, {
+    required bool pinned,
+  }) {
+    if (!_autoPopHolograms && !pinned) return;
+    setState(() {
+      _activeHologramSector = sector;
+      _hologramPinned = pinned;
+      _hologramAutoHideTimer = pinned ? 0.0 : _hologramPreviewDuration;
+      _lastHologramTriggeredSectorIdx = sector.index;
+    });
+    GamificationController.instance.completeQuest(sector.questId);
+  }
+
+  void _dismissHologram() {
+    if (_activeHologramSector == null) return;
+    setState(() {
+      _activeHologramSector = null;
+      _hologramPinned = false;
+      _hologramAutoHideTimer = 0.0;
+    });
+    _focusNode.requestFocus();
+  }
+
+  void _toggleCurrentHologram() {
+    if (_activeHologramSector != null) {
+      _dismissHologram();
+    } else {
+      _openDestinationHologram(_activeSector, pinned: true);
+    }
+  }
+
   Future<void> _launchQuickLink(DriverQuickLink link) async {
     GamificationController.instance.completeQuest('loot_collector');
     GamificationController.instance.addXp(
@@ -283,6 +414,27 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         key == LogicalKeyboardKey.space;
 
     if (event is KeyDownEvent) {
+      if (key == LogicalKeyboardKey.escape && _activeHologramSector != null) {
+        _dismissHologram();
+        return KeyEventResult.handled;
+      }
+      if ((key == LogicalKeyboardKey.keyW ||
+              key == LogicalKeyboardKey.arrowUp) &&
+          _activeHologramSector != null) {
+        _dismissHologram();
+      }
+      if (key == LogicalKeyboardKey.keyV) {
+        _cycleVehicle();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.keyG) {
+        _openVehicleGarage();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.keyH) {
+        _toggleCurrentHologram();
+        return KeyEventResult.handled;
+      }
       if (key == LogicalKeyboardKey.keyE || key == LogicalKeyboardKey.enter) {
         if (_gameMode == RacingGameMode.openPaddock &&
             _activePortalLink != null) {
@@ -479,6 +631,65 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     GamificationController.instance.completeQuest('bug_hunter');
   }
 
+  void _spawnCircuitSparks({
+    required double laneX,
+    required double yOffset,
+    required double pushDir,
+    int count = 14,
+  }) {
+    for (int i = 0; i < count; i++) {
+      final spreadX = (pushDir * (0.4 + _rng.nextDouble() * 1.4)) +
+          (_rng.nextDouble() - 0.5) * 0.9;
+      final spreadY = -60.0 - _rng.nextDouble() * 160.0;
+      _sparks.add(
+        ImpactSpark(
+          x: laneX,
+          y: yOffset,
+          vx: spreadX,
+          vy: spreadY,
+          life: 0.35 + _rng.nextDouble() * 0.25,
+          maxLife: 0.60,
+          size: 2.2 + _rng.nextDouble() * 2.8,
+          color: i.isEven
+              ? const Color(0xFFFBBF24)
+              : const Color(0xFFFF3B5C),
+        ),
+      );
+    }
+    if (_sparks.length > 90) {
+      _sparks.removeRange(0, _sparks.length - 90);
+    }
+  }
+
+  void _spawnPaddockSparks({
+    required Offset worldPoint,
+    required Offset normal,
+    int count = 14,
+  }) {
+    for (int i = 0; i < count; i++) {
+      final angle = math.atan2(normal.dy, normal.dx) +
+          (_rng.nextDouble() - 0.5) * 1.8;
+      final speed = 110.0 + _rng.nextDouble() * 220.0;
+      _sparks.add(
+        ImpactSpark(
+          x: worldPoint.dx,
+          y: worldPoint.dy,
+          vx: math.cos(angle) * speed,
+          vy: math.sin(angle) * speed,
+          life: 0.35 + _rng.nextDouble() * 0.25,
+          maxLife: 0.60,
+          size: 2.5 + _rng.nextDouble() * 2.5,
+          color: i.isEven
+              ? const Color(0xFFFBBF24)
+              : const Color(0xFFFF3B5C),
+        ),
+      );
+    }
+    if (_sparks.length > 90) {
+      _sparks.removeRange(0, _sparks.length - 90);
+    }
+  }
+
   void _onTick(Duration elapsed) {
     if (_lastTick == Duration.zero) {
       _lastTick = elapsed;
@@ -497,6 +708,34 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     }
     if (_collisionFlashTimer > 0) {
       _collisionFlashTimer = math.max(0.0, _collisionFlashTimer - dt);
+    }
+    if (_cameraShakeTimer > 0) {
+      _cameraShakeTimer = math.max(0.0, _cameraShakeTimer - dt);
+    }
+    if (_hitVignetteAlpha > 0) {
+      _hitVignetteAlpha = math.max(0.0, _hitVignetteAlpha - dt * 1.25);
+    }
+    if (_paddockMonumentHitCooldown > 0) {
+      _paddockMonumentHitCooldown =
+          math.max(0.0, _paddockMonumentHitCooldown - dt);
+    }
+    if (_hullIntegrity < 1.0) {
+      _hullIntegrity = (_hullIntegrity + dt * 0.015).clamp(0.0, 1.0);
+    }
+    if (_activeHologramSector != null && !_hologramPinned) {
+      _hologramAutoHideTimer = math.max(0.0, _hologramAutoHideTimer - dt);
+      if (_hologramAutoHideTimer == 0.0) {
+        _activeHologramSector = null;
+      }
+    }
+    for (int i = _sparks.length - 1; i >= 0; i--) {
+      final sp = _sparks[i];
+      sp.x += sp.vx * dt;
+      sp.y += sp.vy * dt;
+      sp.life -= dt;
+      if (sp.life <= 0) {
+        _sparks.removeAt(i);
+      }
     }
     if (_wheelGasImpulse > 0) {
       _wheelGasImpulse = math.max(0.0, _wheelGasImpulse - dt);
@@ -597,9 +836,16 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       }
     }
 
-    // Advance roaming paddock rivals
+    // Advance roaming paddock rivals & decay hit states
     for (final rival in _paddockRivals) {
       rival.angle = (rival.angle + rival.speedRad * dt) % (2 * math.pi);
+      if (rival.hitCooldown > 0) {
+        rival.hitCooldown = math.max(0.0, rival.hitCooldown - dt);
+      }
+      if (rival.hitFlashTimer > 0) {
+        rival.hitFlashTimer = math.max(0.0, rival.hitFlashTimer - dt);
+      }
+      rival.staggerOffset = rival.staggerOffset * math.exp(-5.0 * dt);
     }
 
     bool effectiveGas = gas;
@@ -620,9 +866,9 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         if (arrived != null) {
           _activeSector = arrived;
           context.read<ScreenBloc>().add(UpdateScreen(screen: arrived.screen));
-          GamificationController.instance.completeQuest(arrived.questId);
+          _openDestinationHologram(arrived, pinned: true);
           _showCallout(
-            '📍 PARKED AT ${arrived.shortLabel} BAY — PRESS [E] FOR DOSSIER',
+            '📍 ARRIVED: ${arrived.destinationLabel} — HOLOGRAM PROJECTED',
           );
         } else {
           _showCallout('📍 DESTINATION REACHED');
@@ -637,7 +883,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         _nitroCharge = math.max(_nitroCharge, 0.40);
       }
     } else if (_autoPilot) {
-      // Smoothly tour the oval Grand Prix Paddock Loop
+      // Smoothly tour the oval Grand Prix Paddock Loop with rival avoidance
       final prevAngle = _paddockCruiseAngle;
       _paddockCruiseAngle += dt * 0.34;
       if (_paddockCruiseAngle >= math.pi && prevAngle < math.pi) {
@@ -647,10 +893,19 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         _lapCount++;
         _lapTimeSeconds = 0.0;
       }
-      final targetPt = Offset(
+      var targetPt = Offset(
         math.cos(_paddockCruiseAngle) * 900.0,
         math.sin(_paddockCruiseAngle) * 535.0,
       );
+      for (final r in _paddockRivals) {
+        final dRival = (r.position - _paddockPos).distance;
+        if (dRival < 140.0) {
+          final away = _paddockPos - r.position;
+          if (away.distance > 1.0) {
+            targetPt += (away / away.distance) * 140.0;
+          }
+        }
+      }
       final toTarget = targetPt - _paddockPos;
       final desiredHeading = math.atan2(toTarget.dx, -toTarget.dy);
       final angleDiff = _wrapAngle(desiredHeading - _paddockHeading);
@@ -666,15 +921,17 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       _nitroCharge = (_nitroCharge + dt * 0.06).clamp(0.0, 1.0);
     }
 
-    final topSpeed = nitroActive ? _nitroMaxSpeed : _baseMaxSpeed;
+    final topSpeed = nitroActive
+        ? _selectedVehicle.nitroMaxSpeed
+        : _selectedVehicle.baseMaxSpeed;
     if (!_isModalOpen) {
       if (nitroActive) {
-        _paddockSignedSpeed += 260.0 * dt;
+        _paddockSignedSpeed += (_selectedVehicle.acceleration * 1.65) * dt;
       } else if (effectiveGas) {
-        _paddockSignedSpeed += 165.0 * dt;
+        _paddockSignedSpeed += _selectedVehicle.acceleration * dt;
       } else if (effectiveBrake) {
         if (_paddockSignedSpeed > 8.0) {
-          _paddockSignedSpeed -= 260.0 * dt;
+          _paddockSignedSpeed -= _selectedVehicle.braking * dt;
         } else {
           // Reverse gear in Open-World Paddock!
           _paddockSignedSpeed -= 110.0 * dt;
@@ -699,7 +956,9 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     final speedNorm = (_speedKmh / 160.0).clamp(0.0, 1.25);
     if (_speedKmh > 3.0) {
       final reverseSign = _paddockSignedSpeed >= 0 ? 1.0 : -1.0;
-      final turnRate = 2.45 * (0.35 + 0.65 * speedNorm.clamp(0.0, 1.0));
+      final turnScale = _selectedVehicle.handling / 1.90;
+      final turnRate =
+          2.45 * turnScale * (0.35 + 0.65 * speedNorm.clamp(0.0, 1.0));
       _paddockHeading = _wrapAngle(
         _paddockHeading + effectiveSteer * turnRate * reverseSign * dt,
       );
@@ -726,6 +985,76 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       _paddockPos.dx.clamp(-maxX, maxX),
       _paddockPos.dy.clamp(-maxY, maxY),
     );
+
+    // 2D SAT OBB Collisions with Roaming Rivals & Central Monument
+    if (!_isModalOpen) {
+      var playerObb = Obb2D(
+        center: _paddockPos,
+        headingRad: _paddockHeading,
+        halfWidth: _selectedVehicle.topDownWidth * 0.48,
+        halfLength: _selectedVehicle.topDownLength * 0.48,
+      );
+
+      for (final r in _paddockRivals) {
+        final rivalObb = Obb2D(
+          center: r.position,
+          headingRad: r.heading,
+          halfWidth: r.kind.topDownWidth * 0.48,
+          halfLength: r.kind.topDownLength * 0.48,
+        );
+        final hit = ObbCollisionDetector.testObbVsObb(playerObb, rivalObb);
+        if (hit != null) {
+          _paddockPos += hit.mtv;
+          r.staggerOffset -= hit.normal * 16.0;
+          playerObb = Obb2D(
+            center: _paddockPos,
+            headingRad: _paddockHeading,
+            halfWidth: _selectedVehicle.topDownWidth * 0.48,
+            halfLength: _selectedVehicle.topDownLength * 0.48,
+          );
+          if (r.hitCooldown <= 0) {
+            r.hitCooldown = 0.55;
+            r.hitFlashTimer = 0.35;
+            _collisionFlashTimer = 0.35;
+            _collisionCount++;
+            final armor = _selectedVehicle.armorFactor;
+            _paddockSignedSpeed = _paddockSignedSpeed * (0.45 + armor * 0.35);
+            _hullIntegrity =
+                (_hullIntegrity - (0.10 * (1.1 - armor * 0.6))).clamp(0.10, 1.0);
+            _cameraShakeTimer = 0.25;
+            _cameraShakeIntensity = 0.72;
+            _hitVignetteAlpha = 0.36;
+            _spawnPaddockSparks(
+              worldPoint: hit.contactPoint,
+              normal: hit.normal,
+            );
+            _showCallout('💥 COLLISION WITH ${r.label}!');
+          }
+        }
+      }
+
+      final monumentHit = ObbCollisionDetector.testObbVsCircle(
+        playerObb,
+        Offset.zero,
+        168.0,
+      );
+      if (monumentHit != null) {
+        _paddockPos += monumentHit.mtv;
+        if (_paddockMonumentHitCooldown <= 0) {
+          _paddockMonumentHitCooldown = 0.50;
+          _collisionFlashTimer = 0.30;
+          _paddockSignedSpeed = -_paddockSignedSpeed * 0.35;
+          _cameraShakeTimer = 0.22;
+          _cameraShakeIntensity = 0.60;
+          _hitVignetteAlpha = 0.30;
+          _spawnPaddockSparks(
+            worldPoint: monumentHit.contactPoint,
+            normal: monumentHit.normal,
+          );
+          _showCallout('⚠️ DRIVER MONUMENT BARRIER');
+        }
+      }
+    }
 
     // Spawn twin rear tire drift marks when cornering hard at speed
     if (effectiveSteer.abs() > 0.45 && _speedKmh > 110.0) {
@@ -787,9 +1116,13 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       context
           .read<ScreenBloc>()
           .add(UpdateScreen(screen: insideZone.screen));
-      GamificationController.instance.completeQuest(insideZone.questId);
+      if (insideZone.index != _lastHologramTriggeredSectorIdx) {
+        _openDestinationHologram(insideZone, pinned: false);
+      } else {
+        GamificationController.instance.completeQuest(insideZone.questId);
+      }
       _showCallout(
-        '🏁 ENTERED ${insideZone.shortLabel} BAY — PRESS [E] FOR DOSSIER',
+        '🏁 ENTERED ${insideZone.destinationLabel} — HOLOGRAM PROJECTED',
       );
     }
 
@@ -802,8 +1135,10 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         if (_lastPaddockBoostIdx != i) {
           _lastPaddockBoostIdx = i;
           _nitroCharge = (_nitroCharge + 0.30).clamp(0.0, 1.0);
-          _paddockSignedSpeed =
-              math.min(_nitroMaxSpeed, _paddockSignedSpeed + 75.0);
+          _paddockSignedSpeed = math.min(
+            _selectedVehicle.nitroMaxSpeed,
+            _paddockSignedSpeed + 75.0,
+          );
           if (b.skillName != null) {
             GamificationController.instance.boostSkill(b.skillName!);
           }
@@ -867,8 +1202,10 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
         _warpTargetSector = null;
         _autoPilot = true;
         _speedKmh = _cruiseTargetSpeed;
-        GamificationController.instance.completeQuest(arrived.questId);
-        _showCallout('📍 ARRIVED: ${arrived.title} — PRESS [E] FOR PIT-STOP');
+        _activeSector = arrived;
+        context.read<ScreenBloc>().add(UpdateScreen(screen: arrived.screen));
+        _openDestinationHologram(arrived, pinned: true);
+        _showCallout('📍 ARRIVED: ${arrived.destinationLabel} — HOLOGRAM ACTIVE');
       } else {
         effectiveGas = true;
         effectiveBrake = false;
@@ -878,18 +1215,17 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       }
     } else if (_autoPilot && !effectiveBrake) {
       effectiveGas = _speedKmh < _cruiseTargetSpeed;
-      double desiredLane = 0.0;
       final trackLen = CircuitBuilder.trackLength;
       final normZ = ((_playerZ % trackLen) + trackLen) % trackLen;
-      for (final car in _trafficCars) {
-        double dz = car.z - normZ;
-        if (dz < 0) dz += trackLen;
-        if (dz > 0 && dz < 2600 && (car.lane - desiredLane).abs() < 0.38) {
-          desiredLane = car.lane >= 0 ? -0.64 : 0.64;
-          break;
-        }
-      }
-      effectiveSteer = ((desiredLane - _playerX) * 2.2).clamp(-0.85, 0.85);
+      final desiredLane = CircuitCollisionDetector.chooseBestAutopilotLane(
+        normZ: normZ,
+        currentPlayerX: _playerX,
+        trackLen: trackLen,
+        vehicle: _selectedVehicle,
+        trafficCars: _trafficCars,
+        obstacles: _obstacles,
+      );
+      effectiveSteer = ((desiredLane - _playerX) * 2.3).clamp(-0.90, 0.90);
     }
 
     final nitroActive =
@@ -900,20 +1236,24 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       _nitroCharge = (_nitroCharge + dt * 0.055).clamp(0.0, 1.0);
     }
 
-    final topSpeed = nitroActive ? _nitroMaxSpeed : _baseMaxSpeed;
+    final topSpeed = nitroActive
+        ? _selectedVehicle.nitroMaxSpeed
+        : _selectedVehicle.baseMaxSpeed;
     if (nitroActive) {
-      _speedKmh += 240.0 * dt;
+      _speedKmh += (_selectedVehicle.acceleration * 1.65) * dt;
     } else if (effectiveGas) {
-      _speedKmh += 135.0 * dt;
+      _speedKmh += _selectedVehicle.acceleration * dt;
     } else if (effectiveBrake) {
-      _speedKmh -= 230.0 * dt;
+      _speedKmh -= _selectedVehicle.braking * dt;
     } else {
       _speedKmh -= 48.0 * dt;
     }
 
-    if (_playerX.abs() > 1.06 && _warpTargetSector == null) {
+    if (_playerX.abs() > 1.06 &&
+        _warpTargetSector == null &&
+        _selectedVehicle.offRoadDragFactor > 0.0) {
       if (_speedKmh > 135.0) {
-        _speedKmh -= 160.0 * dt;
+        _speedKmh -= (160.0 * _selectedVehicle.offRoadDragFactor) * dt;
       }
     }
 
@@ -929,6 +1269,10 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     final segLen = CircuitBuilder.segmentLength;
     final trackLen = CircuitBuilder.trackLength;
     final totalSegs = _segments.length;
+
+    // Capture pre-step player coordinates for continuous swept collision checks
+    final prevNormZ = ((_playerZ % trackLen) + trackLen) % trackLen;
+    final prevPlayerX = _playerX;
 
     final prevLapIndex = (_playerZ / trackLen).floor();
     final worldUnitsPerSec = _speedKmh * 24.5;
@@ -957,9 +1301,12 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     final segIndex = (normZ ~/ segLen) % totalSegs;
     final currentSeg = _segments[segIndex];
 
-    final speedFactor = (_speedKmh / _baseMaxSpeed).clamp(0.0, 1.35);
-    final steerAuthority = _speedKmh > 4 ? 1.85 : 0.0;
+    final speedFactor =
+        (_speedKmh / _selectedVehicle.baseMaxSpeed).clamp(0.0, 1.35);
+    final steerAuthority = _speedKmh > 4 ? _selectedVehicle.handling : 0.0;
     _playerX += steerInput * steerAuthority * dt;
+    _playerX += _lateralBounceVel * dt;
+    _lateralBounceVel *= math.exp(-7.5 * dt);
 
     // Centrifugal force applies in 3D curving highway mode
     if (_gameMode == RacingGameMode.horizon3d &&
@@ -983,8 +1330,14 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
           .read<ScreenBloc>()
           .add(UpdateScreen(screen: detectedSector.screen));
       if (_warpTargetSector == null) {
-        GamificationController.instance.completeQuest(detectedSector.questId);
-        _showCallout('🏁 ${detectedSector.code} // ${detectedSector.title}');
+        if (detectedSector.index != _lastHologramTriggeredSectorIdx) {
+          _openDestinationHologram(detectedSector, pinned: false);
+        } else {
+          GamificationController.instance.completeQuest(detectedSector.questId);
+        }
+        _showCallout(
+          '🏁 ${detectedSector.destinationLabel} // ${detectedSector.title}',
+        );
       }
     }
 
@@ -992,7 +1345,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       if ((_playerX - currentSeg.boostLane!).abs() < 0.34) {
         _lastBoostSegIndex = segIndex;
         _nitroCharge = (_nitroCharge + 0.30).clamp(0.0, 1.0);
-        _speedKmh = math.min(_nitroMaxSpeed, _speedKmh + 65.0);
+        _speedKmh = math.min(_selectedVehicle.nitroMaxSpeed, _speedKmh + 65.0);
         if (currentSeg.boostSkillName != null) {
           GamificationController.instance
               .boostSkill(currentSeg.boostSkillName!);
@@ -1012,7 +1365,8 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       if (orb.collected) continue;
       double dz = (orb.z - normZ).abs();
       if (dz > trackLen * 0.5) dz = trackLen - dz;
-      if (dz < 220.0 && (_playerX - orb.lane).abs() < 0.30) {
+      if (dz < 220.0 &&
+          (_playerX - orb.lane).abs() < _selectedVehicle.roadHalfWidth + 0.14) {
         orb.collected = true;
         _nitroCharge = (_nitroCharge + 0.20).clamp(0.0, 1.0);
         GamificationController.instance.addXp(
@@ -1022,21 +1376,127 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       }
     }
 
+    // Continuous Swept Collision Detection & Near-Misses against Traffic Opponents
     for (final car in _trafficCars) {
-      final prevRel = _signedTrackDelta(car.z, normZ, trackLen);
+      if (car.hitCooldown > 0) {
+        car.hitCooldown = math.max(0.0, car.hitCooldown - dt);
+      }
+      if (car.hitFlashTimer > 0) {
+        car.hitFlashTimer = math.max(0.0, car.hitFlashTimer - dt);
+      }
+      car.lateralRecoil *= math.exp(-5.0 * dt);
+
+      final prevOppZ = car.z;
+      final prevOppLane = car.effectiveLane;
       car.z = (car.z + car.speed * 18.0 * dt) % trackLen;
-      final newRel = _signedTrackDelta(car.z, normZ, trackLen);
+      final currOppLane = car.effectiveLane;
+
+      final prevRelZ =
+          CircuitCollisionDetector.signedTrackDelta(prevOppZ, prevNormZ, trackLen);
+      final currRelZ =
+          CircuitCollisionDetector.signedTrackDelta(car.z, normZ, trackLen);
+
+      final (zMin, zMax) = CircuitCollisionDetector.computeLongitudinalBand(
+        mode: _gameMode,
+        vehicle: _selectedVehicle,
+        oppZHalfLength: car.kind.zHalfLength,
+        oppTopDownLength: car.kind.topDownLength,
+      );
 
       if (!_isModalOpen &&
           _warpTargetSector == null &&
-          newRel > -60.0 &&
-          newRel < 190.0 &&
-          (_playerX - car.lane).abs() < 0.25) {
-        _collisionFlashTimer = 0.32;
-        _speedKmh = math.max(85.0, car.speed * 0.92);
-        car.z = (normZ + 280.0) % trackLen;
-        _showCallout('💥 RUBBING IS RACING! STEER AROUND TRAFFIC');
-      } else if (prevRel > 80.0 && newRel <= 80.0 && !car.passedRecently) {
+          car.hitCooldown <= 0) {
+        final hit = CircuitCollisionDetector.detectSweptCircuitHit(
+          prevNormZ: prevNormZ,
+          currNormZ: normZ,
+          prevPlayerX: prevPlayerX,
+          currPlayerX: _playerX,
+          prevOppZ: prevOppZ,
+          currOppZ: car.z,
+          prevOppLane: prevOppLane,
+          currOppLane: currOppLane,
+          trackLen: trackLen,
+          playerHalfWidth: _selectedVehicle.roadHalfWidth,
+          oppHalfWidth: car.kind.roadHalfWidth,
+          zBandMin: zMin,
+          zBandMax: zMax,
+        );
+
+        if (hit != null) {
+          final res = CircuitCollisionDetector.resolveCircuitHit(
+            hit: hit,
+            vehicle: _selectedVehicle,
+            playerSpeedKmh: _speedKmh,
+            playerX: _playerX,
+            currNormZ: normZ,
+            oppZ: car.z,
+            oppLane: car.lane,
+            oppSpeedKmh: car.speed,
+            oppMass: car.kind.mass,
+            oppHalfWidth: car.kind.roadHalfWidth,
+            zBandMin: zMin,
+            zBandMax: zMax,
+            trackLen: trackLen,
+            maxLateral: maxLateral,
+          );
+
+          _speedKmh = res.newPlayerSpeedKmh;
+          _playerX = res.newPlayerX;
+          _lateralBounceVel = res.lateralBounceVelocity;
+          car.z = res.newOppZ;
+          car.speed = res.newOppSpeedKmh;
+          car.lateralRecoil = res.oppLateralRecoil;
+          car.hitCooldown = 0.45;
+          car.hitFlashTimer = 0.35;
+          _collisionFlashTimer = 0.35;
+          _collisionCount++;
+          _hullIntegrity =
+              (_hullIntegrity - res.hullDamage / 100.0).clamp(0.10, 1.0);
+          _cameraShakeTimer = 0.28;
+          _cameraShakeIntensity = res.shakeIntensity;
+          _hitVignetteAlpha = 0.40;
+          _spawnCircuitSparks(
+            laneX: hit.impactLaneX -
+                hit.pushDirection * _selectedVehicle.roadHalfWidth * 0.6,
+            yOffset: hit.kind == CollisionKind.rearEnd ? -34.0 : -10.0,
+            pushDir: hit.pushDirection,
+          );
+          _showCallout(
+            hit.kind == CollisionKind.sideswipe
+                ? '⚡ SIDESWIPE WITH ${car.label}!'
+                : '💥 IMPACT WITH ${car.label}! STEER CLEAR',
+          );
+          continue;
+        }
+
+        if (!car.nearMissAwarded &&
+            CircuitCollisionDetector.isNearMiss(
+              prevRelZ: prevRelZ,
+              currRelZ: currRelZ,
+              trackLen: trackLen,
+              playerX: _playerX,
+              oppLane: currOppLane,
+              playerHalfWidth: _selectedVehicle.roadHalfWidth,
+              oppHalfWidth: car.kind.roadHalfWidth,
+              playerSpeedKmh: _speedKmh,
+            )) {
+          car.nearMissAwarded = true;
+          _nearMissCount++;
+          _nitroCharge = (_nitroCharge + 0.14).clamp(0.0, 1.0);
+          _showCallout('🔥 NEAR MISS ${car.label}! +14% NITRO');
+          if (_nearMissCount % 3 == 0) {
+            GamificationController.instance.addXp(
+              10,
+              reason: '$_nearMissCount Razor-Close Near Misses!',
+            );
+          }
+        }
+      }
+
+      if (prevRelZ > 80.0 &&
+          currRelZ <= 80.0 &&
+          !car.passedRecently &&
+          car.hitCooldown <= 0) {
         car.passedRecently = true;
         _overtakes++;
         _nitroCharge = (_nitroCharge + 0.08).clamp(0.0, 1.0);
@@ -1046,8 +1506,87 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
             reason: '$_overtakes Clean Overtakes on Circuit!',
           );
         }
-      } else if (newRel.abs() > 2500.0) {
+      } else if (currRelZ.abs() > 2500.0) {
         car.passedRecently = false;
+        car.nearMissAwarded = false;
+      }
+    }
+
+    // Continuous Swept Collision Detection against Static Track Obstacles
+    for (final obs in _obstacles) {
+      if (obs.hitCooldown > 0) {
+        obs.hitCooldown = math.max(0.0, obs.hitCooldown - dt);
+      }
+      if (obs.hitFlashTimer > 0) {
+        obs.hitFlashTimer = math.max(0.0, obs.hitFlashTimer - dt);
+      }
+
+      if (_isModalOpen || _warpTargetSector != null || obs.hitCooldown > 0) {
+        continue;
+      }
+
+      final (zMin, zMax) = CircuitCollisionDetector.computeLongitudinalBand(
+        mode: _gameMode,
+        vehicle: _selectedVehicle,
+        oppZHalfLength: obs.zHalfLength,
+        oppTopDownLength: 20.0,
+      );
+
+      final hit = CircuitCollisionDetector.detectSweptCircuitHit(
+        prevNormZ: prevNormZ,
+        currNormZ: normZ,
+        prevPlayerX: prevPlayerX,
+        currPlayerX: _playerX,
+        prevOppZ: obs.z,
+        currOppZ: obs.z,
+        prevOppLane: obs.lane,
+        currOppLane: obs.lane,
+        trackLen: trackLen,
+        playerHalfWidth: _selectedVehicle.roadHalfWidth,
+        oppHalfWidth: obs.roadHalfWidth,
+        zBandMin: zMin,
+        zBandMax: zMax,
+        isStaticBarrier: true,
+      );
+
+      if (hit != null) {
+        final res = CircuitCollisionDetector.resolveCircuitHit(
+          hit: hit,
+          vehicle: _selectedVehicle,
+          playerSpeedKmh: _speedKmh,
+          playerX: _playerX,
+          currNormZ: normZ,
+          oppZ: obs.z,
+          oppLane: obs.lane,
+          oppSpeedKmh: 0.0,
+          oppMass: 2.5,
+          oppHalfWidth: obs.roadHalfWidth,
+          zBandMin: zMin,
+          zBandMax: zMax,
+          trackLen: trackLen,
+          maxLateral: maxLateral,
+          isStaticBarrier: true,
+        );
+
+        _speedKmh = res.newPlayerSpeedKmh;
+        _playerX = res.newPlayerX;
+        _lateralBounceVel = res.lateralBounceVelocity;
+        obs.hitCooldown = 0.55;
+        obs.hitFlashTimer = 0.38;
+        _collisionFlashTimer = 0.35;
+        _collisionCount++;
+        _hullIntegrity =
+            (_hullIntegrity - res.hullDamage / 100.0).clamp(0.10, 1.0);
+        _cameraShakeTimer = 0.28;
+        _cameraShakeIntensity = res.shakeIntensity;
+        _hitVignetteAlpha = 0.42;
+        _spawnCircuitSparks(
+          laneX: hit.impactLaneX,
+          yOffset: -26.0,
+          pushDir: hit.pushDirection,
+          count: 16,
+        );
+        _showCallout('⚠️ STRUCK ${obs.label}!');
       }
     }
   }
@@ -1060,17 +1599,6 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
       rad += 2 * math.pi;
     }
     return rad;
-  }
-
-  double _signedTrackDelta(double targetZ, double baseZ, double trackLen) {
-    double d = targetZ - baseZ;
-    while (d > trackLen * 0.5) {
-      d -= trackLen;
-    }
-    while (d < -trackLen * 0.5) {
-      d += trackLen;
-    }
-    return d;
   }
 
   double _lerpDouble(double a, double b, double t) {
@@ -1143,6 +1671,15 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                     const topHudOffset = 104.0;
                     final carWidth = (maxW * 0.22).clamp(138.0, 236.0);
                     final carHeight = carWidth * 0.62;
+                    final shakeMag = _cameraShakeIntensity *
+                        (_cameraShakeTimer / 0.28).clamp(0.0, 1.0) *
+                        11.0;
+                    final cameraShake = _cameraShakeTimer > 0
+                        ? Offset(
+                            math.sin(_timeSeconds * 75) * shakeMag,
+                            math.cos(_timeSeconds * 92) * shakeMag * 0.7,
+                          )
+                        : Offset.zero;
 
                     return Stack(
                       fit: StackFit.expand,
@@ -1161,15 +1698,16 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                               nitroActive: nitroActive,
                               isAccelerating: isAccelerating,
                               isBraking: isBraking,
+                              cameraShake: cameraShake,
                             ),
                           ),
                         ),
 
-                        // 2. CHASE-CAM SUPERCAR OVERLAY (ONLY IN 3D HORIZON MODE)
+                        // 2. CHASE-CAM PLAYER VEHICLE OVERLAY (ONLY IN 3D HORIZON MODE)
                         if (_gameMode == RacingGameMode.horizon3d)
                           Positioned(
-                            left: (maxW - carWidth) / 2,
-                            bottom: isCompact ? 132 : 102,
+                            left: (maxW - carWidth) / 2 + cameraShake.dx * 0.35,
+                            bottom: (isCompact ? 132 : 102) - cameraShake.dy * 0.35,
                             width: carWidth,
                             height: carHeight,
                             child: IgnorePointer(
@@ -1184,6 +1722,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                                   timeSeconds: _timeSeconds,
                                   themeState: themeState,
                                   palette: palette,
+                                  vehicleType: _selectedVehicle,
                                 ),
                               ),
                             ),
@@ -1253,6 +1792,51 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                             ),
                           ),
 
+                        // 4.5 DESTINATION 3D HOLOGRAM PROJECTION OVERLAY
+                        if (_activeHologramSector != null && !_isModalOpen)
+                          Positioned(
+                            top: topHudOffset + 8,
+                            left: 0,
+                            right: 0,
+                            bottom: isCompact ? 138 : 118,
+                            child: DestinationHologramOverlay(
+                              sector: _activeHologramSector!,
+                              palette: palette,
+                              timeSeconds: _timeSeconds,
+                              isPinned: _hologramPinned,
+                              autoHideRemainingRatio: _hologramPinned
+                                  ? 1.0
+                                  : (_hologramAutoHideTimer /
+                                          _hologramPreviewDuration)
+                                      .clamp(0.0, 1.0),
+                              onPin: () {
+                                if (!_hologramPinned) {
+                                  setState(() => _hologramPinned = true);
+                                }
+                              },
+                              onDismiss: _dismissHologram,
+                              onOpenFullDossier: () {
+                                final screen = _activeHologramSector!.screen;
+                                _dismissHologram();
+                                _openPitStop(screen);
+                              },
+                              onPrevSector: () {
+                                final curIdx = _activeHologramSector!.index;
+                                final prev = RaceSectorMeta.sectors[
+                                    (curIdx - 1 + RaceSectorMeta.sectors.length) %
+                                        RaceSectorMeta.sectors.length];
+                                _openDestinationHologram(prev, pinned: true);
+                              },
+                              onNextSector: () {
+                                final curIdx = _activeHologramSector!.index;
+                                final next = RaceSectorMeta.sectors[
+                                    (curIdx + 1) %
+                                        RaceSectorMeta.sectors.length];
+                                _openDestinationHologram(next, pinned: true);
+                              },
+                            ),
+                          ),
+
                         // 5. BOTTOM DIGITAL SPEEDOMETER & TOUCH PEDALS
                         Positioned(
                           left: 0,
@@ -1262,7 +1846,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                             gameMode: _gameMode,
                             palette: palette,
                             speedKmh: _speedKmh,
-                            maxSpeedKmh: _nitroMaxSpeed,
+                            maxSpeedKmh: _selectedVehicle.nitroMaxSpeed,
                             nitroCharge: _nitroCharge,
                             nitroActive: nitroActive,
                             autoPilot: _autoPilot,
@@ -1270,12 +1854,29 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                             lapTimeSeconds: _lapTimeSeconds,
                             bestLapSeconds: _bestLapSeconds,
                             overtakes: _overtakes,
+                            hullIntegrity: _hullIntegrity,
+                            collisions: _collisionCount,
+                            nearMisses: _nearMissCount,
+                            autoPopHolograms: _autoPopHolograms,
                             showTouchPedals: _showTouchPedals,
                             onToggleAutoPilot: () {
                               setState(() {
                                 _autoPilot = !_autoPilot;
                                 _warpTargetSector = null;
                                 _paddockGpsTarget = null;
+                              });
+                            },
+                            onToggleAutoPopHolograms: () {
+                              setState(() {
+                                _autoPopHolograms = !_autoPopHolograms;
+                                if (!_autoPopHolograms && !_hologramPinned) {
+                                  _activeHologramSector = null;
+                                }
+                                _showCallout(
+                                  _autoPopHolograms
+                                      ? '✨ DESTINATION HOLOGRAMS: AUTO-POP ON'
+                                      : '✨ DESTINATION HOLOGRAMS: MANUAL [H]',
+                                );
                               });
                             },
                             onToggleTouchPedals: () {
@@ -1294,7 +1895,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                         // 6. FLOATING TROPHY & +XP TOAST BANNER
                         const AchievementToastBanner(),
 
-                        // 7. TOP TELEMETRY BAR (3 MODES + 3 THEMES + 6 SECTORS)
+                        // 7. TOP TELEMETRY BAR (3 MODES + 3 THEMES + VEHICLE + 6 SECTORS)
                         Positioned(
                           top: 0,
                           left: 0,
@@ -1305,6 +1906,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                               activeSector: _activeSector,
                               gameMode: _gameMode,
                               visualTheme: _visualTheme,
+                              selectedVehicle: _selectedVehicle,
                               palette: palette,
                               lapProgress: lapProgress,
                               isWarping: _warpTargetSector != null ||
@@ -1312,6 +1914,8 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                               onSelectSector: _engageSectorSelection,
                               onSelectGameMode: _switchGameMode,
                               onSelectVisualTheme: _switchVisualTheme,
+                              onOpenGarage: _openVehicleGarage,
+                              onToggleHologram: _toggleCurrentHologram,
                               onOpenPitWall: () =>
                                   _openPitStop(_activeSector.screen),
                               onTriggerNitroQuest: _triggerNitroChallenge,
@@ -1336,6 +1940,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     required bool nitroActive,
     required bool isAccelerating,
     required bool isBraking,
+    required Offset cameraShake,
   }) {
     switch (_gameMode) {
       case RacingGameMode.horizon3d:
@@ -1347,13 +1952,17 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
             playerZ: _playerZ,
             playerX: _playerX,
             speedKmh: _speedKmh,
-            maxSpeedKmh: _nitroMaxSpeed,
+            maxSpeedKmh: _selectedVehicle.nitroMaxSpeed,
             nitroActive: nitroActive,
             skyParallax: _skyParallax,
             timeSeconds: _timeSeconds,
             themeState: themeState,
             palette: palette,
             driverPhoto: _driverPhoto,
+            obstacles: _obstacles,
+            sparks: _sparks,
+            cameraShake: cameraShake,
+            hitVignetteAlpha: _hitVignetteAlpha,
           ),
         );
 
@@ -1380,6 +1989,11 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
             skidMarks: _paddockSkids,
             rivals: _paddockRivals,
             driverPhoto: _driverPhoto,
+            vehicleType: _selectedVehicle,
+            collisionFlash: _collisionFlashTimer > 0,
+            sparks: _sparks,
+            cameraShake: cameraShake,
+            hitVignetteAlpha: _hitVignetteAlpha,
           ),
         );
 
@@ -1399,6 +2013,12 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
             timeSeconds: _timeSeconds,
             palette: palette,
             driverPhoto: _driverPhoto,
+            vehicleType: _selectedVehicle,
+            obstacles: _obstacles,
+            sparks: _sparks,
+            cameraShake: cameraShake,
+            collisionFlash: _collisionFlashTimer > 0,
+            hitVignetteAlpha: _hitVignetteAlpha,
           ),
         );
     }

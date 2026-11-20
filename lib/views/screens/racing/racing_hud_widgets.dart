@@ -16,12 +16,15 @@ class RacingTopTelemetryBar extends StatelessWidget {
     required this.activeSector,
     required this.gameMode,
     required this.visualTheme,
+    required this.selectedVehicle,
     required this.palette,
     required this.lapProgress,
     required this.isWarping,
     required this.onSelectSector,
     required this.onSelectGameMode,
     required this.onSelectVisualTheme,
+    required this.onOpenGarage,
+    required this.onToggleHologram,
     required this.onOpenPitWall,
     required this.onTriggerNitroQuest,
   });
@@ -29,12 +32,15 @@ class RacingTopTelemetryBar extends StatelessWidget {
   final RaceSectorMeta activeSector;
   final RacingGameMode gameMode;
   final RacingVisualTheme visualTheme;
+  final VehicleType selectedVehicle;
   final RacingThemePalette palette;
   final double lapProgress; // 0.0 .. 1.0
   final bool isWarping;
   final ValueChanged<Screen> onSelectSector;
   final ValueChanged<RacingGameMode> onSelectGameMode;
   final ValueChanged<RacingVisualTheme> onSelectVisualTheme;
+  final VoidCallback onOpenGarage;
+  final VoidCallback onToggleHologram;
   final VoidCallback onOpenPitWall;
   final VoidCallback onTriggerNitroQuest;
 
@@ -100,8 +106,96 @@ class RacingTopTelemetryBar extends StatelessWidget {
                                 secondary: secondary,
                                 onSelectTheme: onSelectVisualTheme,
                               ),
+                              const SizedBox(width: 8),
+                              Tooltip(
+                                message: 'Select Vehicle Type (G / V)',
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: onOpenGarage,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF00F0FF)
+                                            .withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(7),
+                                        border: Border.all(
+                                          color: const Color(0xFF00F0FF)
+                                              .withValues(alpha: 0.72),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            selectedVehicle.icon,
+                                            size: 13,
+                                            color: const Color(0xFF00F0FF),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            selectedVehicle.shortLabel,
+                                            style: context.bodySmall.copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.9,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Tooltip(
+                                message: 'Project Destination Hologram (H)',
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: onToggleHologram,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: secondary.withValues(alpha: 0.14),
+                                        borderRadius: BorderRadius.circular(7),
+                                        border: Border.all(
+                                          color: secondary.withValues(alpha: 0.72),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.auto_awesome_rounded,
+                                            size: 12.5,
+                                            color: secondary,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'HOLOGRAM',
+                                            style: context.bodySmall.copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.9,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                               if (!isVeryCompact) ...[
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 8),
                                 GamificationHudPill(
                                   compact: true,
                                   onOpenQuests: () => showQuestLogModal(
@@ -515,8 +609,13 @@ class RacingBottomCockpitHud extends StatelessWidget {
     required this.lapTimeSeconds,
     required this.bestLapSeconds,
     required this.overtakes,
+    required this.hullIntegrity,
+    required this.collisions,
+    required this.nearMisses,
+    required this.autoPopHolograms,
     required this.showTouchPedals,
     required this.onToggleAutoPilot,
+    required this.onToggleAutoPopHolograms,
     required this.onToggleTouchPedals,
     required this.onSteerLeftChanged,
     required this.onSteerRightChanged,
@@ -536,8 +635,13 @@ class RacingBottomCockpitHud extends StatelessWidget {
   final double lapTimeSeconds;
   final double? bestLapSeconds;
   final int overtakes;
+  final double hullIntegrity; // 0.0 .. 1.0
+  final int collisions;
+  final int nearMisses;
+  final bool autoPopHolograms;
   final bool showTouchPedals;
   final VoidCallback onToggleAutoPilot;
+  final VoidCallback onToggleAutoPopHolograms;
   final VoidCallback onToggleTouchPedals;
   final ValueChanged<bool> onSteerLeftChanged;
   final ValueChanged<bool> onSteerRightChanged;
@@ -577,11 +681,11 @@ class RacingBottomCockpitHud extends StatelessWidget {
 
         final hintText = switch (gameMode) {
           RacingGameMode.openPaddock =>
-            'WASD / ARROWS: FREE-ROAM & DRIFT   •   CLICK ANY ZONE OR LINK PAD   •   SPACE: NITRO   •   E: PIT-STOP   •   1/2/3: GAME MODE   •   T: THEME',
+            'WASD / ARROWS: FREE-ROAM & DRIFT   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE   •   T: THEME',
           RacingGameMode.verticalHighway =>
-            'WASD / ARROWS: LANE WEAVE & THROTTLE   •   SPACE: NITRO   •   SCROLL: THROTTLE   •   E: PIT-STOP   •   1/2/3: GAME MODE   •   T: THEME',
+            'WASD / ARROWS: LANE WEAVE & THROTTLE   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE',
           RacingGameMode.horizon3d =>
-            'WASD / ARROWS: DRIVE & STEER   •   SPACE / SHIFT: NITRO   •   SCROLL: THROTTLE   •   E: PIT-STOP   •   1/2/3: GAME MODE   •   T: THEME',
+            'WASD / ARROWS: DRIVE & STEER   •   SPACE: NITRO   •   V/G: VEHICLE GARAGE   •   H: HOLOGRAM   •   E: PIT-STOP   •   1/2/3: MODE   •   T: THEME',
         };
 
         return Padding(
@@ -804,6 +908,16 @@ class RacingBottomCockpitHud extends StatelessWidget {
                                     value: '$overtakes',
                                     color: secondary,
                                   ),
+                                  const SizedBox(width: 16),
+                                  _CockpitMetric(
+                                    label: 'SHIELD ${(hullIntegrity * 100).round()}%',
+                                    value: collisions == 0
+                                        ? 'CLEAR ($nearMisses NM)'
+                                        : '$collisions HITS',
+                                    color: hullIntegrity > 0.45
+                                        ? const Color(0xFF00F0FF)
+                                        : const Color(0xFFFF3B5C),
+                                  ),
                                 ],
                               ],
                             ),
@@ -867,6 +981,50 @@ class RacingBottomCockpitHud extends StatelessWidget {
                               ),
                               if (!isCompact) ...[
                                 const SizedBox(width: 8),
+                                Tooltip(
+                                  message: 'Auto-Pop Destination Holograms',
+                                  child: MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: GestureDetector(
+                                      onTap: onToggleAutoPopHolograms,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 9,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: autoPopHolograms
+                                              ? const Color(0xFF00F0FF)
+                                                  .withValues(alpha: 0.18)
+                                              : Colors.white
+                                                  .withValues(alpha: 0.06),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: autoPopHolograms
+                                                ? const Color(0xFF00F0FF)
+                                                : Colors.white
+                                                    .withValues(alpha: 0.20),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          autoPopHolograms
+                                              ? 'HOLO: ON'
+                                              : 'HOLO: OFF',
+                                          style: context.bodySmall.copyWith(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.9,
+                                            color: autoPopHolograms
+                                                ? const Color(0xFF00F0FF)
+                                                : Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
                                 IconButton(
                                   tooltip: 'Toggle On-Screen Pedals',
                                   onPressed: onToggleTouchPedals,

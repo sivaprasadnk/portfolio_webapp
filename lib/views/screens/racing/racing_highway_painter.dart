@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:spnk/views/screens/racing/racing_car_painter.dart';
+import 'package:spnk/views/screens/racing/racing_collision_engine.dart';
 import 'package:spnk/views/screens/racing/racing_models.dart';
 
 /// Top-Down Vertical Highway Lane Racer painter (Mode 3).
@@ -22,6 +23,12 @@ class RacingHighwayPainter extends CustomPainter {
   final double timeSeconds;
   final RacingThemePalette palette;
   final ui.Image? driverPhoto;
+  final VehicleType vehicleType;
+  final List<TrackObstacle> obstacles;
+  final List<ImpactSpark> sparks;
+  final Offset cameraShake;
+  final bool collisionFlash;
+  final double hitVignetteAlpha;
 
   RacingHighwayPainter({
     required this.segments,
@@ -37,10 +44,16 @@ class RacingHighwayPainter extends CustomPainter {
     required this.timeSeconds,
     required this.palette,
     this.driverPhoto,
+    this.vehicleType = VehicleType.apexGt,
+    this.obstacles = const [],
+    this.sparks = const [],
+    this.cameraShake = Offset.zero,
+    this.collisionFlash = false,
+    this.hitVignetteAlpha = 0.0,
   });
 
   // World Z units visible per vertical pixel on screen
-  static const double _zPerPixel = 7.2;
+  static const double _zPerPixel = CircuitCollisionDetector.highwayZPerPixel;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -60,6 +73,11 @@ class RacingHighwayPainter extends CustomPainter {
     final roadCenterX = size.width * 0.5;
     final roadLeft = roadCenterX - roadHalfW;
     final roadRight = roadCenterX + roadHalfW;
+
+    canvas.save();
+    if (cameraShake != Offset.zero) {
+      canvas.translate(cameraShake.dx, cameraShake.dy);
+    }
 
     // 1. Scrolling Terrain Shoulders
     final bgRect = Offset.zero & size;
@@ -198,6 +216,41 @@ class RacingHighwayPainter extends CustomPainter {
       canvas.drawPath(d, Paint()..color = c);
     }
 
+    // Pass 2.5: Static Highway Roadblock Obstacles
+    for (final obs in obstacles) {
+      final relZ = _signedTrackDelta(obs.z, normZ, trackLen);
+      if (relZ < minVisibleRelZ - 80 || relZ > maxVisibleRelZ + 80) continue;
+      final oy = playerScreenY - (relZ / _zPerPixel);
+      final ox = roadCenterX + obs.lane * roadHalfW;
+      final ow = (roadHalfW * obs.roadHalfWidth * 1.9).clamp(28.0, 74.0);
+      final isHit = obs.hitFlashTimer > 0;
+      final blinkColor = isHit
+          ? Colors.white
+          : ((timeSeconds * 8).floor().isEven
+              ? const Color(0xFFFF3B5C)
+              : const Color(0xFFF59E0B));
+      final rect = Rect.fromCenter(center: Offset(ox, oy), width: ow, height: 20);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        Paint()
+          ..color = isHit ? const Color(0xFFFF3B5C) : const Color(0xFF1F1224),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        Paint()
+          ..color = blinkColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0,
+      );
+      for (final side in const [-0.36, 0.36]) {
+        canvas.drawCircle(
+          Offset(ox + side * ow, oy),
+          3.2,
+          Paint()..color = blinkColor,
+        );
+      }
+    }
+
     // Pass 3: Rival Traffic Cars in Highway Lanes
     const rivalColors = [
       Color(0xFF38BDF8),
@@ -209,13 +262,17 @@ class RacingHighwayPainter extends CustomPainter {
       final relZ = _signedTrackDelta(car.z, normZ, trackLen);
       if (relZ < minVisibleRelZ - 80 || relZ > maxVisibleRelZ + 80) continue;
       final cy = playerScreenY - (relZ / _zPerPixel);
-      final cx = roadCenterX + car.lane * roadHalfW;
+      final cx = roadCenterX + car.effectiveLane * roadHalfW;
+      final rivalW = (roadHalfW * car.kind.roadHalfWidth * 1.95).clamp(
+        car.kind.topDownWidth * 0.78,
+        car.kind.topDownWidth * 1.35,
+      );
       TopDownRaceCarRenderer.paint(
         canvas: canvas,
         position: Offset(cx, cy),
         headingRadians: 0,
-        width: 30,
-        length: 58,
+        width: rivalW,
+        length: car.kind.topDownLength,
         steer: 0,
         isAccelerating: true,
         isBraking: false,
@@ -225,17 +282,23 @@ class RacingHighwayPainter extends CustomPainter {
         badge: '',
         overrideTrim: rivalColors[car.colorVariant % rivalColors.length],
         showHeadlights: false,
+        opponentKind: car.kind,
+        collisionFlash: car.hitFlashTimer > 0,
       );
     }
 
-    // Pass 4: Player Top-Down `SPNK-01` Supercar
+    // Pass 4: Player Top-Down Vehicle (`SPNK-01`)
     final playerScreenX = roadCenterX + playerX * roadHalfW;
+    final playerW = (roadHalfW * vehicleType.roadHalfWidth * 1.95).clamp(
+      vehicleType.topDownWidth * 0.78,
+      vehicleType.topDownWidth * 1.35,
+    );
     TopDownRaceCarRenderer.paint(
       canvas: canvas,
       position: Offset(playerScreenX, playerScreenY),
       headingRadians: steerVisual * 0.20,
-      width: 36,
-      length: 70,
+      width: playerW,
+      length: vehicleType.topDownLength,
       steer: steerVisual,
       isAccelerating: isAccelerating,
       isBraking: isBraking,
@@ -243,7 +306,19 @@ class RacingHighwayPainter extends CustomPainter {
       timeSeconds: timeSeconds,
       palette: palette,
       badge: '01',
+      vehicleType: vehicleType,
+      collisionFlash: collisionFlash,
     );
+
+    // Collision Sparks on Highway
+    for (final sp in sparks) {
+      final alpha = (sp.life / sp.maxLife).clamp(0.0, 1.0);
+      canvas.drawCircle(
+        Offset(roadCenterX + sp.x * roadHalfW, playerScreenY + sp.y),
+        sp.size * (0.6 + 0.5 * alpha),
+        Paint()..color = sp.color.withValues(alpha: alpha),
+      );
+    }
 
     // Pass 5: Roadside Pit-Stop Bays, Driver Photo Jumbotrons & Overhead Gantries
     for (int step = startStep; step <= endStep; step++) {
@@ -281,6 +356,7 @@ class RacingHighwayPainter extends CustomPainter {
           canvas: canvas,
           code: seg.gantryCode ?? 'SECTOR',
           title: seg.gantryTitle!,
+          destinationLabel: seg.gantryDestinationLabel,
           roadLeft: roadLeft - kerbWidth - 8,
           roadRight: roadRight + kerbWidth + 8,
           y: y,
@@ -288,6 +364,24 @@ class RacingHighwayPainter extends CustomPainter {
           secondary: secondary,
         );
       }
+    }
+
+    canvas.restore();
+
+    if (hitVignetteAlpha > 0.01) {
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()
+          ..shader = RadialGradient(
+            radius: 1.05,
+            colors: [
+              Colors.transparent,
+              const Color(0xFFFF1E42)
+                  .withValues(alpha: hitVignetteAlpha.clamp(0.0, 0.45)),
+            ],
+            stops: const [0.55, 1.0],
+          ).createShader(Offset.zero & size),
+      );
     }
   }
 
@@ -420,6 +514,7 @@ class RacingHighwayPainter extends CustomPainter {
     required Canvas canvas,
     required String code,
     required String title,
+    String? destinationLabel,
     required double roadLeft,
     required double roadRight,
     required double y,
@@ -428,6 +523,7 @@ class RacingHighwayPainter extends CustomPainter {
   }) {
     final rect = Rect.fromLTRB(roadLeft, y - 19, roadRight, y + 19);
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
+    const holoCyan = Color(0xFF00F0FF);
     canvas.drawRRect(
       rrect,
       Paint()..color = palette.hudSurface.withValues(alpha: 0.94),
@@ -435,14 +531,17 @@ class RacingHighwayPainter extends CustomPainter {
     canvas.drawRRect(
       rrect,
       Paint()
-        ..color = accent
+        ..color = holoCyan.withValues(alpha: 0.85)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0,
     );
 
+    final labelPrefix = destinationLabel != null
+        ? 'HOLO-GATE: $destinationLabel'
+        : code;
     final tp = TextPainter(
       text: TextSpan(
-        text: '$code  •  $title',
+        text: '$labelPrefix  •  $title',
         style: const TextStyle(
           fontFamily: 'Rajdhani',
           fontSize: 14.5,

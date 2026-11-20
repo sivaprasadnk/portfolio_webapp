@@ -8,22 +8,34 @@ import 'package:spnk/views/screens/racing/racing_models.dart';
 class PaddockRivalState {
   double angle;
   final double speedRad;
+  final double radiusX;
+  final double radiusY;
   final int colorVariant;
   final String label;
+  final OpponentVehicleKind kind;
+  double hitCooldown;
+  double hitFlashTimer;
+  Offset staggerOffset;
 
   PaddockRivalState({
     required this.angle,
     required this.speedRad,
+    this.radiusX = 900.0,
+    this.radiusY = 535.0,
     required this.colorVariant,
     required this.label,
+    this.kind = OpponentVehicleKind.coupe,
+    this.hitCooldown = 0.0,
+    this.hitFlashTimer = 0.0,
+    this.staggerOffset = Offset.zero,
   });
 
   Offset get position => Offset(
-        math.cos(angle) * 900.0,
-        math.sin(angle) * 535.0,
+        math.cos(angle) * radiusX + staggerOffset.dx,
+        math.sin(angle) * radiusY + staggerOffset.dy,
       );
 
-  double get heading => angle + math.pi;
+  double get heading => math.atan2(-math.sin(angle) * radiusX, -math.cos(angle) * radiusY);
 }
 
 class RacingPaddockPainter extends CustomPainter {
@@ -47,6 +59,11 @@ class RacingPaddockPainter extends CustomPainter {
   final List<PaddockSkidMark> skidMarks;
   final List<PaddockRivalState> rivals;
   final ui.Image? driverPhoto;
+  final VehicleType vehicleType;
+  final bool collisionFlash;
+  final List<ImpactSpark> sparks;
+  final Offset cameraShake;
+  final double hitVignetteAlpha;
 
   RacingPaddockPainter({
     required this.playerPos,
@@ -69,6 +86,11 @@ class RacingPaddockPainter extends CustomPainter {
     required this.skidMarks,
     required this.rivals,
     this.driverPhoto,
+    this.vehicleType = VehicleType.apexGt,
+    this.collisionFlash = false,
+    this.sparks = const [],
+    this.cameraShake = Offset.zero,
+    this.hitVignetteAlpha = 0.0,
   });
 
   /// Converts a screen tap coordinate into a world-space coordinate.
@@ -100,8 +122,8 @@ class RacingPaddockPainter extends CustomPainter {
     canvas.save();
     // Camera transform: place `cameraPos` slightly below screen center
     canvas.translate(
-      size.width * 0.5 - cameraPos.dx,
-      size.height * 0.54 - cameraPos.dy,
+      size.width * 0.5 - cameraPos.dx + cameraShake.dx,
+      size.height * 0.54 - cameraPos.dy + cameraShake.dy,
     );
 
     // 2. World Blueprint / Turf / Synthwave Grid & Boundary Fence
@@ -175,8 +197,8 @@ class RacingPaddockPainter extends CustomPainter {
         canvas: canvas,
         position: r.position,
         headingRadians: r.heading,
-        width: 28,
-        length: 54,
+        width: r.kind.topDownWidth,
+        length: r.kind.topDownLength,
         steer: -0.18,
         isAccelerating: true,
         isBraking: false,
@@ -186,16 +208,18 @@ class RacingPaddockPainter extends CustomPainter {
         badge: '',
         overrideTrim: rivalTrim[r.colorVariant % rivalTrim.length],
         showHeadlights: false,
+        opponentKind: r.kind,
+        collisionFlash: r.hitFlashTimer > 0,
       );
     }
 
-    // 11. Player Top-Down Supercar (`SPNK-01`)
+    // 11. Player Top-Down Vehicle (`SPNK-01`)
     TopDownRaceCarRenderer.paint(
       canvas: canvas,
       position: playerPos,
       headingRadians: playerHeading,
-      width: 34,
-      length: 66,
+      width: vehicleType.topDownWidth,
+      length: vehicleType.topDownLength,
       steer: steerVisual,
       isAccelerating: isAccelerating,
       isBraking: isBraking,
@@ -203,9 +227,37 @@ class RacingPaddockPainter extends CustomPainter {
       timeSeconds: timeSeconds,
       palette: palette,
       badge: '01',
+      vehicleType: vehicleType,
+      collisionFlash: collisionFlash,
     );
 
+    // World-space collision sparks
+    for (final sp in sparks) {
+      final alpha = (sp.life / sp.maxLife).clamp(0.0, 1.0);
+      canvas.drawCircle(
+        Offset(sp.x, sp.y),
+        sp.size * (0.6 + 0.5 * alpha),
+        Paint()..color = sp.color.withValues(alpha: alpha),
+      );
+    }
+
     canvas.restore();
+
+    if (hitVignetteAlpha > 0.01) {
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()
+          ..shader = RadialGradient(
+            radius: 1.05,
+            colors: [
+              Colors.transparent,
+              const Color(0xFFFF1E42)
+                  .withValues(alpha: hitVignetteAlpha.clamp(0.0, 0.45)),
+            ],
+            stops: const [0.55, 1.0],
+          ).createShader(Offset.zero & size),
+      );
+    }
 
     // 12. Screen-Space Corner Paddock Mini-Map Radar
     if (size.width >= 680 && size.height >= 500) {
@@ -583,15 +635,30 @@ class RacingPaddockPainter extends CustomPainter {
       color: Colors.white.withValues(alpha: 0.78),
       weight: FontWeight.w600,
     );
+    // Holographic projection emitter halo on sector bay
+    final pulse = 0.5 + 0.5 * math.sin(timeSeconds * 3.5 + sector.index);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(rect.center.dx, rect.bottom - 52),
+        width: 110 + 18 * pulse,
+        height: 22 + 5 * pulse,
+      ),
+      Paint()
+        ..color = const Color(0xFF00F0FF)
+            .withValues(alpha: isHovered ? 0.28 : 0.14)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
+
     _drawCenteredText(
       canvas: canvas,
       text: isHovered
-          ? '⚡ PARKED IN BAY — PRESS [E] OR TAP TO OPEN DOSSIER'
-          : 'CLICK OR DRIVE INTO BAY TO INSPECT',
+          ? '⚡ PARKED IN ${sector.destinationLabel} — HOLOGRAM READY'
+          : 'HOLOGRAM ZONE • DRIVE INTO BAY TO PROJECT',
       center: Offset(rect.center.dx, rect.bottom - 30),
       maxWidth: rect.width - 28,
       fontSize: 11.5,
-      color: isHovered ? const Color(0xFF10B981) : secondary,
+      color: isHovered ? const Color(0xFF00F0FF) : secondary,
       weight: FontWeight.w800,
     );
   }

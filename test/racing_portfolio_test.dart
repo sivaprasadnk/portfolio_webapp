@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:spnk/main.dart';
@@ -160,6 +161,122 @@ void main() {
       await tester.tap(find.byIcon(Icons.light_mode));
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
+
+  testWidgets(
+    'Selects across all 5 user vehicle types in 3D Garage & updates HUD',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1520, 920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(MyApp());
+      await tester.pump(const Duration(milliseconds: 150));
+
+      // Default vehicle pill should be SUPERCAR
+      expect(find.text('SUPERCAR'), findsOneWidget);
+
+      // Open 3D Vehicle Garage
+      await tester.ensureVisible(find.text('SUPERCAR'));
+      await tester.tap(find.text('SUPERCAR'));
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(
+        find.text('3D VEHICLE GARAGE // SELECT CHASSIS'),
+        findsOneWidget,
+      );
+      expect(find.text('APEX GT-01'), findsWidgets);
+      expect(find.text('FORMULA-X'), findsOneWidget);
+      expect(find.text('CYBER-BIKE'), findsOneWidget);
+      expect(find.text('TITAN-6X'), findsOneWidget);
+      expect(find.text('AERO-HOVER'), findsOneWidget);
+
+      // Choose CYBER-BIKE and deploy
+      await tester.tap(find.text('CYBER-BIKE'));
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.tap(find.text('DEPLOY CYBER-BIKE'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.text('3D VEHICLE GARAGE // SELECT CHASSIS'),
+        findsNothing,
+      );
+      expect(find.text('MOTO BIKE'), findsOneWidget);
+
+      // Cycle vehicle via keyboard shortcut V -> TITAN-6X (CYBER SUV)
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(find.text('CYBER SUV'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
+
+  testWidgets(
+    'Pops interactive 3D Destination Hologram projecting About Me, Projects & Contact Us',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1520, 920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(MyApp());
+      await tester.pump(const Duration(milliseconds: 150));
+
+      // Open current Hologram via top bar HOLOGRAM button
+      await tester.ensureVisible(find.text('HOLOGRAM'));
+      await tester.tap(find.text('HOLOGRAM'));
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(
+        find.text('HOLOGRAM PROJECTION // HOME BASE'),
+        findsOneWidget,
+      );
+
+      // Step forward to ABOUT ME destination hologram
+      await tester.tap(find.byTooltip('Next Destination'));
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(
+        find.text('HOLOGRAM PROJECTION // ABOUT ME'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Clean Arch & BLoC'), findsWidgets);
+
+      // Step to SKILLS -> EXPERIENCE -> PROJECTS
+      await tester.tap(find.byTooltip('Next Destination'));
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.tap(find.byTooltip('Next Destination'));
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.tap(find.byTooltip('Next Destination'));
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(
+        find.text('HOLOGRAM PROJECTION // PROJECTS'),
+        findsOneWidget,
+      );
+      expect(find.text('SP Quiz App'), findsOneWidget);
+      expect(find.text('QR Code Studio'), findsOneWidget);
+
+      // Step to CONTACT US destination hologram
+      await tester.tap(find.byTooltip('Next Destination'));
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(
+        find.text('HOLOGRAM PROJECTION // CONTACT US'),
+        findsOneWidget,
+      );
+      expect(find.text('TRANSMIT'), findsWidgets);
+
+      // Dismiss hologram with RESUME DRIVE
+      await tester.tap(find.text('RESUME DRIVE'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        find.text('HOLOGRAM PROJECTION // CONTACT US'),
+        findsNothing,
+      );
 
       await tester.pump(const Duration(seconds: 3));
     },

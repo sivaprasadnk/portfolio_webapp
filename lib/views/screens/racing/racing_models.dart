@@ -73,6 +73,208 @@ enum RacingVisualTheme {
   final IconData icon;
 }
 
+/// 5 selectable player vehicle types with distinct visuals, physics & hitboxes.
+enum VehicleType {
+  apexGt(
+    name: 'APEX GT-01',
+    shortLabel: 'SUPERCAR',
+    tagline: 'Twin-Turbo Carbon GT',
+    icon: Icons.directions_car_filled_rounded,
+    baseMaxSpeed: 300.0,
+    nitroMaxSpeed: 425.0,
+    acceleration: 145.0,
+    braking: 235.0,
+    handling: 1.90,
+    armorFactor: 0.55,
+    mass: 1.0,
+    roadHalfWidth: 0.18,
+    chaseWidthScale: 1.0,
+    topDownWidth: 36.0,
+    topDownLength: 70.0,
+    offRoadDragFactor: 1.0,
+    speedRating: 0.84,
+    handlingRating: 0.78,
+    armorRating: 0.62,
+    agilityRating: 0.75,
+  ),
+  formulaX(
+    name: 'FORMULA-X',
+    shortLabel: 'F1 RACER',
+    tagline: 'Aero Ground-Effect GP',
+    icon: Icons.sports_motorsports_rounded,
+    baseMaxSpeed: 335.0,
+    nitroMaxSpeed: 465.0,
+    acceleration: 178.0,
+    braking: 270.0,
+    handling: 2.28,
+    armorFactor: 0.28,
+    mass: 0.78,
+    roadHalfWidth: 0.17,
+    chaseWidthScale: 0.95,
+    topDownWidth: 34.0,
+    topDownLength: 76.0,
+    offRoadDragFactor: 1.25,
+    speedRating: 0.98,
+    handlingRating: 0.92,
+    armorRating: 0.35,
+    agilityRating: 0.88,
+  ),
+  cyberBike(
+    name: 'CYBER-BIKE',
+    shortLabel: 'MOTO BIKE',
+    tagline: 'Razor-Thin Lightcycle',
+    icon: Icons.two_wheeler_rounded,
+    baseMaxSpeed: 318.0,
+    nitroMaxSpeed: 450.0,
+    acceleration: 195.0,
+    braking: 255.0,
+    handling: 2.45,
+    armorFactor: 0.22,
+    mass: 0.55,
+    roadHalfWidth: 0.10,
+    chaseWidthScale: 0.62,
+    topDownWidth: 20.0,
+    topDownLength: 62.0,
+    offRoadDragFactor: 0.90,
+    speedRating: 0.90,
+    handlingRating: 0.98,
+    armorRating: 0.25,
+    agilityRating: 1.00,
+  ),
+  titanTruck(
+    name: 'TITAN-6X',
+    shortLabel: 'CYBER SUV',
+    tagline: 'Armored Ramming Hauler',
+    icon: Icons.local_shipping_rounded,
+    baseMaxSpeed: 268.0,
+    nitroMaxSpeed: 385.0,
+    acceleration: 122.0,
+    braking: 210.0,
+    handling: 1.52,
+    armorFactor: 0.88,
+    mass: 1.85,
+    roadHalfWidth: 0.23,
+    chaseWidthScale: 1.18,
+    topDownWidth: 44.0,
+    topDownLength: 78.0,
+    offRoadDragFactor: 0.45,
+    speedRating: 0.70,
+    handlingRating: 0.62,
+    armorRating: 0.98,
+    agilityRating: 0.55,
+  ),
+  aeroHover(
+    name: 'AERO-HOVER',
+    shortLabel: 'HOVERCRAFT',
+    tagline: 'Zero-Drag Anti-Grav Jet',
+    icon: Icons.flight_rounded,
+    baseMaxSpeed: 312.0,
+    nitroMaxSpeed: 445.0,
+    acceleration: 165.0,
+    braking: 240.0,
+    handling: 2.08,
+    armorFactor: 0.68,
+    mass: 1.15,
+    roadHalfWidth: 0.20,
+    chaseWidthScale: 1.06,
+    topDownWidth: 40.0,
+    topDownLength: 68.0,
+    offRoadDragFactor: 0.0,
+    speedRating: 0.88,
+    handlingRating: 0.86,
+    armorRating: 0.72,
+    agilityRating: 0.84,
+  );
+
+  const VehicleType({
+    required this.name,
+    required this.shortLabel,
+    required this.tagline,
+    required this.icon,
+    required this.baseMaxSpeed,
+    required this.nitroMaxSpeed,
+    required this.acceleration,
+    required this.braking,
+    required this.handling,
+    required this.armorFactor,
+    required this.mass,
+    required this.roadHalfWidth,
+    required this.chaseWidthScale,
+    required this.topDownWidth,
+    required this.topDownLength,
+    required this.offRoadDragFactor,
+    required this.speedRating,
+    required this.handlingRating,
+    required this.armorRating,
+    required this.agilityRating,
+  });
+
+  final String name;
+  final String shortLabel;
+  final String tagline;
+  final IconData icon;
+  final double baseMaxSpeed;
+  final double nitroMaxSpeed;
+  final double acceleration;
+  final double braking;
+  final double handling;
+  final double armorFactor;
+  final double mass;
+  final double roadHalfWidth;
+  final double chaseWidthScale;
+  final double topDownWidth;
+  final double topDownLength;
+  final double offRoadDragFactor;
+  final double speedRating;
+  final double handlingRating;
+  final double armorRating;
+  final double agilityRating;
+}
+
+/// Distinct opponent classes with accurately matched render sizes and hitboxes.
+enum OpponentVehicleKind {
+  coupe(
+    visualWidthFactor: 0.34,
+    roadHalfWidth: 0.17,
+    zHalfLength: 70.0,
+    topDownWidth: 30.0,
+    topDownLength: 58.0,
+    mass: 1.0,
+  ),
+  truck(
+    visualWidthFactor: 0.44,
+    roadHalfWidth: 0.22,
+    zHalfLength: 96.0,
+    topDownWidth: 38.0,
+    topDownLength: 74.0,
+    mass: 1.7,
+  ),
+  interceptor(
+    visualWidthFactor: 0.32,
+    roadHalfWidth: 0.16,
+    zHalfLength: 68.0,
+    topDownWidth: 28.0,
+    topDownLength: 56.0,
+    mass: 0.9,
+  );
+
+  const OpponentVehicleKind({
+    required this.visualWidthFactor,
+    required this.roadHalfWidth,
+    required this.zHalfLength,
+    required this.topDownWidth,
+    required this.topDownLength,
+    required this.mass,
+  });
+
+  final double visualWidthFactor;
+  final double roadHalfWidth;
+  final double zHalfLength;
+  final double topDownWidth;
+  final double topDownLength;
+  final double mass;
+}
+
 /// Unified color & surface palette resolved from [ThemeState] + [RacingVisualTheme].
 class RacingThemePalette {
   final RacingVisualTheme visualTheme;
@@ -304,6 +506,7 @@ class RaceSectorMeta {
   final Screen screen;
   final String code;
   final String shortLabel;
+  final String destinationLabel;
   final String title;
   final String subtitle;
   final int startSegment;
@@ -318,6 +521,7 @@ class RaceSectorMeta {
     required this.screen,
     required this.code,
     required this.shortLabel,
+    required this.destinationLabel,
     required this.title,
     required this.subtitle,
     required this.startSegment,
@@ -334,6 +538,7 @@ class RaceSectorMeta {
       screen: Screen.home,
       code: 'SEC-01',
       shortLabel: 'GRID',
+      destinationLabel: 'HOME BASE',
       title: 'POLE POSITION // SIVAPRASAD NK',
       subtitle: 'Senior Flutter Architect • Starting Grid & Driver Profile',
       startSegment: 0,
@@ -348,6 +553,7 @@ class RaceSectorMeta {
       screen: Screen.aboutMe,
       code: 'SEC-02',
       shortLabel: 'BIO',
+      destinationLabel: 'ABOUT ME',
       title: 'ORIGIN CHICANE // DRIVER BIO',
       subtitle: '3.7+ Yrs Flutter • Clean Architecture • Fitness & Perks',
       startSegment: 120,
@@ -362,6 +568,7 @@ class RaceSectorMeta {
       screen: Screen.skills,
       code: 'SEC-03',
       shortLabel: 'SKILLS',
+      destinationLabel: 'SKILLS',
       title: 'DYNO STRAIGHT // TECH ARSENAL',
       subtitle: 'ECU Engine Tuning • Dart, Flutter, Firebase, Web',
       startSegment: 240,
@@ -376,6 +583,7 @@ class RaceSectorMeta {
       screen: Screen.experience,
       code: 'SEC-04',
       shortLabel: 'CAREER',
+      destinationLabel: 'EXPERIENCE',
       title: 'CHRONO HAIRPINS // PRO SEASONS',
       subtitle: 'Bayasys • Indbytes • Invenics Career Telemetry',
       startSegment: 360,
@@ -390,6 +598,7 @@ class RaceSectorMeta {
       screen: Screen.projects,
       code: 'SEC-05',
       shortLabel: 'PROJECTS',
+      destinationLabel: 'PROJECTS',
       title: 'NEON SHOWROOM // CHAMPIONSHIP APPS',
       subtitle:
           'Quiz, Quotes, Portfolio, QR Studio, Arcade & YT Downloader',
@@ -405,6 +614,7 @@ class RaceSectorMeta {
       screen: Screen.contactMe,
       code: 'SEC-06',
       shortLabel: 'COMMS',
+      destinationLabel: 'CONTACT US',
       title: 'VICTORY PADDOCK // PIT-WALL RADIO',
       subtitle: 'Direct Radio Comms, Social Paddock & CV Trophy',
       startSegment: 600,
@@ -459,6 +669,7 @@ class RoadSegment {
   final String? gantryCode;
   final String? gantryTitle;
   final String? gantrySubtitle;
+  final String? gantryDestinationLabel;
   final BillboardSpec? leftBillboard;
   final BillboardSpec? rightBillboard;
   final double? boostLane;
@@ -475,6 +686,7 @@ class RoadSegment {
     this.gantryCode,
     this.gantryTitle,
     this.gantrySubtitle,
+    this.gantryDestinationLabel,
     this.leftBillboard,
     this.rightBillboard,
     this.boostLane,
@@ -490,7 +702,12 @@ class TrafficCar {
   double speed;
   final int colorVariant;
   final String label;
+  final OpponentVehicleKind kind;
   bool passedRecently;
+  double hitCooldown;
+  double hitFlashTimer;
+  double lateralRecoil;
+  bool nearMissAwarded;
 
   TrafficCar({
     required this.z,
@@ -498,7 +715,56 @@ class TrafficCar {
     required this.speed,
     required this.colorVariant,
     required this.label,
+    this.kind = OpponentVehicleKind.coupe,
     this.passedRecently = false,
+    this.hitCooldown = 0.0,
+    this.hitFlashTimer = 0.0,
+    this.lateralRecoil = 0.0,
+    this.nearMissAwarded = false,
+  });
+
+  double get effectiveLane => (lane + lateralRecoil).clamp(-0.92, 0.92);
+}
+
+class TrackObstacle {
+  final double z;
+  final double lane;
+  final double roadHalfWidth;
+  final double zHalfLength;
+  final String label;
+  double hitCooldown;
+  double hitFlashTimer;
+
+  TrackObstacle({
+    required this.z,
+    required this.lane,
+    this.roadHalfWidth = 0.16,
+    this.zHalfLength = 45.0,
+    required this.label,
+    this.hitCooldown = 0.0,
+    this.hitFlashTimer = 0.0,
+  });
+}
+
+class ImpactSpark {
+  double x;
+  double y;
+  double vx;
+  double vy;
+  double life;
+  final double maxLife;
+  final double size;
+  final Color color;
+
+  ImpactSpark({
+    required this.x,
+    required this.y,
+    required this.vx,
+    required this.vy,
+    required this.life,
+    required this.maxLife,
+    required this.size,
+    required this.color,
   });
 }
 
@@ -917,6 +1183,7 @@ class CircuitBuilder {
         gantryCode: gantry?.code,
         gantryTitle: gantry?.title,
         gantrySubtitle: gantry?.subtitle,
+        gantryDestinationLabel: gantry?.destinationLabel,
         leftBillboard: leftBoards[i],
         rightBillboard: rightBoards[i],
         boostLane: boostLanes[i],
@@ -941,6 +1208,11 @@ class CircuitBuilder {
       'AERO-UI',
     ];
     const lanes = [-0.66, 0.0, 0.66];
+    const kinds = [
+      OpponentVehicleKind.coupe,
+      OpponentVehicleKind.truck,
+      OpponentVehicleKind.interceptor,
+    ];
     return List<TrafficCar>.generate(10, (i) {
       return TrafficCar(
         z: ((i + 1) * (trackLength / 11)) % trackLength,
@@ -948,8 +1220,45 @@ class CircuitBuilder {
         speed: 95.0 + (i % 4) * 18.0,
         colorVariant: i % 4,
         label: labels[i % labels.length],
+        kind: kinds[i % kinds.length],
       );
     });
+  }
+
+  static List<TrackObstacle> buildInitialObstacles() {
+    const barrierLabels = [
+      'CHICANE CONE',
+      'CYBER BARRIER',
+      'APEX BLOCK',
+      'DRONE PYLON',
+    ];
+    const candidateLanes = [-0.66, 0.0, 0.66];
+    const blockedBoostSegs = {30, 82, 176, 418, 508, 556, 676};
+
+    final obstacles = <TrackObstacle>[];
+    final checkpointSegs =
+        RaceSectorMeta.sectors.map((s) => s.checkpointSegment).toList();
+
+    for (int i = 0; i < 12; i++) {
+      int seg = (48 + i * 56) % totalSegments;
+      bool nearCheckpoint() => checkpointSegs.any((cp) => (seg - cp).abs() <= 6);
+      bool nearBoost() =>
+          blockedBoostSegs.contains(seg) ||
+          (seg >= 252 && seg <= 332 && (seg - 260) % 18 <= 6);
+
+      while (nearCheckpoint() || nearBoost()) {
+        seg = (seg + 10) % totalSegments;
+      }
+
+      obstacles.add(
+        TrackObstacle(
+          z: seg * segmentLength + 90.0,
+          lane: candidateLanes[(i * 2 + 1) % candidateLanes.length],
+          label: barrierLabels[i % barrierLabels.length],
+        ),
+      );
+    }
+    return obstacles;
   }
 
   static List<DataCrystalOrb> buildInitialOrbs() {
