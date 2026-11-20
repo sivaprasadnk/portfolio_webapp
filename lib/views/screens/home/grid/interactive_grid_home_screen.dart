@@ -35,6 +35,7 @@ import 'package:spnk/views/screens/home/widgets/theme_icon.dart';
 import 'package:spnk/views/screens/home/widgets/theme_switch.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 import 'package:spnk/views/screens/racing/racing_portfolio_screen.dart';
+import 'package:spnk/views/screens/solar/solar_system_screen.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 import 'package:spnk/views/widgets/gamification_engine.dart';
 import 'package:spnk/views/widgets/portfolio_style_widgets.dart';
@@ -178,6 +179,11 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
     Navigator.of(context).pushNamed(RacingPortfolioScreen.routeName);
   }
 
+  void _openSolarV3() {
+    GamificationController.instance.completeQuest('first_scroll');
+    Navigator.of(context).pushNamed(SolarSystemPortfolioScreen.routeName);
+  }
+
   Future<void> _launchExternal(String rawUrl, {String? xpReason, String? key}) async {
     final trimmed = rawUrl.trim();
     if (trimmed.isEmpty) return;
@@ -224,6 +230,10 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
     }
     if (project.webUrl == racingGameV2Link) {
       _openRacingV2();
+      return;
+    }
+    if (project.webUrl == solarSystemV3Link) {
+      _openSolarV3();
       return;
     }
     if (project.webUrl.isNotEmpty) {
@@ -1087,6 +1097,13 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
                       onTap: _openRacingV2,
                     ),
                     _GridActionPill(
+                      label: '3D Solar /v3',
+                      icon: Icons.public_rounded,
+                      color: const Color(0xFFA855F7),
+                      filled: true,
+                      onTap: _openSolarV3,
+                    ),
+                    _GridActionPill(
                       label: 'GitHub',
                       icon: FontAwesomeIcons.github,
                       color: context.primaryColor,
@@ -1388,6 +1405,12 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
                 color: const Color(0xFFEF4444),
                 onTap: () => Navigator.of(context)
                     .pushNamed(YtDownloaderScreen.routeName),
+              ),
+              _GridActionPill(
+                label: '3D Solar /v3',
+                icon: Icons.public_rounded,
+                color: const Color(0xFFA855F7),
+                onTap: _openSolarV3,
               ),
             ],
           ),

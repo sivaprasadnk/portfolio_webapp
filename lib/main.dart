@@ -22,6 +22,7 @@ import 'package:spnk/views/screens/privacy_policy/qrcode_privacy_policy_screen.d
 import 'package:spnk/views/screens/privacy_policy/yt_downloader_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 import 'package:spnk/views/screens/racing/racing_portfolio_screen.dart';
+import 'package:spnk/views/screens/solar/solar_system_screen.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 
 void main() {
@@ -96,6 +97,10 @@ class MyApp extends StatelessWidget {
                   const RacingPortfolioScreen(),
               '${RacingPortfolioScreen.routeName}/': (context) =>
                   const RacingPortfolioScreen(),
+              SolarSystemPortfolioScreen.routeName: (context) =>
+                  const SolarSystemPortfolioScreen(),
+              '${SolarSystemPortfolioScreen.routeName}/': (context) =>
+                  const SolarSystemPortfolioScreen(),
               ChronoCraftPrivacyPolicyScreen.routeName: (context) =>
                   const ChronoCraftPrivacyPolicyScreen(),
               '${ChronoCraftPrivacyPolicyScreen.routeName}/': (context) =>
@@ -165,6 +170,14 @@ class MyApp extends StatelessWidget {
                   builder: (_) => const RacingPortfolioScreen(),
                 );
               }
+              if (name == '/v3' ||
+                  name.startsWith('/v3/') ||
+                  name.startsWith('/v3?')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const SolarSystemPortfolioScreen(),
+                );
+              }
               if (name == '/home' || name == HomeScreen.routeName) {
                 return MaterialPageRoute(
                   settings: settings,
@@ -189,10 +202,16 @@ class SplashScreen extends StatelessWidget {
   bool _matchesV2(String value) =>
       value == '/v2' || value.startsWith('/v2/') || value.startsWith('/v2?');
 
+  bool _matchesV3(String value) =>
+      value == '/v3' || value.startsWith('/v3/') || value.startsWith('/v3?');
+
   @override
   Widget build(BuildContext context) {
     final path = Uri.base.path;
     final fragment = Uri.base.fragment;
+    if (_matchesV3(path) || _matchesV3(fragment)) {
+      return const SolarSystemPortfolioScreen();
+    }
     if (_matchesV2(path) || _matchesV2(fragment)) {
       return const RacingPortfolioScreen();
     }
