@@ -29,6 +29,7 @@ class RacingTopTelemetryBar extends StatelessWidget {
     required this.onToggleHologram,
     required this.onOpenPitWall,
     required this.onTriggerNitroQuest,
+    this.onGoHome,
   });
 
   final RaceSectorMeta activeSector;
@@ -47,6 +48,7 @@ class RacingTopTelemetryBar extends StatelessWidget {
   final VoidCallback onToggleHologram;
   final VoidCallback onOpenPitWall;
   final VoidCallback onTriggerNitroQuest;
+  final VoidCallback? onGoHome;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +86,54 @@ class RacingTopTelemetryBar extends StatelessWidget {
                       LogoText(
                         onTap: () => onSelectSector(Screen.home),
                       ),
-                      const SizedBox(width: 10),
+                      if (onGoHome != null) ...[
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: 'Back to Interactive Grid Home (/)',
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: onGoHome,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isVeryCompact ? 7 : 9,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.07),
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.grid_view_rounded,
+                                      size: 13,
+                                      color: accent,
+                                    ),
+                                    if (!isVeryCompact) ...[
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'HOME',
+                                        style: context.bodySmall.copyWith(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.9,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
                       Expanded(
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,

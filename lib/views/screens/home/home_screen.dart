@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spnk/views/screens/racing/racing_portfolio_screen.dart';
+import 'package:spnk/views/screens/home/grid/interactive_grid_home_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -8,6 +8,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const RacingPortfolioScreen();
+    return const InteractiveGridHomeScreen();
   }
 }

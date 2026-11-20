@@ -19,11 +19,12 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v2'));
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 250));
 
-      // Verify driver identity, photo & live clickable quick-links on windshield HUD
+      // Verify Home return pill and driver identity on /v2 racing HUD
+      expect(find.text('HOME'), findsOneWidget);
       expect(find.text('SIVAPRASAD NK'), findsOneWidget);
       expect(find.text('GH'), findsOneWidget);
       expect(find.text('IN'), findsOneWidget);
@@ -90,7 +91,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v2'));
       await tester.pump(const Duration(milliseconds: 150));
 
       // Verify mobile touch pedals & compact HUD render with zero overflow
@@ -114,7 +115,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v2'));
       await tester.pump(const Duration(milliseconds: 150));
 
       // 1. Switch across all 3 Gameplay Modes: 3D HORIZON -> OPEN WORLD -> HIGHWAY
@@ -181,7 +182,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v2'));
       await tester.pump(const Duration(milliseconds: 150));
 
       // Default vehicle pill should be SUPERCAR
@@ -232,7 +233,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v2'));
       await tester.pump(const Duration(milliseconds: 150));
 
       // Open current Hologram via top bar HOLOGRAM button

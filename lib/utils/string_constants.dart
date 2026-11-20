@@ -26,6 +26,7 @@ const String qrCodePlayStoreLink =
     'https://play.google.com/store/apps/details?id=dev.sivaprasadnk.qr_code_studio_mobile';
 const String arcadeHubLink = 'https://sivaprasadnk.dev/arcade';
 const String ytDownloaderLink = 'https://sivaprasadnk.dev/yt-downloader';
+const String racingGameV2Link = 'https://sivaprasadnk.dev/v2';
 
 const String spQuizLink =
     'https://play.google.com/store/apps/details?id=com.sptpra.spquiz';

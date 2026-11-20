@@ -21,14 +21,19 @@ import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_scr
 import 'package:spnk/views/screens/privacy_policy/qrcode_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/yt_downloader_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
+import 'package:spnk/views/screens/racing/racing_portfolio_screen.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 
 void main() {
   setup();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key, this.initialRoute});
+
+  final String? initialRoute;
+
   @override
   Widget build(BuildContext context) {
     precacheImage(const AssetImage('assets/images/mesh1.jpg'), context);
@@ -82,8 +87,15 @@ class MyApp extends StatelessWidget {
             title: 'Sivaprasad NK',
             debugShowCheckedModeBanner: false,
             theme: state.themeData,
+            initialRoute: initialRoute,
             routes: {
               '/': (context) => const SplashScreen(),
+              HomeScreen.routeName: (context) => const HomeScreen(),
+              '/home': (context) => const HomeScreen(),
+              RacingPortfolioScreen.routeName: (context) =>
+                  const RacingPortfolioScreen(),
+              '${RacingPortfolioScreen.routeName}/': (context) =>
+                  const RacingPortfolioScreen(),
               ChronoCraftPrivacyPolicyScreen.routeName: (context) =>
                   const ChronoCraftPrivacyPolicyScreen(),
               '${ChronoCraftPrivacyPolicyScreen.routeName}/': (context) =>
@@ -145,6 +157,20 @@ class MyApp extends StatelessWidget {
                   builder: (_) => const YtDownloaderScreen(),
                 );
               }
+              if (name == '/v2' ||
+                  name.startsWith('/v2/') ||
+                  name.startsWith('/v2?')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const RacingPortfolioScreen(),
+                );
+              }
+              if (name == '/home' || name == HomeScreen.routeName) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const HomeScreen(),
+                );
+              }
               return MaterialPageRoute(
                 settings: settings,
                 builder: (_) => const SplashScreen(),
@@ -160,10 +186,16 @@ class MyApp extends StatelessWidget {
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
+  bool _matchesV2(String value) =>
+      value == '/v2' || value.startsWith('/v2/') || value.startsWith('/v2?');
+
   @override
   Widget build(BuildContext context) {
     final path = Uri.base.path;
     final fragment = Uri.base.fragment;
+    if (_matchesV2(path) || _matchesV2(fragment)) {
+      return const RacingPortfolioScreen();
+    }
     if (path.startsWith('/chronocraft/privacy-policy') ||
         fragment.startsWith('/chronocraft/privacy-policy')) {
       return const ChronoCraftPrivacyPolicyScreen();

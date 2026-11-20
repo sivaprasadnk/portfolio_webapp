@@ -315,7 +315,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v2'));
       await tester.pump(const Duration(milliseconds: 250));
 
       await tester.tap(find.text('PIT WALL'));

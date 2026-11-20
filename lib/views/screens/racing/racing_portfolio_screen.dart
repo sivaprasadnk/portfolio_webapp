@@ -21,6 +21,7 @@ import 'package:spnk/views/bloc/skills/skills_bloc.dart';
 import 'package:spnk/views/bloc/skills/skills_state.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
+import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/racing/racing_3d_bridge.dart';
 import 'package:spnk/views/screens/racing/racing_car_painter.dart';
 import 'package:spnk/views/screens/racing/racing_collision_engine.dart';
@@ -37,6 +38,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 class RacingPortfolioScreen extends StatefulWidget {
   const RacingPortfolioScreen({super.key});
+
+  static const routeName = '/v2';
 
   @override
   State<RacingPortfolioScreen> createState() => _RacingPortfolioScreenState();
@@ -1846,6 +1849,14 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
     return a + (b - a) * t.clamp(0.0, 1.0);
   }
 
+  void _goHome() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocListener(
@@ -2189,6 +2200,7 @@ class _RacingPortfolioScreenState extends State<RacingPortfolioScreen>
                               onOpenPitWall: () =>
                                   _openPitStop(_activeSector.screen),
                               onTriggerNitroQuest: _triggerNitroChallenge,
+                              onGoHome: _goHome,
                             ),
                           ),
                         ),
