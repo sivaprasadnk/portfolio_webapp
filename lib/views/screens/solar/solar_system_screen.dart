@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -346,6 +347,10 @@ class _SolarSystemPortfolioScreenState extends State<SolarSystemPortfolioScreen>
   }
 
   void _openV2() {
+    if (kIsWeb) {
+      launchUrl(Uri.parse('/v2/'), webOnlyWindowName: '_self');
+      return;
+    }
     Navigator.of(context).pushNamed(RacingPortfolioScreen.routeName);
   }
 

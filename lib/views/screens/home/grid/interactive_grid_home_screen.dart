@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -174,6 +175,10 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
 
   void _openRacingV2() {
     GamificationController.instance.completeQuest('first_scroll');
+    if (kIsWeb) {
+      launchUrl(Uri.parse('/v2/'), webOnlyWindowName: '_self');
+      return;
+    }
     Navigator.of(context).pushNamed(RacingPortfolioScreen.routeName);
   }
 
