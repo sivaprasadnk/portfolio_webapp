@@ -16,6 +16,7 @@ import 'package:spnk/views/bloc/skills/skills_event.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_bloc.dart';
 import 'package:spnk/views/bloc/theme_switch/theme_state.dart';
 import 'package:spnk/views/screens/arcade/arcade_screen.dart';
+import 'package:spnk/views/screens/christmas/christmas_portfolio_screen.dart';
 import 'package:spnk/views/screens/home/grid/interactive_grid_home_screen.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
@@ -98,6 +99,10 @@ class MyApp extends StatelessWidget {
                   const InteractiveGridHomeScreen(),
               '${InteractiveGridHomeScreen.routeName}/': (context) =>
                   const InteractiveGridHomeScreen(),
+              ChristmasPortfolioScreen.routeName: (context) =>
+                  const ChristmasPortfolioScreen(),
+              '${ChristmasPortfolioScreen.routeName}/': (context) =>
+                  const ChristmasPortfolioScreen(),
               RacingPortfolioScreen.routeName: (context) =>
                   const RacingPortfolioScreen(),
               '${RacingPortfolioScreen.routeName}/': (context) =>
@@ -191,6 +196,14 @@ class MyApp extends StatelessWidget {
                   builder: (_) => const InteractiveGridHomeScreen(),
                 );
               }
+              if (name == '/v5' ||
+                  name.startsWith('/v5/') ||
+                  name.startsWith('/v5?')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const ChristmasPortfolioScreen(),
+                );
+              }
               if (name == '/home' || name == HomeScreen.routeName) {
                 return MaterialPageRoute(
                   settings: settings,
@@ -221,10 +234,16 @@ class SplashScreen extends StatelessWidget {
   bool _matchesV4(String value) =>
       value == '/v4' || value.startsWith('/v4/') || value.startsWith('/v4?');
 
+  bool _matchesV5(String value) =>
+      value == '/v5' || value.startsWith('/v5/') || value.startsWith('/v5?');
+
   @override
   Widget build(BuildContext context) {
     final path = Uri.base.path;
     final fragment = Uri.base.fragment;
+    if (_matchesV5(path) || _matchesV5(fragment)) {
+      return const ChristmasPortfolioScreen();
+    }
     if (_matchesV4(path) || _matchesV4(fragment)) {
       return const InteractiveGridHomeScreen();
     }

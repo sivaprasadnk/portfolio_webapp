@@ -35,9 +35,11 @@ import 'package:spnk/views/screens/solar/solar_system_screen.dart';
 import 'package:spnk/views/screens/yt_downloader/yt_downloader_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Interactive 3D Christmas Winter Village portfolio screen for sivaprasadnk.dev.
+/// Interactive 3D Christmas Winter Village portfolio screen (/v5).
 class ChristmasPortfolioScreen extends StatefulWidget {
   const ChristmasPortfolioScreen({super.key});
+
+  static const routeName = '/v5';
 
   @override
   State<ChristmasPortfolioScreen> createState() =>
@@ -1393,6 +1395,11 @@ class _ChristmasPortfolioScreenState extends State<ChristmasPortfolioScreen>
             spacing: 14,
             runSpacing: 8,
             children: [
+              _FooterLinkChip(
+                label: '2D Santa /',
+                color: goldAccent,
+                onTap: () => Navigator.of(context).pushNamed('/'),
+              ),
               _FooterLinkChip(
                 label: 'Classic /v4',
                 color: goldAccent,

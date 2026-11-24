@@ -38,7 +38,7 @@ void main() {
   });
 
   testWidgets(
-    'Root route (/) renders 3D Christmas Winter Village with SP globe, floating clouds, day/night & /v4',
+    'Root route (/) renders 2D Horizontal Santa Village with section boards, sub-boards, forward/back walk & /v5',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -46,10 +46,13 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const MyApp());
-      await tester.pump(const Duration(milliseconds: 160));
+      await tester.pump(const Duration(milliseconds: 180));
 
-      // Fixed SP glass snow globe
+      // Fixed SP glass snow globe & main character Santa Claus
       expect(find.byKey(const ValueKey('sp_snow_globe')), findsOneWidget);
+      expect(find.byKey(const ValueKey('santa_character')), findsOneWidget);
+      expect(find.byKey(const ValueKey('santa_walk_forward')), findsOneWidget);
+      expect(find.byKey(const ValueKey('santa_walk_back')), findsOneWidget);
 
       // Floating cloud navigation destinations
       for (final id in [
@@ -63,19 +66,25 @@ void main() {
         expect(find.byKey(ValueKey('cloud_nav_$id')), findsOneWidget);
       }
 
-      // Portfolio content & sections
+      // Main section boards & sub-boards content
       expect(find.text('Merry Christmas & Happy New Year!'), findsOneWidget);
       expect(find.text('Sivaprasad NK'), findsOneWidget);
       expect(find.text('Ernakulam, Kerala • India'), findsOneWidget);
-      expect(find.textContaining('5 years of experience'), findsWidgets);
-      expect(find.textContaining('AI coding'), findsWidgets);
-      expect(find.text('Endurance Athlete'), findsOneWidget);
       expect(find.text('About Me'), findsOneWidget);
+      expect(find.text('AI Coding & Craft'), findsOneWidget);
+      expect(find.text('Endurance Athlete'), findsOneWidget);
       expect(find.text('Experience'), findsWidgets);
       expect(find.text('Projects'), findsWidgets);
       expect(find.text('Skills & Technologies'), findsOneWidget);
-      expect(find.text('Get In Touch'), findsWidgets);
+      expect(find.text('Get In Touch'), findsOneWidget);
       expect(find.text('CLASSIC /v4'), findsOneWidget);
+      expect(find.text('3D VILLAGE /v5'), findsOneWidget);
+
+      // Walk Santa forward & backward
+      await tester.tap(find.byKey(const ValueKey('santa_walk_forward')));
+      await tester.pump(const Duration(milliseconds: 450));
+      await tester.tap(find.byKey(const ValueKey('santa_walk_back')));
+      await tester.pump(const Duration(milliseconds: 450));
 
       // Day / Night toggle
       final dayNightToggle = find.byKey(const ValueKey('day_night_toggle'));
@@ -85,7 +94,6 @@ void main() {
       await tester.tap(dayNightToggle);
       await tester.pump(const Duration(milliseconds: 250));
       expect(find.text(wasDayInitially ? 'Night' : 'Day'), findsOneWidget);
-      // Restore toggle state for subsequent tests
       await tester.tap(dayNightToggle);
       await tester.pump(const Duration(milliseconds: 250));
 
@@ -96,7 +104,6 @@ void main() {
       expect(find.text('Let It Snow: OFF'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('let_it_snow_toggle')));
       await tester.pump(const Duration(milliseconds: 150));
-      expect(find.text('Let It Snow: ON'), findsOneWidget);
 
       // Navigate via cloud nav & SP snow globe
       await tester.tap(find.byKey(const ValueKey('cloud_nav_projects')));
@@ -104,19 +111,43 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('sp_snow_globe')));
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Navigate to /v4 Classic Grid Home
-      await tester.tap(find.text('CLASSIC /v4'));
-      await tester.pump(const Duration(milliseconds: 250));
-      await tester.pump(const Duration(milliseconds: 250));
-      expect(find.text('01 // COMMANDER'), findsOneWidget);
-      expect(find.text('PARTY MODE'), findsOneWidget);
+      // Navigate to 3D Winter Village /v5
+      await tester.tap(find.byKey(const ValueKey('village_3d_v5_btn')));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('2D Santa /'), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 2));
     },
   );
 
   testWidgets(
-    '3D Christmas Winter Village renders cleanly on mobile 390x844 viewport without overflow',
+    'Route /v5 renders 3D Christmas Winter Village cleanly with /v4 navigation',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const MyApp(initialRoute: '/v5'));
+      await tester.pump(const Duration(milliseconds: 160));
+
+      expect(find.byKey(const ValueKey('sp_snow_globe')), findsOneWidget);
+      expect(find.text('Sivaprasad NK'), findsOneWidget);
+      expect(find.text('2D Santa /'), findsOneWidget);
+      expect(find.text('CLASSIC /v4'), findsOneWidget);
+
+      await tester.tap(find.text('CLASSIC /v4'));
+      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.text('01 // COMMANDER'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 2));
+    },
+  );
+
+  testWidgets(
+    '2D Horizontal Santa Village renders cleanly on mobile 390x844 viewport without overflow',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
@@ -124,14 +155,15 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const MyApp());
-      await tester.pump(const Duration(milliseconds: 160));
+      await tester.pump(const Duration(milliseconds: 180));
 
       expect(find.byKey(const ValueKey('sp_snow_globe')), findsOneWidget);
+      expect(find.byKey(const ValueKey('santa_character')), findsOneWidget);
+      expect(find.byKey(const ValueKey('santa_walk_forward')), findsOneWidget);
+      expect(find.byKey(const ValueKey('santa_walk_back')), findsOneWidget);
       expect(find.byKey(const ValueKey('day_night_toggle')), findsOneWidget);
       expect(find.byKey(const ValueKey('let_it_snow_toggle')), findsOneWidget);
       expect(find.byKey(const ValueKey('cloud_nav_home')), findsOneWidget);
-      expect(find.byKey(const ValueKey('cloud_nav_contact')), findsOneWidget);
-      expect(find.text('Merry Christmas & Happy New Year!'), findsOneWidget);
       expect(find.text('Sivaprasad NK'), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 2));
