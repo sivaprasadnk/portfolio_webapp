@@ -526,62 +526,70 @@ class _CloudShapePainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    final path = Path()
+    // Multi-layered soft painterly cloud fill without hard cartoony outline
+    final softBody = Path()
       ..addRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.06, h * 0.24, w * 0.88, h * 0.72),
-          Radius.circular(h * 0.36),
+          Rect.fromLTWH(w * 0.05, h * 0.28, w * 0.90, h * 0.66),
+          Radius.circular(h * 0.34),
         ),
       )
-      ..addOval(Rect.fromCircle(center: Offset(w * 0.28, h * 0.34), radius: h * 0.30))
-      ..addOval(Rect.fromCircle(center: Offset(w * 0.52, h * 0.25), radius: h * 0.36))
-      ..addOval(Rect.fromCircle(center: Offset(w * 0.74, h * 0.36), radius: h * 0.28));
+      ..addOval(Rect.fromCircle(center: Offset(w * 0.26, h * 0.38), radius: h * 0.28))
+      ..addOval(Rect.fromCircle(center: Offset(w * 0.50, h * 0.26), radius: h * 0.35))
+      ..addOval(Rect.fromCircle(center: Offset(w * 0.74, h * 0.39), radius: h * 0.27));
 
-    // Soft atmospheric shadow underneath cloud
+    // Soft feathered outer mist halo
     canvas.drawPath(
-      path.shift(const Offset(0, 4)),
+      softBody,
+      Paint()
+        ..color = Colors.white.withValues(alpha: lerpDouble(0.22, 0.38, dayFactor)!)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+    );
+
+    // Subtle atmospheric shadow underneath cloud
+    canvas.drawPath(
+      softBody.shift(const Offset(0, 5)),
       Paint()
         ..color = Color.lerp(
-          const Color(0x66020817),
-          const Color(0x331E3A5F),
+          const Color(0x55020817),
+          const Color(0x281E3A5F),
           dayFactor,
         )!
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
 
     if (hovered || isActive) {
       canvas.drawPath(
-        path,
+        softBody,
         Paint()
           ..color = (isActive
                   ? ChristmasThemeConfig.champagneGold
                   : ChristmasThemeConfig.icyBlue)
-              .withValues(alpha: hovered ? 0.55 : 0.35)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+              .withValues(alpha: hovered ? 0.52 : 0.32)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 11),
       );
     }
 
-    // Fluffy cloud fill
+    // Soft translucent cloud body gradient
     final fillShader = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        Color.lerp(const Color(0xFFEDF6FF), Colors.white, dayFactor)!,
-        Color.lerp(const Color(0xFFCAE1F7), const Color(0xFFF0F7FF), dayFactor)!,
+        Color.lerp(const Color(0xE8EBF4FF), const Color(0xF5FFFFFF), dayFactor)!,
+        Color.lerp(const Color(0xD8BFE0FA), const Color(0xE8EAF4FF), dayFactor)!,
       ],
     ).createShader(Offset.zero & size);
-    canvas.drawPath(path, Paint()..shader = fillShader);
+    canvas.drawPath(softBody, Paint()..shader = fillShader);
 
-    // Delicate highlight rim
-    canvas.drawPath(
-      path,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isActive ? 1.4 : 0.9
-        ..color = isActive
-            ? ChristmasThemeConfig.warmGold.withValues(alpha: 0.85)
-            : Colors.white.withValues(alpha: 0.85),
-    );
+    if (isActive) {
+      canvas.drawPath(
+        softBody,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.1
+          ..color = ChristmasThemeConfig.warmGold.withValues(alpha: 0.75),
+      );
+    }
   }
 
   @override
