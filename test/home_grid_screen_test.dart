@@ -20,7 +20,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v4'));
       await tester.pump(const Duration(milliseconds: 120));
       await tester.pump(const Duration(milliseconds: 180));
 
@@ -79,7 +79,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v4'));
       await tester.pump(const Duration(milliseconds: 150));
 
       expect(find.text('POS [3, 2]'), findsOneWidget);
@@ -121,7 +121,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v4'));
       await tester.pump(const Duration(milliseconds: 150));
 
       await tester.tap(find.text('PLAY /v2'));
@@ -153,7 +153,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v4'));
       await tester.pump(const Duration(milliseconds: 150));
 
       expect(find.text('Sivaprasad NK'), findsOneWidget);
@@ -172,7 +172,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v4'));
       await tester.pump(const Duration(milliseconds: 150));
 
       final headerFinder = find.byKey(const ValueKey('home_grid_header_bar'));
@@ -255,7 +255,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MyApp());
+      await tester.pumpWidget(const MyApp(initialRoute: '/v4'));
       await tester.pump(const Duration(milliseconds: 160));
 
       expect(find.byType(RoamingCreaturesOverlay), findsOneWidget);

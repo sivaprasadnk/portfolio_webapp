@@ -57,6 +57,8 @@ enum _GridCategory {
 class InteractiveGridHomeScreen extends StatefulWidget {
   const InteractiveGridHomeScreen({super.key});
 
+  static const routeName = '/v4';
+
   @override
   State<InteractiveGridHomeScreen> createState() =>
       _InteractiveGridHomeScreenState();
