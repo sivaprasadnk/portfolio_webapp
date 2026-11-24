@@ -69,7 +69,7 @@ void main() {
       // Main section boards & sub-boards content
       expect(find.text('Merry Christmas & Happy New Year!'), findsOneWidget);
       expect(find.text('Sivaprasad NK'), findsOneWidget);
-      expect(find.text('Ernakulam, Kerala • India'), findsOneWidget);
+      expect(find.text('Ernakulam, Kerala'), findsOneWidget);
       expect(find.text('About Me'), findsOneWidget);
       expect(find.text('AI Coding & Craft'), findsOneWidget);
       expect(find.text('Endurance Athlete'), findsOneWidget);
@@ -104,6 +104,16 @@ void main() {
       expect(find.text('Let It Snow: OFF'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('let_it_snow_toggle')));
       await tester.pump(const Duration(milliseconds: 150));
+
+      // Verify floating navbar clouds actually move horizontally over time
+      final cloudBefore = tester.getTopLeft(
+        find.byKey(const ValueKey('cloud_nav_home')),
+      );
+      await tester.pump(const Duration(milliseconds: 900));
+      final cloudAfter = tester.getTopLeft(
+        find.byKey(const ValueKey('cloud_nav_home')),
+      );
+      expect(cloudAfter.dx, greaterThan(cloudBefore.dx));
 
       // Navigate via cloud nav & SP snow globe
       await tester.tap(find.byKey(const ValueKey('cloud_nav_projects')));

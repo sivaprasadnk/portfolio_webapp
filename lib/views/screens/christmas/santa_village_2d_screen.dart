@@ -41,7 +41,10 @@ class SantaVillage2dScreen extends StatefulWidget {
 
 class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
     with TickerProviderStateMixin {
-  static const double _groundYFrac = 0.80;
+  static const double _groundYFrac = 0.78;
+  static const Color _woodIvoryText = Color(0xFFFFF8EE);
+  static const Color _woodSubText = Color(0xFFE7D7C1);
+  static const Color _woodGoldText = Color(0xFFFDE68A);
   static const Set<String> _supportedSkillSvgs = {
     'dart',
     'flutter',
@@ -452,7 +455,7 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
     final groundY = size.height * _groundYFrac;
     final topReserved = isMobile ? 162.0 : (isCompact ? 124.0 : 108.0);
     final boardBandMaxHeight = (groundY - topReserved).clamp(240.0, 560.0);
-    final santaBottomOffset = (size.height - groundY - 40.0).clamp(54.0, 220.0);
+    final santaBottomOffset = (size.height - groundY - 48.0).clamp(50.0, 220.0);
 
     return Scaffold(
       backgroundColor: ChristmasThemeConfig.skyTop(dayFactor),
@@ -508,13 +511,13 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
 
               // Layer 3: Main Character Santa Claus walking Forward / Backward on the snow path
               Positioned(
-                left: isMobile ? 18 : 74,
+                left: isMobile ? 16 : 68,
                 bottom: santaBottomOffset,
                 child: IgnorePointer(
                   child: SizedBox(
                     key: const ValueKey('santa_character'),
-                    width: 96,
-                    height: 112,
+                    width: 118,
+                    height: 138,
                     child: CustomPaint(
                       painter: SantaCharacterPainter(
                         walkPhase: _walkPhase,
@@ -694,8 +697,10 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
     required double maxBoardHeight,
   }) {
     final countdown = ChristmasThemeConfig.countdownLabel(DateTime.now());
-    final boardGap = isMobile ? 18.0 : 28.0;
-    final zoneGap = isMobile ? 42.0 : 68.0;
+    final boardGap = isMobile ? 110.0 : 215.0;
+    final zoneGap = isMobile ? 210.0 : 380.0;
+    final mainBoardCap = (maxBoardHeight * 0.62).clamp(210.0, 295.0);
+    final subBoardCap = (maxBoardHeight * 0.50).clamp(175.0, 240.0);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -710,8 +715,8 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           badgeText: countdown,
           icon: Icons.park_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
-          width: isMobile ? 255 : 310,
+          maxHeight: mainBoardCap,
+          width: isMobile ? 250 : 300,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -719,8 +724,8 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
               Text(
                 'Senior Software Engineer (5 Years) • AI Coding, Flutter & Interactive Web',
                 style: TextStyle(
-                  color: ChristmasThemeConfig.primaryText(dayFactor),
-                  fontSize: 13,
+                  color: _woodIvoryText,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   height: 1.38,
                 ),
@@ -756,15 +761,15 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           title: 'Ernakulam Base',
           icon: Icons.location_on_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
-          width: isMobile ? 225 : 245,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          maxHeight: subBoardCap,
+          width: isMobile ? 225 : 248,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 82,
-                height: 82,
-                padding: const EdgeInsets.all(3),
+                width: 60,
+                height: 60,
+                padding: const EdgeInsets.all(2.5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: ChristmasThemeConfig.goldActionGradient,
@@ -773,44 +778,50 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                   child: Image.asset('assets/images/propic3.png', fit: BoxFit.cover),
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Ernakulam, Kerala • India',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: ChristmasThemeConfig.primaryText(dayFactor),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12.5,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Ernakulam, Kerala',
+                      style: TextStyle(
+                        color: _woodIvoryText,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 5,
+                      runSpacing: 5,
+                      children: [
+                        _BoardBadge(
+                          label: 'Arcade',
+                          dayFactor: dayFactor,
+                          isGold: false,
+                          onTap: () => Navigator.of(context)
+                              .pushNamed(ArcadeScreen.routeName),
+                        ),
+                        _BoardBadge(
+                          label: 'QR',
+                          dayFactor: dayFactor,
+                          isGold: false,
+                          onTap: () => Navigator.of(context)
+                              .pushNamed(QrCodeScreen.routeName),
+                        ),
+                        _BoardBadge(
+                          label: 'YT',
+                          dayFactor: dayFactor,
+                          isGold: false,
+                          onTap: () => Navigator.of(context)
+                              .pushNamed(YtDownloaderScreen.routeName),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _BoardBadge(
-                    label: 'Arcade',
-                    dayFactor: dayFactor,
-                    isGold: false,
-                    onTap: () =>
-                        Navigator.of(context).pushNamed(ArcadeScreen.routeName),
-                  ),
-                  _BoardBadge(
-                    label: 'QR Tool',
-                    dayFactor: dayFactor,
-                    isGold: false,
-                    onTap: () =>
-                        Navigator.of(context).pushNamed(QrCodeScreen.routeName),
-                  ),
-                  _BoardBadge(
-                    label: 'YT Downloader',
-                    dayFactor: dayFactor,
-                    isGold: false,
-                    onTap: () => Navigator.of(context)
-                        .pushNamed(YtDownloaderScreen.routeName),
-                  ),
-                ],
               ),
             ],
           ),
@@ -827,18 +838,18 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           badgeText: 'ERNAKULAM',
           icon: Icons.cottage_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
+          maxHeight: mainBoardCap,
           width: isMobile ? 250 : 285,
           child: BlocBuilder<AboutMeBloc, AboutMeState>(
             builder: (context, state) {
               return Text(
                 state.content.trim(),
-                maxLines: 7,
+                maxLines: 5,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: ChristmasThemeConfig.secondaryText(dayFactor),
-                  fontSize: 12.5,
-                  height: 1.45,
+                style: const TextStyle(
+                  color: _woodSubText,
+                  fontSize: 12,
+                  height: 1.4,
                 ),
               );
             },
@@ -849,14 +860,14 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           title: 'AI Coding & Craft',
           icon: Icons.auto_awesome_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
+          maxHeight: subBoardCap,
           width: isMobile ? 225 : 245,
-          child: Text(
-            '5 years engineering Flutter mobile & WebAssembly apps, now actively focused on AI coding, agentic workflows, and Clean Architecture.',
+          child: const Text(
+            '5 years engineering Flutter mobile & WebAssembly apps, now actively focused on AI coding & agentic workflows.',
             style: TextStyle(
-              color: ChristmasThemeConfig.secondaryText(dayFactor),
-              fontSize: 12.5,
-              height: 1.45,
+              color: _woodSubText,
+              fontSize: 12,
+              height: 1.4,
             ),
           ),
         ),
@@ -865,14 +876,14 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           title: 'Endurance Athlete',
           icon: Icons.directions_run_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
+          maxHeight: subBoardCap,
           width: isMobile ? 225 : 245,
-          child: Text(
-            'Regular gym strength training, consistent running, and endurance discipline fueling calm, focused software engineering.',
+          child: const Text(
+            'Regular gym strength training, consistent running, and endurance discipline fueling focused engineering.',
             style: TextStyle(
-              color: ChristmasThemeConfig.secondaryText(dayFactor),
-              fontSize: 12.5,
-              height: 1.45,
+              color: _woodSubText,
+              fontSize: 12,
+              height: 1.4,
             ),
           ),
         ),
@@ -888,18 +899,18 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           badgeText: '5 YEARS',
           icon: Icons.alt_route_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
-          width: isMobile ? 220 : 245,
-          child: Text(
-            'Walk along the path to read each engineering chapter from Bayasys to Indbytes and Invenics.',
+          maxHeight: mainBoardCap,
+          width: isMobile ? 225 : 250,
+          child: const Text(
+            'Walk the winter road past each chapter from Bayasys to Indbytes and Invenics.',
             style: TextStyle(
-              color: ChristmasThemeConfig.secondaryText(dayFactor),
-              fontSize: 12.5,
-              height: 1.45,
+              color: _woodSubText,
+              fontSize: 12,
+              height: 1.4,
             ),
           ),
         ),
-        ..._buildExperienceSubBoards(dayFactor, isMobile, boardGap, maxBoardHeight),
+        ..._buildExperienceSubBoards(dayFactor, isMobile, boardGap, subBoardCap),
         SizedBox(width: zoneGap),
 
         // ============================================================
@@ -912,18 +923,18 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           badgeText: 'SHOWCASE',
           icon: Icons.storefront_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
-          width: isMobile ? 220 : 245,
-          child: Text(
-            'Inspect any village project board for live launches, Flutter WebAssembly tools, and mobile releases.',
+          maxHeight: mainBoardCap,
+          width: isMobile ? 225 : 250,
+          child: const Text(
+            'Inspect any weathered trail board for live launches, Flutter WebAssembly tools & apps.',
             style: TextStyle(
-              color: ChristmasThemeConfig.secondaryText(dayFactor),
-              fontSize: 12.5,
-              height: 1.45,
+              color: _woodSubText,
+              fontSize: 12,
+              height: 1.4,
             ),
           ),
         ),
-        ..._buildProjectSubBoards(dayFactor, isMobile, boardGap, maxBoardHeight),
+        ..._buildProjectSubBoards(dayFactor, isMobile, boardGap, subBoardCap),
         SizedBox(width: zoneGap),
 
         // ============================================================
@@ -936,18 +947,18 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           badgeText: 'STACK',
           icon: Icons.ac_unit_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
+          maxHeight: mainBoardCap,
           width: isMobile ? 235 : 265,
-          child: Text(
-            'Dart, Flutter, Firebase, Web, Clean Architecture, BLoC, Three.js, and AI-assisted development.',
+          child: const Text(
+            'Dart, Flutter, Firebase, Web, Clean Architecture, BLoC, Three.js & AI-assisted coding.',
             style: TextStyle(
-              color: ChristmasThemeConfig.secondaryText(dayFactor),
-              fontSize: 12.5,
-              height: 1.45,
+              color: _woodSubText,
+              fontSize: 12,
+              height: 1.4,
             ),
           ),
         ),
-        ..._buildSkillSubBoards(dayFactor, isMobile, boardGap, maxBoardHeight),
+        ..._buildSkillSubBoards(dayFactor, isMobile, boardGap * 0.85, subBoardCap),
         SizedBox(width: zoneGap),
 
         // ============================================================
@@ -960,18 +971,18 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           badgeText: 'CONNECT',
           icon: Icons.mark_email_read_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
+          maxHeight: mainBoardCap,
           width: isMobile ? 235 : 265,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Open to senior Flutter & AI engineering roles, architecture consulting, and product collaborations.',
+              const Text(
+                'Open to senior Flutter & AI engineering roles and product collaborations.',
                 style: TextStyle(
-                  color: ChristmasThemeConfig.secondaryText(dayFactor),
-                  fontSize: 12.5,
-                  height: 1.4,
+                  color: _woodSubText,
+                  fontSize: 12,
+                  height: 1.38,
                 ),
               ),
               const SizedBox(height: 10),
@@ -987,13 +998,13 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
           ),
         ),
         SizedBox(width: boardGap),
-        _buildContactChannelsSubBoard(dayFactor, isMobile, maxBoardHeight),
+        _buildContactChannelsSubBoard(dayFactor, isMobile, subBoardCap),
         SizedBox(width: boardGap),
         _SubDetailBoard(
           title: 'More Editions',
           icon: Icons.explore_rounded,
           dayFactor: dayFactor,
-          maxHeight: maxBoardHeight,
+          maxHeight: subBoardCap,
           width: isMobile ? 230 : 250,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1041,11 +1052,11 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 '© ${DateTime.now().year} Sivaprasad NK',
-                style: TextStyle(
-                  color: ChristmasThemeConfig.secondaryText(dayFactor),
+                style: const TextStyle(
+                  color: _woodSubText,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1087,20 +1098,18 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           '• ',
                           style: TextStyle(
-                            color: ChristmasThemeConfig.accentGold(dayFactor),
+                            color: _SantaVillage2dScreenState._woodGoldText,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Expanded(
                           child: Text(
                             bullet,
-                            style: TextStyle(
-                              color: ChristmasThemeConfig.secondaryText(
-                                dayFactor,
-                              ),
+                            style: const TextStyle(
+                              color: _SantaVillage2dScreenState._woodSubText,
                               fontSize: 12,
                               height: 1.35,
                             ),
@@ -1143,10 +1152,10 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                 proj.descList.join(' • ').replaceAll('\n', ' '),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: ChristmasThemeConfig.secondaryText(dayFactor),
-                  fontSize: 12,
-                  height: 1.38,
+                style: const TextStyle(
+                  color: _woodSubText,
+                  fontSize: 11.8,
+                  height: 1.35,
                 ),
               ),
               const SizedBox(height: 8),
@@ -1220,10 +1229,10 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                   height: 24,
                 )
               : null,
-          child: Text(
+          child: const Text(
             'Production Experience',
             style: TextStyle(
-              color: ChristmasThemeConfig.secondaryText(dayFactor),
+              color: _woodSubText,
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
@@ -1264,11 +1273,10 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: ChristmasThemeConfig.cardSurface(dayFactor)
-                      .withValues(alpha: 0.65),
+                  color: const Color(0x55180A04),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: ChristmasThemeConfig.cardBorder(dayFactor),
+                    color: _woodGoldText.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
@@ -1280,8 +1288,8 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                             : c.details.trim().replaceAll('\n', ' '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: ChristmasThemeConfig.primaryText(dayFactor),
+                        style: const TextStyle(
+                          color: _woodIvoryText,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1292,7 +1300,7 @@ class _SantaVillage2dScreenState extends State<SantaVillage2dScreen>
                       child: Icon(
                         copied ? Icons.check_circle : Icons.copy_rounded,
                         size: 14,
-                        color: ChristmasThemeConfig.accentGold(dayFactor),
+                        color: _woodGoldText,
                       ),
                     ),
                   ],
@@ -1333,140 +1341,103 @@ class _MainTimberSectionBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gold = ChristmasThemeConfig.accentGold(dayFactor);
-    final boardBg = Color.lerp(
-      const Color(0xEC0C1D38),
-      const Color(0xEEF5FAFF),
-      dayFactor,
-    )!;
-    final woodFrame = Color.lerp(
-      const Color(0xFF7D5031),
-      const Color(0xFF8C5835),
-      dayFactor,
-    )!;
+    const gold = _SantaVillage2dScreenState._woodGoldText;
+    final seed = title.hashCode.abs() + 7;
+    final legHeight = 62.0 + (seed % 3) * 14.0;
+    final tiltRad = ((seed % 7) - 3) * 0.0045;
 
     return Container(
       key: sectionKey,
       width: width,
       constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: boardBg,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: woodFrame, width: 3.5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x45020817),
-                        blurRadius: 16,
-                        offset: Offset(0, 8),
+      child: Transform.rotate(
+        angle: tiltRad,
+        alignment: Alignment.bottomCenter,
+        child: CustomPaint(
+          painter: RusticBrokenWoodBoardPainter(
+            seed: seed,
+            dayFactor: dayFactor,
+            isMainBoard: true,
+            legHeight: legHeight,
+            elapsed: 0.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 22, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: gold.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: gold.withValues(alpha: 0.45),
+                              ),
+                            ),
+                            child: Icon(icon, size: 16, color: gold),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              badgeText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: gold,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: gold.withValues(alpha: 0.16),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: gold.withValues(alpha: 0.45),
-                                ),
-                              ),
-                              child: Icon(icon, size: 17, color: gold),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                badgeText,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: gold,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ),
+                      const SizedBox(height: 8),
+                      Text(
+                        title,
+                        style: context.displaySmall.copyWith(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
+                          color: _SantaVillage2dScreenState._woodIvoryText,
+                          shadows: const [
+                            Shadow(color: Color(0xCC100703), blurRadius: 3),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          title,
-                          style: context.displaySmall.copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: ChristmasThemeConfig.primaryText(dayFactor),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: gold,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        child,
-                      ],
-                    ),
-                  ),
-                ),
-                // Top snow drift cap resting along upper edge of main board
-                Positioned(
-                  top: -4,
-                  left: 14,
-                  right: 14,
-                  child: Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Color.lerp(
-                        const Color(0xFFD6E9FA),
-                        Colors.white,
-                        dayFactor,
                       ),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: gold,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      child,
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: legHeight),
+            ],
           ),
-          // Twin wooden legs anchored into the snow path
-          SizedBox(
-            height: 36,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _TimberPost(woodColor: woodFrame, height: 36),
-                _TimberPost(woodColor: woodFrame, height: 36),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Smaller Village Detail / List Item Sub-Board planted into the snow alongside
-/// each main section board.
+/// Smaller Village Detail / List Item Sub-Board with broken rustic wood edges
+/// planted along the snowy trail beside each main section board.
 class _SubDetailBoard extends StatelessWidget {
   const _SubDetailBoard({
     required this.title,
@@ -1490,134 +1461,82 @@ class _SubDetailBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gold = ChristmasThemeConfig.accentGold(dayFactor);
-    final boardBg = ChristmasThemeConfig.cardSurface(dayFactor);
-    final woodFrame = Color.lerp(
-      const Color(0xFF6B4328),
-      const Color(0xFF7D4F30),
-      dayFactor,
-    )!;
+    const gold = _SantaVillage2dScreenState._woodGoldText;
+    final seed = title.hashCode.abs() + 19;
+    final legHeight = 52.0 + (seed % 4) * 16.0;
+    final tiltRad = ((seed % 9) - 4) * 0.0052;
 
     return Container(
       width: width,
-      constraints: BoxConstraints(maxHeight: (maxHeight - 24).clamp(180, 440)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: boardBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: woodFrame, width: 2.2),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x36020817),
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(13, 14, 13, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            if (customIcon != null) ...[
-                              customIcon!,
-                              const SizedBox(width: 8),
-                            ] else ...[
-                              Icon(icon, size: 15, color: gold),
-                              const SizedBox(width: 6),
-                            ],
-                            Expanded(
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: ChristmasThemeConfig.primaryText(
-                                    dayFactor,
-                                  ),
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Transform.rotate(
+        angle: tiltRad,
+        alignment: Alignment.bottomCenter,
+        child: CustomPaint(
+          painter: RusticBrokenWoodBoardPainter(
+            seed: seed,
+            dayFactor: dayFactor,
+            isMainBoard: false,
+            legHeight: legHeight,
+            elapsed: 0.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(17, 17, 20, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          if (customIcon != null) ...[
+                            customIcon!,
+                            const SizedBox(width: 8),
+                          ] else ...[
+                            Icon(icon, size: 15, color: gold),
+                            const SizedBox(width: 6),
                           ],
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            subtitle!,
-                            style: TextStyle(
-                              color: gold,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: _SantaVillage2dScreenState._woodIvoryText,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                shadows: [
+                                  Shadow(color: Color(0xCC100703), blurRadius: 2),
+                                ],
+                              ),
                             ),
                           ),
                         ],
-                        const SizedBox(height: 8),
-                        child,
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: -3,
-                  left: 12,
-                  right: 12,
-                  child: Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Color.lerp(
-                        const Color(0xFFD0E6F9),
-                        Colors.white,
-                        dayFactor,
                       ),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle!,
+                          style: const TextStyle(
+                            color: gold,
+                            fontSize: 11.2,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 7),
+                      child,
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              SizedBox(height: legHeight),
+            ],
           ),
-          // Single sturdy timber post planted into snow
-          _TimberPost(woodColor: woodFrame, height: 24, width: 9),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimberPost extends StatelessWidget {
-  const _TimberPost({
-    required this.woodColor,
-    required this.height,
-    this.width = 10,
-  });
-
-  final Color woodColor;
-  final double height;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: woodColor,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(3)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(2, 2)),
-        ],
+        ),
       ),
     );
   }
@@ -1639,20 +1558,20 @@ class _BoardBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = isGold
-        ? ChristmasThemeConfig.accentGold(dayFactor)
-        : ChristmasThemeConfig.accentIce(dayFactor);
+        ? ChristmasThemeConfig.champagneGold
+        : ChristmasThemeConfig.icyBlue;
 
     final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.14),
+        color: const Color(0x66160A04),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.45)),
+        border: Border.all(color: accent.withValues(alpha: 0.55)),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: ChristmasThemeConfig.primaryText(dayFactor),
+        style: const TextStyle(
+          color: _SantaVillage2dScreenState._woodIvoryText,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
@@ -1696,14 +1615,14 @@ class _ActionPillButton extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           gradient: isPrimary ? ChristmasThemeConfig.goldActionGradient : null,
-          color: isPrimary
-              ? null
-              : ChristmasThemeConfig.cardSurface(dayFactor)
-                  .withValues(alpha: 0.78),
+          color: isPrimary ? null : const Color(0x70160A04),
           borderRadius: BorderRadius.circular(10),
           border: isPrimary
               ? null
-              : Border.all(color: ChristmasThemeConfig.cardBorder(dayFactor)),
+              : Border.all(
+                  color: _SantaVillage2dScreenState._woodGoldText
+                      .withValues(alpha: 0.48),
+                ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1714,7 +1633,7 @@ class _ActionPillButton extends StatelessWidget {
                 size: 13.5,
                 color: isPrimary
                     ? ChristmasThemeConfig.midnightBlue
-                    : ChristmasThemeConfig.accentGold(dayFactor),
+                    : _SantaVillage2dScreenState._woodGoldText,
               ),
               const SizedBox(width: 5),
             ],
@@ -1723,7 +1642,7 @@ class _ActionPillButton extends StatelessWidget {
               style: TextStyle(
                 color: isPrimary
                     ? ChristmasThemeConfig.midnightBlue
-                    : ChristmasThemeConfig.primaryText(dayFactor),
+                    : _SantaVillage2dScreenState._woodIvoryText,
                 fontSize: compact ? 11.5 : 12.5,
                 fontWeight: FontWeight.w800,
               ),

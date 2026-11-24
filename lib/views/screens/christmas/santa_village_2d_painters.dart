@@ -904,8 +904,367 @@ class SantaVillage2dBackdropPainter extends CustomPainter {
       true;
 }
 
-/// Articulated 2D Santa Claus character carrying a gift sack & glowing brass
-/// lantern, walking forward or backward cleanly along the snowy trail.
+/// Paints a weathered rustic wooden trail board with broken/chipped plank edges,
+/// horizontal split seams, wood knots, forged nails, organic melted snow crest,
+/// tiny corner icicles, and crooked timber posts anchored into a snow mound.
+class RusticBrokenWoodBoardPainter extends CustomPainter {
+  const RusticBrokenWoodBoardPainter({
+    required this.seed,
+    required this.dayFactor,
+    required this.isMainBoard,
+    required this.legHeight,
+    required this.elapsed,
+  });
+
+  final int seed;
+  final double dayFactor;
+  final bool isMainBoard;
+  final double legHeight;
+  final double elapsed;
+
+  double _hash(int n) {
+    final x = math.sin(seed * 73.1 + n * 19.7) * 43758.5453;
+    return x - x.floor();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final boardH = (size.height - legHeight).clamp(60.0, size.height);
+    final w = size.width;
+
+    // 1. Paint supporting crooked timber post(s) behind the board first
+    final postWood = Color.lerp(
+      const Color(0xFF3A2112),
+      const Color(0xFF56321D),
+      dayFactor,
+    )!;
+    final postShadow = const Color(0xFF221209);
+    if (isMainBoard) {
+      _paintCrookedPost(
+        canvas,
+        topCenter: Offset(w * 0.25, boardH - 10),
+        bottomY: size.height,
+        topWidth: 14,
+        bottomWidth: 17,
+        tilt: (_hash(1) - 0.5) * 5.0,
+        woodColor: postWood,
+        shadowColor: postShadow,
+      );
+      _paintCrookedPost(
+        canvas,
+        topCenter: Offset(w * 0.75, boardH - 10),
+        bottomY: size.height,
+        topWidth: 14,
+        bottomWidth: 17,
+        tilt: (_hash(2) - 0.5) * 5.0,
+        woodColor: postWood,
+        shadowColor: postShadow,
+      );
+    } else {
+      _paintCrookedPost(
+        canvas,
+        topCenter: Offset(w * 0.5, boardH - 8),
+        bottomY: size.height,
+        topWidth: 13,
+        bottomWidth: 16,
+        tilt: (_hash(3) - 0.5) * 4.5,
+        woodColor: postWood,
+        shadowColor: postShadow,
+      );
+    }
+
+    // 2. Build irregular broken/chipped outer timber silhouette (NON-rectangular!)
+    final brokenRightTop = _hash(4) > 0.45;
+    final chipX = 11.0 + _hash(5) * 7.0;
+    final chipY = 10.0 + _hash(6) * 7.0;
+    final plank1Out = 3.0 + _hash(7) * 5.0;
+    final plank2In = 3.5 + _hash(8) * 5.5;
+    final leftNotchY = boardH * (0.34 + _hash(9) * 0.22);
+    final rightNotchY = boardH * (0.52 + _hash(10) * 0.20);
+    final bottomSplitX = w * (0.38 + _hash(11) * 0.28);
+    final isPointedSign = !isMainBoard && (_hash(16) > 0.45);
+    final arrowTipOut = isPointedSign ? 16.0 : 0.0;
+
+    final boardPath = Path();
+    // Start top-left (torn corner / rustic bevel)
+    boardPath.moveTo(brokenRightTop ? 4.0 : chipX, brokenRightTop ? 3.0 : 1.0);
+    boardPath.lineTo(w * 0.27, 0.5 + (_hash(12) - 0.5) * 4.0);
+    boardPath.lineTo(w * 0.33, 5.5);
+    boardPath.lineTo(w * 0.37, 1.0);
+    boardPath.lineTo(w * 0.72, 2.0 + (_hash(13) - 0.5) * 3.5);
+    if (brokenRightTop) {
+      boardPath.lineTo(w - chipX, 1.0);
+      boardPath.lineTo(w - 2.0, chipY);
+    } else {
+      boardPath.lineTo(w - 2.0, 3.0);
+    }
+
+    // Right edge — uneven split plank ends / rustic pointed trail tip + broken notch
+    if (isPointedSign) {
+      boardPath.lineTo(w + arrowTipOut * 0.6, boardH * 0.34);
+      boardPath.lineTo(w + arrowTipOut, boardH * 0.50);
+      boardPath.lineTo(w + arrowTipOut * 0.4, boardH * 0.68);
+      boardPath.lineTo(w - 4.0, boardH - 6.0);
+    } else {
+      boardPath.lineTo(w + plank1Out * 0.6, boardH * 0.26);
+      boardPath.lineTo(w - plank2In * 1.15, boardH * 0.33);
+      boardPath.lineTo(w + plank1Out * 0.7, boardH * 0.43);
+      boardPath.lineTo(w - 2.0, rightNotchY - 7);
+      boardPath.lineTo(w - 11.0 - _hash(14) * 5.0, rightNotchY);
+      boardPath.lineTo(w - 1.5, rightNotchY + 8);
+      boardPath.lineTo(w - 3.5, boardH - 7.0);
+    }
+
+    // Bottom edge — deep weathered V-split crack
+    boardPath.lineTo(w - 11.0, boardH - 1.5);
+    boardPath.lineTo(bottomSplitX + 7, boardH - 2.5);
+    boardPath.lineTo(bottomSplitX, boardH - 11.0);
+    boardPath.lineTo(bottomSplitX - 6, boardH - 1.5);
+    boardPath.lineTo(10.0, boardH - 2.0);
+    boardPath.lineTo(2.0, boardH - 8.5);
+
+    // Left edge — torn plank steps + V-crack notch
+    boardPath.lineTo(0.5, leftNotchY + 9);
+    boardPath.lineTo(10.0 + _hash(15) * 5.0, leftNotchY + 1);
+    boardPath.lineTo(0.0, leftNotchY - 7);
+    boardPath.lineTo(5.0, boardH * 0.25);
+    if (!brokenRightTop) {
+      boardPath.lineTo(1.5, chipY);
+    }
+    boardPath.close();
+
+    // Soft ambient shadow cast by broken wood board
+    canvas.drawPath(
+      boardPath.shift(const Offset(4, 8)),
+      Paint()
+        ..color = const Color(0x5A020817)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
+    );
+
+    // Rich dark aged oak / pine planks fill directly behind lettering (NO gray rectangle box!)
+    final boardRect = Rect.fromLTWH(0, 0, w + arrowTipOut, boardH);
+    canvas.drawPath(
+      boardPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(const Color(0xFF472A18), const Color(0xFF663E24), dayFactor)!,
+            Color.lerp(const Color(0xFF341E11), const Color(0xFF4E2E1A), dayFactor)!,
+            Color.lerp(const Color(0xFF24130A), const Color(0xFF392011), dayFactor)!,
+          ],
+        ).createShader(boardRect),
+    );
+
+    // Clip inner wood grain, deep horizontal plank splits, knots & forged nails
+    canvas.save();
+    canvas.clipPath(boardPath);
+
+    // Alternating subtle plank shade bands so horizontal planks read distinctly
+    for (int p = 0; p < 3; p++) {
+      final py = boardH * (p / 3.0);
+      final ph = boardH / 3.0;
+      canvas.drawRect(
+        Rect.fromLTWH(0, py, w + arrowTipOut, ph),
+        Paint()
+          ..color = p.isEven
+              ? const Color(0x16FFFFFF)
+              : const Color(0x1C000000),
+      );
+    }
+
+    // Horizontal split plank seams + bevel highlights
+    final splitPaint = Paint()
+      ..color = const Color(0xCC120803)
+      ..strokeWidth = 2.6;
+    final splitHighlight = Paint()
+      ..color = const Color(0x3DB98B63)
+      ..strokeWidth = 1.2;
+    for (final frac in [0.33, 0.67]) {
+      final sy = boardH * frac + (_hash((frac * 10).round()) - 0.5) * 4.5;
+      final seam = Path()
+        ..moveTo(0, sy)
+        ..quadraticBezierTo(w * 0.35, sy + 2.8, w * 0.72, sy - 1.8)
+        ..lineTo(w + arrowTipOut + 6, sy + 1.2);
+      canvas.drawPath(seam, splitPaint);
+      canvas.drawPath(seam.shift(const Offset(0, 1.8)), splitHighlight);
+    }
+
+    // Fine wavy wood grain striations
+    final grainPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.15
+      ..color = const Color(0x36140803);
+    for (int g = 0; g < 9; g++) {
+      final gy = 8.0 + (g / 9.0) * (boardH - 14.0);
+      final wave = (_hash(20 + g) - 0.5) * 6.5;
+      canvas.drawPath(
+        Path()
+          ..moveTo(0, gy)
+          ..cubicTo(w * 0.3, gy + wave, w * 0.65, gy - wave, w + arrowTipOut + 6, gy),
+        grainPaint,
+      );
+    }
+
+    // Deep charred wood knot + crack radiate
+    final knotPos = Offset(w * (0.18 + _hash(30) * 0.62), boardH * (0.20 + _hash(31) * 0.58));
+    canvas.drawOval(
+      Rect.fromCenter(center: knotPos, width: 16, height: 9),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = const Color(0x55120803),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: knotPos, width: 7, height: 4),
+      Paint()..color = const Color(0x45120803),
+    );
+
+    // Subtle dark burnt edge vignette inside timber perimeter (keeps ivory typography ultra-crisp)
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w + arrowTipOut, boardH),
+      Paint()..color = const Color(0x280E0703),
+    );
+
+    canvas.restore();
+
+    // Rugged outer edge bevel
+    canvas.drawPath(
+      boardPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = const Color(0xAA1A0D06),
+    );
+
+    // Forged dark-iron nail heads at corners
+    final nailPaint = Paint()..color = const Color(0xFF1E2229);
+    final nailHighlight = Paint()..color = const Color(0x6694A3B8);
+    for (final np in [
+      Offset(12, 14),
+      Offset(w - 16, 15),
+      Offset(12, boardH - 13),
+      Offset(w - 13, boardH - 14),
+    ]) {
+      canvas.drawCircle(np, 2.7, nailPaint);
+      canvas.drawCircle(np.translate(-0.7, -0.7), 0.9, nailHighlight);
+    }
+
+    // 3. Organic fluffy snow blanket piled unevenly along broken top rim
+    final snowMain = Color.lerp(const Color(0xFFD6E9FA), Colors.white, dayFactor)!;
+    final snowShade = Color.lerp(const Color(0xFF8BB2D8), const Color(0xFFCDE2F6), dayFactor)!;
+    final snowPath = Path()
+      ..moveTo(4, 3)
+      ..quadraticBezierTo(w * 0.14, -6, w * 0.28, -1)
+      ..quadraticBezierTo(w * 0.45, -7, w * 0.62, -2)
+      ..quadraticBezierTo(w * 0.80, -6, w - (brokenRightTop ? chipX : 4), 2)
+      ..quadraticBezierTo(w - 8, 9, w - 16, 5)
+      ..quadraticBezierTo(w * 0.68, 9, w * 0.50, 5)
+      ..quadraticBezierTo(w * 0.28, 10, 10, 6)
+      ..close();
+    canvas.drawPath(snowPath.shift(const Offset(0, 1.5)), Paint()..color = snowShade);
+    canvas.drawPath(snowPath, Paint()..color = snowMain);
+
+    // Small translucent icicles hanging beneath lower edges
+    final iciclePaint = Paint()
+      ..color = Color.lerp(
+        const Color(0x99BAE6FD),
+        const Color(0xBBFFFFFF),
+        dayFactor,
+      )!;
+    for (int i = 0; i < 3; i++) {
+      final ix = w * (0.18 + i * 0.31);
+      final ilen = 7.0 + _hash(40 + i) * 7.0;
+      final ip = Path()
+        ..moveTo(ix - 2.2, boardH - 2)
+        ..lineTo(ix + 2.2, boardH - 2)
+        ..lineTo(ix, boardH - 2 + ilen)
+        ..close();
+      canvas.drawPath(ip, iciclePaint);
+    }
+
+    // Warm miniature hanging lantern on main section boards
+    if (isMainBoard) {
+      final twinkle = 0.78 + 0.22 * math.sin(elapsed * 3.0 + seed);
+      final lanternPos = Offset(w - 6.0, 22.0);
+      canvas.drawCircle(
+        lanternPos,
+        15,
+        Paint()
+          ..color = ChristmasThemeConfig.warmLanternAmber
+              .withValues(alpha: (1 - dayFactor * 0.55) * 0.38 * twinkle)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(w - 10, 8)
+          ..quadraticBezierTo(w - 4, 8, w - 6, 16),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = const Color(0xFF1E293B),
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: lanternPos, width: 9, height: 12),
+        Paint()..color = Color(0xFFFFD56B).withValues(alpha: twinkle),
+      );
+    }
+  }
+
+  void _paintCrookedPost(
+    Canvas canvas, {
+    required Offset topCenter,
+    required double bottomY,
+    required double topWidth,
+    required double bottomWidth,
+    required double tilt,
+    required Color woodColor,
+    required Color shadowColor,
+  }) {
+    final bx = topCenter.dx + tilt;
+    final postPath = Path()
+      ..moveTo(topCenter.dx - topWidth * 0.5, topCenter.dy)
+      ..lineTo(topCenter.dx + topWidth * 0.5, topCenter.dy)
+      ..lineTo(bx + bottomWidth * 0.5, bottomY - 2)
+      ..lineTo(bx - bottomWidth * 0.5, bottomY - 2)
+      ..close();
+
+    canvas.drawPath(postPath, Paint()..color = woodColor);
+    canvas.drawLine(
+      Offset(topCenter.dx + topWidth * 0.18, topCenter.dy),
+      Offset(bx + bottomWidth * 0.18, bottomY - 2),
+      Paint()
+        ..color = shadowColor.withValues(alpha: 0.65)
+        ..strokeWidth = 2.0,
+    );
+
+    // Snow collar heaped where the timber enters the ground
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(bx, bottomY - 2),
+        width: bottomWidth * 2.1,
+        height: 11,
+      ),
+      Paint()
+        ..color = Color.lerp(
+          const Color(0xFFCDE2F6),
+          const Color(0xFFFFFFFF),
+          dayFactor,
+        )!,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant RusticBrokenWoodBoardPainter oldDelegate) =>
+      oldDelegate.dayFactor != dayFactor ||
+      oldDelegate.seed != seed ||
+      oldDelegate.elapsed != elapsed;
+}
+
+/// Painterly articulated 2D Santa Claus with wool greatcoat, curly shearling
+/// fleece trim, belted waist, articulated bent-knee boots, draped fur cap,
+/// flowing beard, cinched gift pack, and glowing brass carriage lantern.
 class SantaCharacterPainter extends CustomPainter {
   const SantaCharacterPainter({
     required this.walkPhase,
@@ -924,34 +1283,34 @@ class SantaCharacterPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width * 0.5;
-    final footY = size.height - 8.0;
+    final footY = size.height - 9.0;
 
-    final stride = isMoving ? math.sin(walkPhase) * 0.52 : 0.0;
+    final stride = isMoving ? math.sin(walkPhase) * 0.46 : 0.0;
     final bob = isMoving
-        ? math.sin(walkPhase).abs() * -4.2
-        : math.sin(elapsed * 2.2) * 1.1;
+        ? math.sin(walkPhase).abs() * -4.8
+        : math.sin(elapsed * 2.1) * 1.2;
 
-    // Warm lantern ground pool below Santa
+    // Ground cast shadow & warm lantern reflection pool on snow
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, footY + 2), width: 66, height: 14),
+      Rect.fromCenter(center: Offset(cx, footY + 3), width: 72, height: 15),
       Paint()
         ..color = Color.lerp(
-          const Color(0x66061224),
-          const Color(0x401E3A5F),
+          const Color(0x6B051123),
+          const Color(0x421D3557),
           dayFactor,
         )!,
     );
-    if (dayFactor < 0.85) {
+    if (dayFactor < 0.88) {
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(cx + (facingRight ? 24 : -24), footY + 2),
-          width: 78,
-          height: 20,
+          center: Offset(cx + (facingRight ? 28 : -28), footY + 3),
+          width: 90,
+          height: 24,
         ),
         Paint()
           ..color = ChristmasThemeConfig.warmLanternAmber
-              .withValues(alpha: (1.0 - dayFactor) * 0.34)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+              .withValues(alpha: (1.0 - dayFactor) * 0.38)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
       );
     }
 
@@ -959,180 +1318,385 @@ class SantaCharacterPainter extends CustomPainter {
     canvas.translate(cx, footY + bob);
     canvas.scale(facingRight ? 1.0 : -1.0, 1.0);
 
-    final coatRed = const Color(0xFFB91C2E);
-    final coatShadow = const Color(0xFF7F1120);
-    final furWhite = const Color(0xFFF8FAFC);
-    final beltLeather = const Color(0xFF1F1612);
-    final bootBlack = const Color(0xFF1A191B);
-    final sackBrown = const Color(0xFF8C5B37);
+    const coatRed = Color(0xFFB51B2C);
+    const coatDeep = Color(0xFF750E1C);
+    const coatHighlight = Color(0xFFD62B3D);
+    const furMain = Color(0xFFF6F8FC);
+    const furShadow = Color(0xFFC9D8EA);
+    const leatherDark = Color(0xFF1F1612);
+    const burlapMain = Color(0xFF8C5B36);
+    const burlapShade = Color(0xFF5D3A20);
 
-    // 1. Weathered Gift Sack slung over back shoulder (-X)
+    // 1. Cinched Burlap Toy Sack slung over rear shoulder (-X)
     canvas.save();
-    canvas.rotate(isMoving ? math.sin(walkPhase * 2) * 0.04 : 0.0);
-    final sackPath = Path()
-      ..moveTo(-6, -48)
-      ..cubicTo(-28, -56, -34, -28, -24, -18)
-      ..quadraticBezierTo(-10, -14, -4, -30)
-      ..close();
-    canvas.drawPath(sackPath, Paint()..color = sackBrown);
-    canvas.drawPath(
-      sackPath,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..color = const Color(0xFF5C3A21),
-    );
-    canvas.restore();
-
-    // 2. Articulated Striding Boots
-    _drawBoot(canvas, offset: Offset(-6, -24), angle: -stride, bootColor: bootBlack);
-    _drawBoot(canvas, offset: Offset(6, -24), angle: stride, bootColor: bootBlack);
-
-    // 3. Back Arm holding Sack Strap
-    canvas.save();
-    canvas.translate(-8, -50);
-    canvas.rotate(-stride * 0.35 + 0.18);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-5, 0, 10, 22), const Radius.circular(5)),
-      Paint()..color = coatShadow,
-    );
-    canvas.drawCircle(const Offset(0, 23), 4.5, Paint()..color = beltLeather);
-    canvas.restore();
-
-    // 4. Crimson Greatcoat & Plush Fur Hem
-    final coat = Path()
-      ..moveTo(-14, -56)
-      ..lineTo(14, -56)
-      ..quadraticBezierTo(20, -34, 18, -18)
-      ..lineTo(-18, -18)
-      ..quadraticBezierTo(-19, -34, -14, -56)
+    canvas.rotate(isMoving ? math.sin(walkPhase * 2) * 0.05 : 0.0);
+    final sack = Path()
+      ..moveTo(-7, -58)
+      ..cubicTo(-30, -68, -42, -38, -28, -20)
+      ..quadraticBezierTo(-13, -15, -6, -34)
       ..close();
     canvas.drawPath(
-      coat,
+      sack,
       Paint()
-        ..shader = LinearGradient(
+        ..shader = const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [coatRed, coatShadow],
-        ).createShader(const Rect.fromLTWH(-20, -56, 40, 40)),
+          colors: [burlapMain, burlapShade],
+        ).createShader(const Rect.fromLTWH(-42, -68, 38, 52)),
+    );
+    // Wrapped crimson gift corner peeking from sack opening
+    canvas.drawPath(
+      Path()
+        ..moveTo(-18, -62)
+        ..lineTo(-27, -71)
+        ..lineTo(-14, -75)
+        ..lineTo(-9, -63)
+        ..close(),
+      Paint()..color = const Color(0xFF0E7490),
+    );
+    // Hemp rope tie around sack neck
+    canvas.drawLine(
+      const Offset(-14, -60),
+      const Offset(-8, -56),
+      Paint()
+        ..strokeWidth = 2.6
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFFD4A373),
+    );
+    canvas.restore();
+
+    // 2. Articulated Striding Legs & Sculpted Leather Winter Boots
+    _drawArticulatedLegAndBoot(
+      canvas,
+      hip: const Offset(-7, -27),
+      swingAngle: -stride,
+      isFront: false,
+      furMain: furMain,
+      furShadow: furShadow,
+      bootColor: leatherDark,
+    );
+    _drawArticulatedLegAndBoot(
+      canvas,
+      hip: const Offset(7, -27),
+      swingAngle: stride,
+      isFront: true,
+      furMain: furMain,
+      furShadow: furShadow,
+      bootColor: leatherDark,
     );
 
-    // Coat Fur Trim Hem
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-19, -22, 38, 7), const Radius.circular(3.5)),
-      Paint()..color = furWhite,
+    // 3. Rear Sleeve & Mitten gripping sack strap
+    canvas.save();
+    canvas.translate(-10, -58);
+    canvas.rotate(-stride * 0.32 + 0.24);
+    final backSleeve = Path()
+      ..moveTo(-5, 0)
+      ..quadraticBezierTo(-7, 13, -4, 24)
+      ..lineTo(5, 24)
+      ..quadraticBezierTo(6, 12, 4, 0)
+      ..close();
+    canvas.drawPath(backSleeve, Paint()..color = coatDeep);
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(0, 27), width: 10, height: 11),
+      Paint()..color = leatherDark,
+    );
+    canvas.restore();
+
+    // 4. Tailored Flared Winter Greatcoat with Fabric Creases
+    final flareLag = isMoving ? -stride * 4.5 : 0.0;
+    final greatcoat = Path()
+      ..moveTo(-15, -66)
+      ..quadraticBezierTo(0, -69, 15, -66)
+      ..cubicTo(19, -50, 22, -32, 21 + flareLag * 0.4, -19)
+      ..quadraticBezierTo(0, -15, -22 + flareLag, -20)
+      ..cubicTo(-22, -35, -18, -51, -15, -66)
+      ..close();
+    canvas.drawPath(
+      greatcoat,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [coatHighlight, coatRed, coatDeep],
+        ).createShader(const Rect.fromLTWH(-24, -68, 48, 52)),
     );
 
-    // Leather Belt + Brushed Gold Buckle
-    canvas.drawRect(const Rect.fromLTWH(-17, -37, 34, 6), Paint()..color = beltLeather);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(2, -38.5, 9, 9), const Radius.circular(2)),
+    // Curly overlapping shearling fur hem along coat bottom (no flat rectangle!)
+    _drawWoolTufts(
+      canvas,
+      points: [
+        Offset(-19 + flareLag, -19),
+        Offset(-11 + flareLag * 0.8, -18),
+        Offset(-3 + flareLag * 0.5, -17.5),
+        Offset(5 + flareLag * 0.3, -17.5),
+        Offset(13 + flareLag * 0.2, -18),
+        Offset(19 + flareLag * 0.2, -19.5),
+      ],
+      radius: 5.2,
+      furMain: furMain,
+      furShadow: furShadow,
+    );
+
+    // Sculpted wide curved leather belt & brass buckle
+    final belt = Path()
+      ..moveTo(-18, -42)
+      ..quadraticBezierTo(0, -39, 19, -42)
+      ..lineTo(19, -35)
+      ..quadraticBezierTo(0, -32, -19, -35)
+      ..close();
+    canvas.drawPath(belt, Paint()..color = leatherDark);
+    canvas.drawPath(
+      Path()
+        ..moveTo(2, -43)
+        ..lineTo(12, -43)
+        ..lineTo(12, -34)
+        ..lineTo(2, -34)
+        ..close(),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
+        ..strokeWidth = 2.3
         ..color = ChristmasThemeConfig.champagneGold,
     );
 
-    // 5. Shaded Winter Face, Flowing Mustache & Beard
-    canvas.drawCircle(const Offset(2, -66), 11.5, Paint()..color = const Color(0xFFF6C7AA));
-
-    // Rosy cheek + gentle eye
-    canvas.drawCircle(
-      const Offset(7, -64),
-      3.0,
-      Paint()..color = const Color(0x66E11D48),
+    // Fur shawl cape collar around shoulders
+    _drawWoolTufts(
+      canvas,
+      points: const [
+        Offset(-14, -64),
+        Offset(-7, -62),
+        Offset(0, -61),
+        Offset(8, -62),
+        Offset(14, -64),
+      ],
+      radius: 5.0,
+      furMain: furMain,
+      furShadow: furShadow,
     );
-    canvas.drawCircle(const Offset(7.5, -67.5), 1.4, Paint()..color = const Color(0xFF1E293B));
 
-    // Sculpted layered Beard
-    final beard = Path()
-      ..moveTo(-7, -63)
-      ..quadraticBezierTo(-8, -46, 3, -44)
-      ..quadraticBezierTo(15, -46, 13, -62)
-      ..quadraticBezierTo(5, -59, -7, -63)
+    // 5. Detailed Head, Winter Complexion, Flowing Wavy Beard & Drooping Hat
+    // Face oval with subtle shading
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(2, -77), width: 22, height: 24),
+      Paint()
+        ..shader = const RadialGradient(
+          center: Alignment(0.3, -0.2),
+          colors: [Color(0xFFFAD2B8), Color(0xFFE7A98B)],
+        ).createShader(const Rect.fromLTWH(-10, -90, 24, 26)),
+    );
+    // Cheek flush, nose bridge & expressive eye
+    canvas.drawCircle(const Offset(8, -74), 3.4, Paint()..color = const Color(0x55E11D48));
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(12.5, -77.5), width: 5.5, height: 4.5),
+      Paint()..color = const Color(0xFFF09986),
+    );
+    canvas.drawCircle(const Offset(8.5, -80.5), 1.5, Paint()..color = const Color(0xFF1E293B));
+    // Silver eyebrow
+    canvas.drawLine(
+      const Offset(5.5, -83.5),
+      const Offset(11.5, -83),
+      Paint()
+        ..color = furMain
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Sculpted curly overlapping beard locks flowing over chest
+    final beardSway = isMoving ? -stride * 2.5 : 0.0;
+    final beardPath = Path()
+      ..moveTo(-9, -76)
+      ..quadraticBezierTo(-11, -60, -5 + beardSway, -51)
+      ..quadraticBezierTo(-1, -46, 3 + beardSway, -49)
+      ..quadraticBezierTo(8 + beardSway, -46, 13, -53)
+      ..quadraticBezierTo(16, -64, 13, -75)
+      ..quadraticBezierTo(5, -71, -9, -76)
       ..close();
-    canvas.drawPath(beard, Paint()..color = furWhite);
+    canvas.drawPath(beardPath.shift(const Offset(0, 1.5)), Paint()..color = furShadow);
+    canvas.drawPath(beardPath, Paint()..color = furMain);
 
-    // Mustache
+    // Flowing handlebar mustache
     final mustache = Path()
-      ..moveTo(4, -63)
-      ..quadraticBezierTo(-3, -60, -2, -57)
-      ..quadraticBezierTo(5, -58, 12, -58)
-      ..quadraticBezierTo(13, -61, 7, -63)
+      ..moveTo(6, -75)
+      ..cubicTo(0, -76, -3, -70, 2, -68)
+      ..quadraticBezierTo(7, -70, 12, -71)
+      ..quadraticBezierTo(16, -72, 13, -75)
       ..close();
     canvas.drawPath(mustache, Paint()..color = Colors.white);
 
-    // Fur-trimmed Drooping Cap & Pom-Pom trailing with movement
-    final pomLag = isMoving ? -stride * 5.0 - 4.0 : 0.0;
+    // Velvet Stocking Hat curving back organically with S-drape & pom-pom
+    final hatTipLag = isMoving ? -stride * 6.5 - 5.0 : 0.0;
     final cap = Path()
-      ..moveTo(-10, -73)
-      ..quadraticBezierTo(-6, -90, 2, -88)
-      ..quadraticBezierTo(12, -86, 12 + pomLag, -77)
-      ..lineTo(12, -73)
+      ..moveTo(-11, -85)
+      ..cubicTo(-8, -104, 4, -107, 13, -97)
+      ..cubicTo(18 + hatTipLag * 0.5, -91, 18 + hatTipLag, -84, 15 + hatTipLag, -80)
+      ..quadraticBezierTo(11, -82, 12, -85)
       ..close();
-    canvas.drawPath(cap, Paint()..color = coatRed);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-12, -76, 25, 6), const Radius.circular(3)),
-      Paint()..color = furWhite,
-    );
-    canvas.drawCircle(Offset(13 + pomLag, -76), 4.0, Paint()..color = Colors.white);
-
-    // 6. Front Arm + Glowing Brass Lantern
-    canvas.save();
-    canvas.translate(8, -50);
-    canvas.rotate(stride * 0.45 - 0.35);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, 0, 9.5, 22), const Radius.circular(4.5)),
-      Paint()..color = coatRed,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-5, 17, 10, 4.5), const Radius.circular(2)),
-      Paint()..color = furWhite,
-    );
-    canvas.drawCircle(const Offset(0, 24), 4.2, Paint()..color = beltLeather);
-
-    // Warm Hanging Brass Lantern
-    final lx = 2.0;
-    final ly = 26.0;
-    canvas.drawLine(Offset(0, 24), Offset(lx, ly + 4), Paint()..strokeWidth = 1.5..color = const Color(0xFF94A3B8));
-    canvas.drawCircle(
-      Offset(lx, ly + 11),
-      14,
+    canvas.drawPath(
+      cap,
       Paint()
-        ..color = ChristmasThemeConfig.warmLanternAmber.withValues(alpha: 0.45)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+        ..shader = const LinearGradient(
+          colors: [coatHighlight, coatDeep],
+        ).createShader(const Rect.fromLTWH(-12, -108, 32, 30)),
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(lx, ly + 11), width: 10, height: 13), const Radius.circular(2)),
-      Paint()..color = const Color(0xFFFFD56B),
+    // Fluffy scalloped hat brim
+    _drawWoolTufts(
+      canvas,
+      points: const [
+        Offset(-11, -85),
+        Offset(-4, -86),
+        Offset(3, -86),
+        Offset(10, -85),
+      ],
+      radius: 4.4,
+      furMain: furMain,
+      furShadow: furShadow,
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(lx, ly + 11), width: 10, height: 13), const Radius.circular(2)),
-      Paint()..style = PaintingStyle.stroke..strokeWidth = 1.4..color = const Color(0xFF334155),
+    // Pom-pom
+    canvas.drawCircle(Offset(15 + hatTipLag, -79), 4.6, Paint()..color = furShadow);
+    canvas.drawCircle(Offset(14.5 + hatTipLag, -80), 4.2, Paint()..color = Colors.white);
+
+    // 6. Lead Arm holding Ornate Hexagonal Glass Carriage Lantern
+    canvas.save();
+    canvas.translate(9, -60);
+    canvas.rotate(stride * 0.35 - 0.42);
+    final frontSleeve = Path()
+      ..moveTo(-5, 0)
+      ..quadraticBezierTo(8, 10, 6, 22)
+      ..lineTo(-3, 23)
+      ..quadraticBezierTo(-5, 11, -5, 0)
+      ..close();
+    canvas.drawPath(frontSleeve, Paint()..color = coatRed);
+    _drawWoolTufts(
+      canvas,
+      points: const [Offset(-2, 22), Offset(2, 22), Offset(6, 21)],
+      radius: 3.4,
+      furMain: furMain,
+      furShadow: furShadow,
+    );
+    // Padded leather mitten
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(2, 27), width: 9, height: 9),
+      Paint()..color = leatherDark,
+    );
+
+    // Ornate Brass & Forged Iron Carriage Lantern
+    final swing = isMoving ? stride * 0.25 : math.sin(elapsed * 2.0) * 0.05;
+    canvas.save();
+    canvas.translate(2, 30);
+    canvas.rotate(swing);
+    canvas.drawLine(
+      Offset.zero,
+      const Offset(0, 6),
+      Paint()
+        ..strokeWidth = 1.6
+        ..color = const Color(0xFF475569),
+    );
+    canvas.drawCircle(
+      const Offset(0, 14),
+      16,
+      Paint()
+        ..color = ChristmasThemeConfig.warmLanternAmber.withValues(alpha: 0.46)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    // Tapered glass lantern housing
+    final glassBody = Path()
+      ..moveTo(-5.5, 8)
+      ..lineTo(5.5, 8)
+      ..lineTo(4.2, 21)
+      ..lineTo(-4.2, 21)
+      ..close();
+    canvas.drawPath(glassBody, Paint()..color = const Color(0xFFFFD873));
+    canvas.drawPath(
+      glassBody,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = const Color(0xFF1E293B),
+    );
+    // Peaked iron hood cap & base
+    canvas.drawPath(
+      Path()
+        ..moveTo(-7, 8)
+        ..lineTo(0, 3)
+        ..lineTo(7, 8)
+        ..close(),
+      Paint()..color = const Color(0xFF1E293B),
+    );
+    canvas.drawLine(
+      const Offset(-5, 21),
+      const Offset(5, 21),
+      Paint()
+        ..strokeWidth = 2.2
+        ..color = const Color(0xFF1E293B),
     );
     canvas.restore();
 
+    canvas.restore();
     canvas.restore();
   }
 
-  void _drawBoot(
+  void _drawWoolTufts(
     Canvas canvas, {
-    required Offset offset,
-    required double angle,
+    required List<Offset> points,
+    required double radius,
+    required Color furMain,
+    required Color furShadow,
+  }) {
+    final shadePaint = Paint()..color = furShadow;
+    final mainPaint = Paint()..color = furMain;
+    for (final p in points) {
+      canvas.drawCircle(p.translate(0, 1.2), radius, shadePaint);
+    }
+    for (final p in points) {
+      canvas.drawCircle(p, radius * 0.94, mainPaint);
+    }
+  }
+
+  void _drawArticulatedLegAndBoot(
+    Canvas canvas, {
+    required Offset hip,
+    required double swingAngle,
+    required bool isFront,
+    required Color furMain,
+    required Color furShadow,
     required Color bootColor,
   }) {
     canvas.save();
-    canvas.translate(offset.dx, offset.dy);
-    canvas.rotate(angle);
-    // Trouser leg + leather boot
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, 0, 9, 14), const Radius.circular(3)),
-      Paint()..color = const Color(0xFF7F1120),
+    canvas.translate(hip.dx, hip.dy);
+    canvas.rotate(swingAngle);
+
+    // Tapered woolen trouser thigh -> bent knee
+    final kneeBend = isFront ? math.max(0.0, -swingAngle) * 0.6 : math.max(0.0, swingAngle) * 0.5;
+    final trouser = Path()
+      ..moveTo(-5.5, 0)
+      ..lineTo(5.5, 0)
+      ..lineTo(4.2, 13)
+      ..lineTo(-4.5, 13)
+      ..close();
+    canvas.drawPath(
+      trouser,
+      Paint()..color = isFront ? const Color(0xFF9A1624) : const Color(0xFF6B0C18),
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, 12, 12, 11), const Radius.circular(3.5)),
-      Paint()..color = bootColor,
-    );
+
+    canvas.translate(0, 12);
+    canvas.rotate(kneeBend);
+
+    // Sculpted knee-high winter leather boot with heel & curved toe vamp
+    final boot = Path()
+      ..moveTo(-4.6, 0)
+      ..lineTo(4.6, 0)
+      ..lineTo(4.8, 10)
+      ..quadraticBezierTo(10.5, 11.5, 11.0, 15.0)
+      ..lineTo(4.5, 15.5)
+      ..lineTo(1.5, 15.0)
+      ..lineTo(-4.8, 15.5)
+      ..lineTo(-5.2, 11.0)
+      ..close();
+    canvas.drawPath(boot, Paint()..color = bootColor);
+
+    // Boot cuff fur trim
+    canvas.drawCircle(const Offset(-2, 0.5), 3.0, Paint()..color = furShadow);
+    canvas.drawCircle(const Offset(2.5, 0.5), 3.0, Paint()..color = furMain);
+
     canvas.restore();
   }
 

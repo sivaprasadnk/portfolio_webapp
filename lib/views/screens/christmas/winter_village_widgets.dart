@@ -289,9 +289,10 @@ class _SpSnowGlobePainter extends CustomPainter {
         text: 'SP',
         style: TextStyle(
           color: Colors.white,
-          fontSize: size.width * 0.30,
+          fontFamily: 'PlayfairDisplay',
+          fontSize: size.width * 0.31,
           fontWeight: FontWeight.w900,
-          letterSpacing: 1.0,
+          letterSpacing: 1.2,
           shadows: const [
             Shadow(color: Color(0xAA071329), blurRadius: 4, offset: Offset(0, 1)),
           ],
@@ -359,7 +360,8 @@ class _SpSnowGlobePainter extends CustomPainter {
 }
 
 /// Floating cloud navigation bar with no rectangular chrome — each destination
-/// lives inside its own fluffy cloud gently drifting across the sky.
+/// lives inside its own fluffy cloud drifting continuously across the sky at
+/// layered altitudes and wind speeds.
 class FloatingCloudNavigation extends StatelessWidget {
   const FloatingCloudNavigation({
     super.key,
@@ -382,26 +384,100 @@ class FloatingCloudNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 720;
-        return Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: compact ? 6 : 12,
-          runSpacing: compact ? 6 : 10,
-          children: [
-            for (final item in items)
-              _FloatingCloudItem(
-                item: item,
-                isActive: activeSectionId == item.id,
-                elapsed: elapsed,
-                dayFactor: dayFactor,
-                reducedMotion: reducedMotion,
-                compact: compact,
-                onTap: () => onSelect(item.id),
+        final rawWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 720.0;
+        final bandWidth = math.max(rawWidth, 240.0);
+        final compact = bandWidth < 680;
+        final t = reducedMotion ? 0.0 : elapsed;
+
+        if (compact) {
+          final trackW = math.max(bandWidth + 115.0, 395.0);
+          return ClipRect(
+            child: SizedBox(
+              width: bandWidth,
+              height: 88,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  for (int i = 0; i < items.length; i++)
+                    _buildDriftingCloud(
+                      item: items[i],
+                      index: i,
+                      t: t,
+                      compact: true,
+                      baseX:
+                          4.0 + (i ~/ 2) * math.max(82.0, (bandWidth - 102.0) / 2.0),
+                      baseY: (i % 2) * 41.0 + 4.0,
+                      trackWidth: trackW,
+                      marginLeft: 105.0,
+                      speedPxPerSec: 8.5 + (i % 3) * 2.2 + (i % 2) * 1.4,
+                    ),
+                ],
               ),
-          ],
+            ),
+          );
+        }
+
+        final trackW = math.max(bandWidth + 145.0, items.length * 145.0);
+        final usableSpan = math.max(200.0, bandWidth - 134.0);
+        return ClipRect(
+          child: SizedBox(
+            width: bandWidth,
+            height: 76,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                for (int i = 0; i < items.length; i++)
+                  _buildDriftingCloud(
+                    item: items[i],
+                    index: i,
+                    t: t,
+                    compact: false,
+                    baseX: 6.0 + (i / math.max(1, items.length - 1)) * usableSpan,
+                    baseY: i.isEven ? 4.0 : 28.0,
+                    trackWidth: trackW,
+                    marginLeft: 128.0,
+                    speedPxPerSec: 12.0 + (i % 3) * 3.8 + (i.isOdd ? 1.8 : 0.0),
+                  ),
+              ],
+            ),
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildDriftingCloud({
+    required CloudNavItem item,
+    required int index,
+    required double t,
+    required bool compact,
+    required double baseX,
+    required double baseY,
+    required double trackWidth,
+    required double marginLeft,
+    required double speedPxPerSec,
+  }) {
+    final x = ((baseX + t * speedPxPerSec + marginLeft) % trackWidth) -
+        marginLeft;
+    final bobY = reducedMotion
+        ? 0.0
+        : math.cos(t * (item.driftSpeed * 1.1) + item.driftPhase) *
+            (compact ? 2.2 : item.bobAmp);
+
+    return Positioned(
+      left: x,
+      top: baseY + bobY,
+      child: _FloatingCloudItem(
+        item: item,
+        isActive: activeSectionId == item.id,
+        elapsed: elapsed,
+        dayFactor: dayFactor,
+        reducedMotion: reducedMotion,
+        compact: compact,
+        onTap: () => onSelect(item.id),
+      ),
     );
   }
 }
@@ -434,27 +510,16 @@ class _FloatingCloudItemState extends State<_FloatingCloudItem> {
 
   @override
   Widget build(BuildContext context) {
-    final t = widget.reducedMotion ? 0.0 : widget.elapsed;
-    final dx = widget.compact || widget.reducedMotion
-        ? 0.0
-        : math.sin(t * widget.item.driftSpeed + widget.item.driftPhase) * 6.0;
-    final dy = widget.reducedMotion
-        ? 0.0
-        : math.cos(t * (widget.item.driftSpeed * 1.15) + widget.item.driftPhase) *
-            (widget.compact ? 2.0 : widget.item.bobAmp);
-
     final textColor = Color.lerp(
       const Color(0xFF0E294B),
       const Color(0xFF0A213F),
       widget.dayFactor,
     )!;
-    final accentColor = widget.isActive
-        ? const Color(0xFFB45309)
-        : Color.lerp(
-            const Color(0xFF0369A1),
-            const Color(0xFF0284C7),
-            widget.dayFactor,
-          )!;
+    final targetScale = widget.reducedMotion
+        ? (widget.isActive ? 1.16 : 1.0)
+        : (widget.isActive
+            ? (_hovered ? 1.24 : 1.18)
+            : (_hovered ? 1.09 : 1.0));
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -464,42 +529,30 @@ class _FloatingCloudItemState extends State<_FloatingCloudItem> {
         key: ValueKey('cloud_nav_${widget.item.id}'),
         onTap: widget.onTap,
         child: Transform.translate(
-          offset: Offset(dx, dy + (_hovered ? -3.0 : 0.0)),
+          offset: Offset(0, _hovered ? -3.0 : 0.0),
           child: AnimatedScale(
-            scale: _hovered && !widget.reducedMotion ? 1.09 : 1.0,
-            duration: const Duration(milliseconds: 180),
+            scale: targetScale,
+            duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
             child: CustomPaint(
               painter: _CloudShapePainter(
                 dayFactor: widget.dayFactor,
-                isActive: widget.isActive,
                 hovered: _hovered,
               ),
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: widget.compact ? 14 : 18,
-                  vertical: widget.compact ? 9 : 11,
+                  vertical: widget.compact ? 8 : 10,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      widget.item.icon,
-                      size: widget.compact ? 14 : 15,
-                      color: accentColor,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      widget.item.label,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: widget.compact ? 12 : 13,
-                        fontWeight:
-                            widget.isActive ? FontWeight.w800 : FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  widget.item.label,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: widget.compact ? 11.5 : 13,
+                    fontWeight:
+                        widget.isActive ? FontWeight.w800 : FontWeight.w700,
+                    letterSpacing: 0.25,
+                  ),
                 ),
               ),
             ),
@@ -513,12 +566,10 @@ class _FloatingCloudItemState extends State<_FloatingCloudItem> {
 class _CloudShapePainter extends CustomPainter {
   const _CloudShapePainter({
     required this.dayFactor,
-    required this.isActive,
     required this.hovered,
   });
 
   final double dayFactor;
-  final bool isActive;
   final bool hovered;
 
   @override
@@ -558,15 +609,12 @@ class _CloudShapePainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
 
-    if (hovered || isActive) {
+    if (hovered) {
       canvas.drawPath(
         softBody,
         Paint()
-          ..color = (isActive
-                  ? ChristmasThemeConfig.champagneGold
-                  : ChristmasThemeConfig.icyBlue)
-              .withValues(alpha: hovered ? 0.52 : 0.32)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 11),
+          ..color = ChristmasThemeConfig.icyBlue.withValues(alpha: 0.44)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
     }
 
@@ -580,22 +628,11 @@ class _CloudShapePainter extends CustomPainter {
       ],
     ).createShader(Offset.zero & size);
     canvas.drawPath(softBody, Paint()..shader = fillShader);
-
-    if (isActive) {
-      canvas.drawPath(
-        softBody,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.1
-          ..color = ChristmasThemeConfig.warmGold.withValues(alpha: 0.75),
-      );
-    }
   }
 
   @override
   bool shouldRepaint(covariant _CloudShapePainter oldDelegate) {
     return oldDelegate.dayFactor != dayFactor ||
-        oldDelegate.isActive != isActive ||
         oldDelegate.hovered != hovered;
   }
 }
