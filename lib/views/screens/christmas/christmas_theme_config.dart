@@ -69,4 +69,57 @@ class ChristmasThemeConfig {
       _ => '$days Days to Dec 25',
     };
   }
+
+  // Day / Night living winter village palette
+  static const Color daySkyTop = Color(0xFF3E95DC);
+  static const Color daySkyMid = Color(0xFF83C7F6);
+  static const Color daySkyHorizon = Color(0xFFE5F3FD);
+
+  static const Color nightSkyTop = Color(0xFF040B1A);
+  static const Color nightSkyMid = Color(0xFF0B1C3D);
+  static const Color nightSkyHorizon = Color(0xFF1A345C);
+
+  static const Color dayCardBg = Color(0xD8F8FCFF);
+  static const Color nightCardBg = Color(0xB809172E);
+  static const Color dayCardBorder = Color(0xBBE0EEFB);
+  static const Color nightCardBorder = Color(0x668ED0FB);
+
+  static const Color dayTextPrimary = Color(0xFF0F223A);
+  static const Color nightTextPrimary = Color(0xFFF8FAFC);
+  static const Color dayTextSecondary = Color(0xFF334E6E);
+  static const Color nightTextSecondary = Color(0xFFD6E7F8);
+
+  static const Color cabinWoodDark = Color(0xFF3A2316);
+  static const Color cabinWoodLight = Color(0xFF694329);
+  static const Color warmLanternAmber = Color(0xFFFFB74D);
+
+  /// Returns `true` when [now] falls in daytime (06:00 <= hour < 18:00).
+  static bool isDayTime(DateTime now) => now.hour >= 6 && now.hour < 18;
+
+  static Color skyTop(double dayFactor) =>
+      Color.lerp(nightSkyTop, daySkyTop, dayFactor)!;
+
+  static Color skyMid(double dayFactor) =>
+      Color.lerp(nightSkyMid, daySkyMid, dayFactor)!;
+
+  static Color skyHorizon(double dayFactor) =>
+      Color.lerp(nightSkyHorizon, daySkyHorizon, dayFactor)!;
+
+  static Color cardSurface(double dayFactor) =>
+      Color.lerp(nightCardBg, dayCardBg, dayFactor)!;
+
+  static Color cardBorder(double dayFactor) =>
+      Color.lerp(nightCardBorder, dayCardBorder, dayFactor)!;
+
+  static Color primaryText(double dayFactor) =>
+      Color.lerp(nightTextPrimary, dayTextPrimary, dayFactor)!;
+
+  static Color secondaryText(double dayFactor) =>
+      Color.lerp(nightTextSecondary, dayTextSecondary, dayFactor)!;
+
+  static Color accentGold(double dayFactor) =>
+      Color.lerp(champagneGold, const Color(0xFFB4690E), dayFactor)!;
+
+  static Color accentIce(double dayFactor) =>
+      Color.lerp(icyBlue, const Color(0xFF0369A1), dayFactor)!;
 }
