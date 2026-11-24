@@ -673,7 +673,7 @@ class _ChristmasPortfolioScreenState extends State<ChristmasPortfolioScreen>
         ),
         const SizedBox(height: 10),
         Text(
-          'Senior Software Engineer  •  Flutter, Cross-Platform & Interactive 3D Web',
+          'Senior Software Engineer (5 Years)  •  AI Coding, Flutter & Interactive 3D Web',
           style: context.bodyLarge.copyWith(
             fontSize: isMobile ? 15.5 : 18.5,
             fontWeight: FontWeight.w700,
@@ -761,7 +761,7 @@ class _ChristmasPortfolioScreenState extends State<ChristmasPortfolioScreen>
           ),
           const SizedBox(height: 14),
           Text(
-            'Malappuram, Kerala • India',
+            'Ernakulam, Kerala • India',
             textAlign: TextAlign.center,
             style: context.bodySmall.copyWith(
               color: secondaryText,
@@ -870,23 +870,23 @@ class _ChristmasPortfolioScreenState extends State<ChristmasPortfolioScreen>
               runSpacing: 12,
               children: [
                 _CabinHighlightCard(
-                  icon: Icons.layers_rounded,
-                  title: 'Clean Architecture',
-                  subtitle: 'BLoC, SOLID, Domain-Driven Mobile Systems',
+                  icon: Icons.auto_awesome_rounded,
+                  title: 'AI Coding & Architecture',
+                  subtitle: '5 Years Experience • Agentic AI Workflows & Clean BLoC Systems',
                   dayFactor: dayFactor,
                   accent: goldAccent,
                 ),
                 _CabinHighlightCard(
                   icon: Icons.devices_rounded,
                   title: 'Multi-Platform Craft',
-                  subtitle: 'Flutter Android, iOS, macOS & WebAssembly',
+                  subtitle: 'Flutter Android, iOS, macOS, WebAssembly & 3D Web',
                   dayFactor: dayFactor,
                   accent: ChristmasThemeConfig.accentIce(dayFactor),
                 ),
                 _CabinHighlightCard(
-                  icon: Icons.view_in_ar_rounded,
-                  title: 'Interactive Experiences',
-                  subtitle: 'Three.js Worlds, Canvas Shaders & Micro-Interactions',
+                  icon: Icons.directions_run_rounded,
+                  title: 'Endurance Athlete',
+                  subtitle: 'Regular Gym Training, Distance Running & Daily Discipline',
                   dayFactor: dayFactor,
                   accent: goldAccent,
                 ),

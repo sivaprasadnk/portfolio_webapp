@@ -390,14 +390,14 @@ class SectorWindshieldHud extends StatelessWidget {
     switch (screen) {
       case Screen.home:
         return Text(
-          'Flutter Architect (3.7+ Yrs) • Tripunithura, Kerala • 98% Dart',
+          'AI & Flutter Architect (5 Yrs) • Ernakulam, Kerala • 98% Dart',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: textStyle,
         );
       case Screen.aboutMe:
         return Text(
-          'Clean Arch & BLoC • Pub.dev Author • Fitness & Felintrovert',
+          'AI Coding & Clean Arch • Gym & Regular Running • Endurance Athlete',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: textStyle,
@@ -555,10 +555,10 @@ class _PitStopDossierDialogState extends State<_PitStopDossierDialog> {
   static const _perks = [
     (
       Icons.bolt_rounded,
-      '3.7+ Years',
-      'Cross-Platform Flutter',
-      'LVL 37',
-      'Engineered production-grade Android, iOS, and Web applications with 60fps custom canvas rendering and adaptive spatial layouts.',
+      '5 Years Exp',
+      'AI Coding & Flutter',
+      'LVL 50',
+      '5 years engineering production Android, iOS, and Web apps, now actively focused on AI coding and 3D interactive web.',
     ),
     (
       Icons.layers_rounded,
@@ -575,11 +575,11 @@ class _PitStopDossierDialogState extends State<_PitStopDossierDialog> {
       'Published reusable Flutter packages on pub.dev and crafted developer tooling and themes for the global community.',
     ),
     (
-      Icons.fitness_center_rounded,
-      'Lifestyle',
-      'Fitness & Felintrovert',
+      Icons.directions_run_rounded,
+      'Endurance',
+      'Gym & Regular Running',
       '99 STA',
-      'Fueled by discipline, strength training, and creative problem-solving alongside feline companions.',
+      'Endurance athlete from Ernakulam training in the gym and running regularly with structured daily discipline.',
     ),
   ];
 
@@ -1042,7 +1042,7 @@ class _PitStopDossierDialogState extends State<_PitStopDossierDialog> {
     return BlocBuilder<AboutMeBloc, AboutMeState>(
       builder: (context, state) {
         final bio = state.content.trim().isEmpty
-            ? 'Passionate Flutter developer with 3.7+ years of experience crafting seamless, cross-platform applications that delight users and solve real-world problems.'
+            ? 'Software engineer from Ernakulam with 5 years of experience, actively focused on AI coding, gym training, and regular endurance running.'
             : state.content.trim();
         final activePerk = _perks[_selectedPerkIdx];
 

@@ -616,7 +616,7 @@ class RaceSectorMeta {
       shortLabel: 'BIO',
       destinationLabel: 'ABOUT ME',
       title: 'ORIGIN CHICANE // DRIVER BIO',
-      subtitle: '3.7+ Yrs Flutter • Clean Architecture • Fitness & Perks',
+      subtitle: '5 Yrs • AI Coding & Flutter • Endurance Athlete',
       startSegment: 120,
       endSegment: 239,
       checkpointSegment: 125,
@@ -1054,9 +1054,9 @@ class CircuitBuilder {
     // --- SECTOR 02: BIO / ORIGIN CHICANE BILLBOARDS ---
     const bioSpecs = [
       BillboardSpec(
-        tag: 'PERK 01 // LVL 37',
-        title: '3.7+ YRS FLUTTER',
-        subtitle: 'HIGH-FPS CROSS-PLATFORM UI',
+        tag: 'PERK 01 // LVL 50',
+        title: '5 YRS AI & FLUTTER',
+        subtitle: 'AI CODING • CROSS-PLATFORM UI',
         showDriverPhoto: true,
       ),
       BillboardSpec(
@@ -1072,8 +1072,8 @@ class CircuitBuilder {
       ),
       BillboardSpec(
         tag: 'PERK 04 // 99 STA',
-        title: 'FITNESS & CATS',
-        subtitle: 'DISCIPLINE & FELINTROVERT',
+        title: 'ENDURANCE ATHLETE',
+        subtitle: 'GYM & REGULAR RUNNING',
         useSecondaryAccent: true,
       ),
     ];

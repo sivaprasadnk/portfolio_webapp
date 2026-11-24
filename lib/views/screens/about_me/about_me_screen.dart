@@ -27,10 +27,10 @@ class _AboutMeScreenState extends State<AboutMeScreen>
   static const _perks = [
     (
       Icons.bolt_rounded,
-      '3.7+ Years',
-      'Cross-Platform Flutter',
-      'LVL 37',
-      'Engineered production-grade Android, iOS, and Web applications with high-frame-rate custom rendering and responsive spatial layouts.',
+      '5 Years Exp',
+      'AI Coding & Flutter',
+      'LVL 50',
+      '5 years engineering production Android, iOS, and Web apps, now actively focused on AI-assisted coding and intelligent tools.',
     ),
     (
       Icons.layers_rounded,
@@ -47,11 +47,11 @@ class _AboutMeScreenState extends State<AboutMeScreen>
       'Published reusable Flutter packages on pub.dev and crafted developer tooling and themes for the global community.',
     ),
     (
-      Icons.fitness_center_rounded,
-      'Lifestyle',
-      'Fitness & Felintrovert',
+      Icons.directions_run_rounded,
+      'Endurance',
+      'Gym & Regular Running',
       '99 STA',
-      'Fueled by discipline, strength training, and creative problem-solving alongside feline companions.',
+      'Endurance athlete training consistently in the gym and running regularly with discipline from Ernakulam.',
     ),
   ];
 

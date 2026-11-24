@@ -66,6 +66,10 @@ void main() {
       // Portfolio content & sections
       expect(find.text('Merry Christmas & Happy New Year!'), findsOneWidget);
       expect(find.text('Sivaprasad NK'), findsOneWidget);
+      expect(find.text('Ernakulam, Kerala • India'), findsOneWidget);
+      expect(find.textContaining('5 years of experience'), findsWidgets);
+      expect(find.textContaining('AI coding'), findsWidgets);
+      expect(find.text('Endurance Athlete'), findsOneWidget);
       expect(find.text('About Me'), findsOneWidget);
       expect(find.text('Experience'), findsWidgets);
       expect(find.text('Projects'), findsWidgets);

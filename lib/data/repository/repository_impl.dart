@@ -66,11 +66,7 @@ class RepositoryImpl implements Repository {
 
   @override
   Future<AboutMeDetails> getAboutMe() async {
-    final result = await locator<RemoteDataSourceImpl>().getAboutMe();
-    return result.fold(
-      (data) => data,
-      (_) => locator<LocalDataSourceImpl>().getAboutMe(),
-    );
+    return locator<LocalDataSourceImpl>().getAboutMe();
   }
 
   @override

@@ -1331,8 +1331,8 @@ class _InteractiveGridHomeScreenState extends State<InteractiveGridHomeScreen>
             children: [
               Expanded(
                 child: _StatMiniBlock(
-                  value: '3.7+ YRS',
-                  caption: 'FLUTTER EXP',
+                  value: '5 YRS',
+                  caption: 'AI & FLUTTER',
                   color: accent,
                 ),
               ),

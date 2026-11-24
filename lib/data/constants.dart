@@ -176,10 +176,8 @@ List<ExperienceDetailsModel> expDetailsList = [
 
 AboutMeDetailsModel aboutMeDetailsContent = AboutMeDetailsModel(
   content: """
- Hello! I'm a passionate Flutter developer with 3.7 years of experience crafting seamless, cross-platform applications that delight users and solve real-world problems. My journey in software development is driven by a relentless curiosity and a commitment to learning new technologies and methodologies.
- Currently, I’m expanding my skill set by diving into HTML and CSS to enhance my front-end development expertise.
- Beyond the world of coding, I'm a fitness enthusiast dedicated to maintaining a balanced and healthy lifestyle. As a proud felintrovert, I cherish my moments of solitude with my feline companions, finding inspiration and creativity in these quiet times.
- I'm always eager to explore new ideas and enhance my skill set, continuously pushing the boundaries of what's possible with Flutter. Let's connect and build something amazing together!""",
+ Hello! I'm a software engineer from Ernakulam with 5 years of experience crafting seamless, cross-platform mobile and web applications. I'm now actively focused on AI coding — building agentic developer workflows, automation tools, and high-performance Flutter & Web apps.
+ Outside of engineering, I hit the gym and run regularly as an endurance athlete, bringing the same consistency, grit, and structured discipline into every product I build. Let's connect and create something remarkable together!""",
 );
 
 List<SkillDetailsModel> skillsList = [

@@ -68,9 +68,9 @@ class _DestinationHologramOverlayState extends State<DestinationHologramOverlay>
 
   static const _traits = [
     (
-      '3.7+ Yrs Flutter',
-      'LVL 37',
-      'Architected cross-platform Android, iOS & Web apps at 60fps with custom Canvas engines & BLoC.',
+      '5 Yrs • AI & Flutter',
+      'LVL 50',
+      '5 years engineering cross-platform Android, iOS & Web apps at 60fps — now actively building with AI coding.',
     ),
     (
       'Clean Arch & BLoC',
@@ -523,7 +523,7 @@ class _DestinationHologramOverlayState extends State<DestinationHologramOverlay>
                     ),
                   ),
                   Text(
-                    'Senior Flutter Architect • Tripunithura, Kerala',
+                    'Senior Flutter Architect • Ernakulam, Kerala',
                     style: context.bodySmall.copyWith(
                       fontSize: 12.5,
                       color: holoCyan,
@@ -532,7 +532,7 @@ class _DestinationHologramOverlayState extends State<DestinationHologramOverlay>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '3.7+ yrs crafting high-FPS Flutter apps, Clean Architecture, BLoC & 2D/3D web canvases.',
+                    '5 yrs crafting high-FPS Flutter apps, AI coding workflows, Clean Architecture & 3D web canvases.',
                     style: context.bodySmall.copyWith(
                       fontSize: 12,
                       color: Colors.white.withValues(alpha: 0.85),
@@ -584,7 +584,7 @@ class _DestinationHologramOverlayState extends State<DestinationHologramOverlay>
     return BlocBuilder<AboutMeBloc, AboutMeState>(
       builder: (context, state) {
         final bio = state.content.trim().isEmpty
-            ? 'Passionate Flutter developer with 3.7+ years of experience crafting seamless cross-platform applications.'
+            ? 'Software engineer from Ernakulam with 5 years of experience, actively focused on AI coding, gym training & endurance running.'
             : state.content.trim();
         final trait = _traits[_selectedTraitIdx];
 
