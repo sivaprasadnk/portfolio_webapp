@@ -21,6 +21,7 @@ import 'package:spnk/views/screens/home/grid/interactive_grid_home_screen.dart';
 import 'package:spnk/views/screens/home/home_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/chronocraft_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/qrcode_privacy_policy_screen.dart';
+import 'package:spnk/views/screens/privacy_policy/sp_video_saver_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/privacy_policy/yt_downloader_privacy_policy_screen.dart';
 import 'package:spnk/views/screens/qrcode/qr_code_screen.dart';
 import 'package:spnk/views/screens/racing/racing_portfolio_screen.dart';
@@ -123,6 +124,10 @@ class MyApp extends StatelessWidget {
                   const YtDownloaderPrivacyPolicyScreen(),
               '${YtDownloaderPrivacyPolicyScreen.routeName}/': (context) =>
                   const YtDownloaderPrivacyPolicyScreen(),
+              SpVideoSaverPrivacyPolicyScreen.routeName: (context) =>
+                  const SpVideoSaverPrivacyPolicyScreen(),
+              '${SpVideoSaverPrivacyPolicyScreen.routeName}/': (context) =>
+                  const SpVideoSaverPrivacyPolicyScreen(),
               QrCodeScreen.routeName: (context) => const QrCodeScreen(),
               '${QrCodeScreen.routeName}/': (context) => const QrCodeScreen(),
               ArcadeScreen.routeName: (context) => const ArcadeScreen(),
@@ -151,6 +156,13 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   settings: settings,
                   builder: (_) => const YtDownloaderPrivacyPolicyScreen(),
+                );
+              }
+              if (name.startsWith('/sp-video-saver/privacy-policy') ||
+                  name.startsWith('/sp-video-downloader/privacy-policy')) {
+                return MaterialPageRoute(
+                  settings: settings,
+                  builder: (_) => const SpVideoSaverPrivacyPolicyScreen(),
                 );
               }
               if (name.startsWith('/qrcode')) {
@@ -266,6 +278,12 @@ class SplashScreen extends StatelessWidget {
         path.startsWith('/youtube-downloader/privacy-policy') ||
         fragment.startsWith('/youtube-downloader/privacy-policy')) {
       return const YtDownloaderPrivacyPolicyScreen();
+    }
+    if (path.startsWith('/sp-video-saver/privacy-policy') ||
+        fragment.startsWith('/sp-video-saver/privacy-policy') ||
+        path.startsWith('/sp-video-downloader/privacy-policy') ||
+        fragment.startsWith('/sp-video-downloader/privacy-policy')) {
+      return const SpVideoSaverPrivacyPolicyScreen();
     }
     if (path.startsWith('/qrcode') || fragment.startsWith('/qrcode')) {
       return const QrCodeScreen();
